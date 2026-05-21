@@ -69,7 +69,6 @@ func (h *PerfilHandler) parseFormToPerfil(r *http.Request) (perfil.Perfil, error
 		Nombre: r.FormValue("nombre"),
 	}
 
-	// Nota: NO generamos el UUID aquí. Eso es responsabilidad del Servicio o la BD.
 	return p, nil
 }
 

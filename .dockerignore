@@ -31,4 +31,4 @@ main
 *.log
 
 # Templ generated files (Optional: if you generate them during Docker build)
-# *_templ.go
+*_templ.go

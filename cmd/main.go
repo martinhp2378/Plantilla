@@ -26,14 +26,12 @@ import (
 func main() {
 	slog.Info("Iniciando aplicación institucional...")
 
-	// 1. Cargar Entorno
 	env, err := entorno.GetEnv(".env")
 	if err != nil {
 		slog.Error("error al obtener variables de ambiente", "error", err)
 		os.Exit(1)
 	}
 
-	// 2. Logger e Instrumentación
 	configInstrumentacion := configInstrumentacion(env)
 	logger := logs.NuevoLogger(configInstrumentacion)
 
@@ -47,13 +45,11 @@ func main() {
 		}
 	}()
 
-	// 3. Base de Datos
 	pools, err := bd.ConnectPostgres(context.Background(), env, instrumentacion)
 	if err != nil {
 		logger.Fatal("error al conectar a postgres", err)
 	}
 
-	// Ejecutar migraciones
 	if err := bd.RunMigrations(env); err != nil {
 		logger.Fatal("error ejecutando migraciones", err)
 	}
@@ -61,7 +57,6 @@ func main() {
 	pqWrite := pools.WritePool
 	pqRead := pools.ReadPool
 
-	// 4. Redis (opcional)
 	var conexionRedis *redis.Client
 	if env.RedisHost != "" {
 		conexionRedis = redis.NewClient(&redis.Options{
@@ -71,21 +66,17 @@ func main() {
 		})
 	}
 
-	// 5. Manejador de Archivos
 	cfgArchivos := configArchivos(env)
 	manejadorArchivos, err := archivos.NuevoManejador(cfgArchivos)
 	if err != nil {
 		logger.Fatal("error al instanciar el manejador de archivos", err)
 	}
 
-	// 6. Email
 	emailCfg := configEmail(env)
 	emailService := email.NewEmailService(emailCfg)
 
-	// 7. Sesiones
 	var constructorSesion *sesiones.ConstructorSesion
 	var constructorSesionJWT *sesiones.ConstructorSesionJWT
-	// Registro de tipos para sesiones
 	regTipos := sesiones.NuevoRegistroTipos()
 	fnObtenerDatos := func(u uuid.UUID, p sesiones.Perfil, m ...map[string]any) []any {
 		return []any{}
@@ -93,7 +84,6 @@ func main() {
 	constructorSesion = sesiones.NuevoConstructor(pqWrite, configSesiones(env), regTipos, fnObtenerDatos)
 	constructorSesionJWT, _ = sesiones.NuevoConstructorJWT(pqWrite, configSesiones(env), configJWT(env), regTipos, fnObtenerDatos)
 
-	// 8. Crear Aplicación (DI)
 	a, err := app.NewApp(
 		context.Background(),
 		env,
@@ -111,49 +101,39 @@ func main() {
 		logger.Fatal("error al crear app", err)
 	}
 
-	// DI
 	config.InitRepositories(a)
 	config.InitServices(a)
 	config.WireResolvers(a)
 	config.InitHandlers(a)
 
-	// Carga inicial de parámetros del sistema
 	if err := a.Services.Parametro.LoadParameters(); err != nil {
 		logger.Error("Error cargando parámetros del sistema", err)
 	}
 
-	// --- CONFIGURACIÓN DE RUTAS Y MIDDLEWARES ---
 	r := chi.NewRouter()
 
-	// Registrar todos los middlewares institucionales (Logging, OTEL, Session, Audit, etc.)
 	app_middleware.RegistrarMiddlewaresApp(r, a)
 
-	// Login es público
 	a.Handlers.Login.RegisterRoutes(r)
 
-	// Servir archivos estáticos localmente
 	if env.Ambiente == entorno.AmbienteLocal {
 		staticDir := env.DirArchivosLocal
 		r.Handle("/static/*", http.StripPrefix("/static", http.FileServer(http.Dir(staticDir))))
 	}
 
-	// Rutas Protegidas (Requieren Login y Políticas)
 	r.Group(func(r chi.Router) {
 		r.Use(app_middleware.MiddlewareRequiereLogin)
 		r.Use(app_middleware.PolicyMiddleware(a))
 
-		// Core Module Routes
 		a.Handlers.Usuario.RegisterRoutes(r)
 		a.Handlers.Perfil.RegisterRoutes(r)
 		a.Handlers.Policy.RegisterRoutes(r)
 		a.Handlers.Persona.RegisterRoutes(r)
 		a.Handlers.Parametro.RegisterRoutes(r)
 
-		// Example Module Routes
 		a.Handlers.Example.RegisterRoutes(r)
 	})
 
-	// Handler para mostrar página 404 institucional
 	app_middleware.RegistrarHandler404(r)
 
 	srv := &http.Server{
@@ -168,7 +148,6 @@ func main() {
 		}
 	}()
 
-	// Graceful shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
@@ -184,8 +163,6 @@ func main() {
 
 	logger.Info("Server exiting")
 }
-
-// --- HELPERS DE CONFIGURACIÓN ---
 
 func configInstrumentacion(env *entorno.Env) *logs.Config {
 	return &logs.Config{

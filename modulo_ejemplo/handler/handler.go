@@ -40,18 +40,6 @@ func (h *handler) HandleSearchTable(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// En un escenario real, aquí filtraríamos y paginaríamos los examples
-	// usando r.FormValue("id"), r.FormValue("name"), etc.
-	// Por ahora devolvemos el componente de tabla actualizado.
-	// Nota: DataTableV2 en view.templ ya tiene las props, aquí solo renderizamos el body
-	// o el componente completo si queremos actualizar filtros/paginacion.
-	// Para este ejemplo, renderizamos la vista completa de nuevo o una versión parcial.
-	
-	// Usamos el helper de la vista para renderizar solo el componente de tabla
-	// (Tendríamos que extraer DataTableV2 a un componente exportado en view si fuera complejo)
-	// Para simplicidad en este ejemplo, dejamos que HandleList maneje el render inicial
-	// y aquí devolvemos lo que pide el hx-target.
-	
 	view.List(examples).Render(r.Context(), w)
 }
 

@@ -33,10 +33,8 @@ type Env struct {
 
 	Timeout time.Duration `json:"timeout"`
 
-	// Puerto del server, debe ser 8080 para Cloud Run
 	ServerListen string `json:"serverListen"`
 
-	// Base de datos
 	PqWriteDb           string `json:"pqWriteDb"`
 	PqWriteUser         string `json:"pqWriteUser"`
 	PqWritePass         string
@@ -49,8 +47,6 @@ type Env struct {
 	PqWriteMaxConnLife  time.Duration `json:"pqWriteMaxConnLife"`
 	PqWriteQueryTimeout time.Duration `json:"pqWriteQueryTimeout"`
 
-	// Base de datos read replica (usar los mismos valores que write para
-	// ambiente local)
 	PqReadDb           string `json:"pqReadDb"`
 	PqReadUser         string `json:"pqReadUser"`
 	PqReadPass         string
@@ -63,22 +59,18 @@ type Env struct {
 	PqReadMaxConnLife  time.Duration `json:"pqReadMaxConnLife"`
 	PqReadQueryTimeout time.Duration `json:"pqReadQueryTimeout"`
 
-	// Redis, dejar el host vacío si no se requiere una conexión
 	RedisHost     string `json:"redisHost"`
 	RedisPort     string `json:"redisPort"`
 	RedisPassword string `json:"redisPassword"`
 	RedisDB       int    `json:"redisDB"`
 
-	// Logger
 	LogsConColores bool `json:"logsConColores"`
 	AgregarSource  bool `json:"agregarSource"`
 	Nivel          logs.Severidad
-	// Instrumentación BD
 	NombreSpanCorto    bool `json:"nombreSpanCorto"`
 	QuitarArgsQuery    bool `json:"quitarArgsQuery"`
 	QuitarPrefijoQuery bool `json:"quitarPrefijoQuery"`
 	QuitarStatement    bool `json:"quitarStatement"`
-	// Instrumentación HTTP
 	TasaSampling                 float64       `json:"tasaSampling"`
 	IntervaloMetricas            time.Duration `json:"intervaloMetricas"`
 	HabilitarMetricasAutomaticas bool          `json:"habilitarMetricasAutomaticas"`
@@ -86,10 +78,8 @@ type Env struct {
 	DeshabilitarMetricas         bool          `json:"deshabilitarMetricas"`
 	UsarExportadorConsola        bool          `json:"usarExportadorConsola"`
 
-	// Multi-tenant
 	HabilitarMultiTenant bool `json:"habilitarMultiTenant"`
 
-	// Sesiones
 	CookieNombre               string        `json:"cookieNombre"`
 	CookiePath                 string        `json:"cookiePath"`
 	CookieDominio              string        `json:"cookieDominio"`
@@ -108,8 +98,6 @@ type Env struct {
 	SesionDuraMasDeUnDia       bool          `json:"sesionDuraMasDeUnDia"`
 	HabilitarRedis             bool          `json:"habilitarRedis"`
 
-	// Sesiones JWT
-	// Nota: El issuer se debe colocar igual al Servicio
 	JWTSecretKey           []byte
 	JWTAlgorithm           string        `json:"JWTAlgorithm"`
 	JWTAccessTokenExpiry   time.Duration `json:"JWTAccessTokenExpiry"`
@@ -117,8 +105,6 @@ type Env struct {
 	JWTEnableRefreshTokens bool          `json:"JWTEnableRefreshTokens"`
 	JWTAudience            []string      `json:"JWTAudience"`
 	JWTAllowedClockSkew    time.Duration `json:"JWTAllowedClockSkew"`
-
-	// Archivos
 
 	DirArchivosLocal       string        `json:"dirArchivosLocal"`
 	RutaPubLocal           string        `json:"rutaPubLocal"`
@@ -130,7 +116,6 @@ type Env struct {
 	ExpiracionURLsFirmados time.Duration `json:"expiracionURLsFirmados"`
 	CacheControl           string        `json:"cacheControl"`
 
-	// Email
 	SMTPHost     string `json:"smtpHost"`
 	SMTPPort     string `json:"smtpPort"`
 	SMTPUser     string `json:"smtpUser"`
@@ -139,7 +124,6 @@ type Env struct {
 	SMTPFromName string `json:"smtpFromName"`
 	SMTPUseTLS   bool   `json:"smtpUseTLS"`
 
-	// Variables particulares de esta app
 	VariablePersonal string `json:"variabePersonal"`
 }
 

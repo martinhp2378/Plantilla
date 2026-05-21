@@ -89,13 +89,11 @@ func ConnectPostgres(ctx context.Context, env *entorno.Env, instrumentacion *log
 	readPoolConfig.ConnConfig.RuntimeParams["timezone"] = "America/Mexico_City"
 	readPoolConfig.ConnConfig.RuntimeParams["lock_timeout"] = "10s"
 
-	// Agregar extension uuid
 	readPoolConfig.AfterConnect = func(ctx context.Context, pgxConn *pgx.Conn) error {
 		pgxuuid.Register(pgxConn.TypeMap())
 		return nil
 	}
 
-	// Multi-tenant: Cambiar el esquema antes de adquirir la conexión
 	readPoolConfig.BeforeAcquire = func(ctx context.Context, pgxConn *pgx.Conn) bool {
 		schema := getTenantSchema(ctx)
 		searchPath, err := buildTenantSearchPath(schema)
@@ -109,10 +107,10 @@ func ConnectPostgres(ctx context.Context, env *entorno.Env, instrumentacion *log
 
 	logsConfigRead := &logs.Config{
 		Servicio:           env.Servicio,
-		NombreSpanCorto:    env.NombreSpanCorto,    // Usar nombres de span corto (SELECT vs SQL completo)
-		QuitarPrefijoQuery: env.QuitarPrefijoQuery, // Por default se agrega como prefijo "query" o "batch query"
-		QuitarArgsQuery:    env.QuitarArgsQuery,    // Incluir los valores de los parámetros en los spans
-		QuitarStatement:    env.QuitarStatement,    // Incluir el statement en los atributos
+		NombreSpanCorto:    env.NombreSpanCorto,
+		QuitarPrefijoQuery: env.QuitarPrefijoQuery,
+		QuitarArgsQuery:    env.QuitarArgsQuery,
+		QuitarStatement:    env.QuitarStatement,
 	}
 
 	logs.AgregarTracingPgxpool(readPoolConfig, logsConfigRead, instrumentacion)

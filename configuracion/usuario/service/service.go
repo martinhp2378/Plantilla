@@ -11,8 +11,6 @@ import (
 )
 
 // ListarUsuarios maneja la lógica de filtrado y paginación.
-// Nota: Fusioné ListarUsuarios y ListarUsuariosFiltrados porque hacían lo mismo.
-// Si no hay criterios, el controlador envía criterios vacíos, no el servicio.
 func (s *UsuarioService) ListarUsuarios(ctx context.Context, criterios pagination.CriteriosPagina[usuario.Usuario]) (pagination.CriteriosPagina[usuario.Usuario], error) {
 	usuariosList, count, err := s.repo.ConsultarUsuarios(ctx, criterios)
 	if err != nil {

@@ -20,37 +20,27 @@ type serviciosMiddleware struct {
 func RegistrarMiddlewaresApp(r chi.Router, a *app.App) {
 	sm := &serviciosMiddleware{a: a}
 
-	// 1. Identificación de Tenant
 	r.Use(TenantMiddleware(a))
 
-	// 2. Infraestructura básica de Chi
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	
-	// 3. Recuperación de panics custom (con página 500)
 	r.Use(sm.CustomRecoverer)
 
-	// 4. Logging de peticiones (Librería institucional)
 	r.Use(a.Logger.MiddlewareHTTPLogger)
 
-	// 5. Instrumentación (OpenTelemetry)
 	r.Use(a.Instrumentacion.MiddlewareOtel())
 	r.Use(a.Instrumentacion.MiddlewareAttrsAdicionales)
 	r.Use(a.Instrumentacion.MiddlewareMetricas)
 
-	// 6. Manejador de Archivos (Librería institucional)
 	r.Use(a.ManejadorArchivos.Middleware)
 
-	// 7. Sesiones (Librería institucional)
 	r.Use(a.ConstructorSesion.Middleware)
 
-	// 8. Inyectar Env en el contexto
 	r.Use(entorno.EnvMiddleware(a.Env))
 
-	// 9. Auditoría: Inyectar UUID en el contexto
 	r.Use(AuditContextMiddleware)
 
-	// 10. Timeout global
 	r.Use(middleware.Timeout(a.Env.Timeout))
 }
 

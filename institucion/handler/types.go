@@ -100,7 +100,6 @@ func (h *personaHandler) parseFormToPersona(r *http.Request) (institucion.Person
 		Razon_i:      r.FormValue("razon_i"),
 	}
 
-	// Nota: NO generamos el UUID aquí. Eso es responsabilidad del Servicio o la BD.
 	return b, nil
 }
 

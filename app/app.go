@@ -54,7 +54,6 @@ type App struct {
 	Services     Services
 	Repositories Repositories
 
-	// Multi-Tenant
 	tenants   map[string]string
 	tenantsMu sync.RWMutex
 }

@@ -8,8 +8,6 @@ import (
 )
 
 // ListarPerfiles maneja la lógica de filtrado y paginación.
-// Nota: Fusioné ListarPerfiles y ListarPerfilesFiltrados porque hacían lo mismo.
-// Si no hay criterios, el controlador envía criterios vacíos, no el servicio.
 func (s *PerfilService) ListarPerfiles(ctx context.Context, criterios pagination.CriteriosPagina[perfil.Perfil]) (pagination.CriteriosPagina[perfil.Perfil], error) {
 	perfilesList, count, err := s.repo.ConsultarPerfiles(ctx, criterios)
 	if err != nil {

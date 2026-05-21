@@ -26,10 +26,11 @@ main
 # vendor/ # Uncomment if you don't want to commit dependencies
 
 # Templ generated files (Optional: some prefer to commit them)
-# *_templ.go
+*_templ.go
 
 # Air (Live reload)
 .proxy/
+.air.toml
 
 # Local docker
 docker-compose.override.yml

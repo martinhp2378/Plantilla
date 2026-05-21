@@ -1,0 +1,21 @@
+package v2
+
+import "github.com/issemym-repos/archivos"
+
+templ EncabezadoInstitucional() {
+	<header class="relative w-full overflow-hidden bg-[var(--color-guinda)] border-b-4 border-[var(--color-naranja)]">
+		<!-- Fondo con Floritura -->
+		<div
+			class="absolute inset-0 opacity-40"
+			style={ "background-image: url(" + archivos.Asset(ctx, "img/Floritura.svg") + "); background-repeat: repeat; background-size: 200px;" }
+		></div>
+		<!-- Contenido Central -->
+		<div class="relative z-10 py-3 flex items-center justify-center px-4 sm:px-8">
+			<img
+				src={ archivos.Asset(ctx, "img/Logo.Fondo.color.png") }
+				alt="ISSEMYM - Gobierno del Estado de México"
+				class="h-12 sm:h-16 lg:h-20 w-auto object-contain"
+			/>
+		</div>
+	</header>
+}

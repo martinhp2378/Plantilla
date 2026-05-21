@@ -1,0 +1,108 @@
+package layouts
+
+import (
+	"PlantillaInstitucional/login/views"
+	"PlantillaInstitucional/shared/views/layouts"
+	"PlantillaInstitucional/shared/views/components/v2"
+)
+
+templ LoginV2(formaLogin views.FormaLogin) {
+	@layouts.Base("Ingresar - Plantilla ISSEMYM") {
+		<div class="h-screen flex flex-col bg-[var(--surface-arena-20)]">
+			<!-- Franja Institucional Superior -->
+			@v2.EncabezadoInstitucional()
+
+			<div class="flex-1 flex flex-col items-center justify-center px-4 -mt-12">
+				<!-- Branding: Icono a la izquierda del nombre -->
+				<div class="flex flex-row items-center gap-8 mb-24">
+					<!-- Icono Burbuja Naranja -->
+					<div class="bg-[var(--color-naranja)] p-6 rounded-[2.5rem] rounded-br-none shadow-2xl shrink-0">
+						<svg class="w-24 h-24 text-white" viewBox="0 0 24 24" fill="currentColor">
+							<path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-11 9c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm3 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm3 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/>
+						</svg>
+					</div>
+					<!-- Texto Branding -->
+					<div class="flex flex-col justify-center">
+						<h1 class="text-7xl font-black text-gray-700 leading-[0.85] tracking-tight">Motor de</h1>
+						<h1 class="text-7xl font-black text-gray-700 leading-[0.85] tracking-tight">sistema</h1>
+						<h2 class="text-6xl font-black text-[var(--color-arena)] tracking-[0.25em] mt-3 leading-none">ISSEMYM</h2>
+						<span class="sr-only">Plantilla ISSEMYM</span>
+					</div>
+				</div>
+
+				<!-- Formulario Lineal: PERFECTAMENTE ALINEADO -->
+				<div class="w-full max-w-7xl">
+					<form action="/login" method="POST" class="flex flex-col lg:flex-row items-center justify-center gap-x-12 gap-y-10 bg-transparent">
+						<!-- Label -->
+						<div class="flex-shrink-0">
+							<p class="text-xl font-bold text-gray-900 whitespace-nowrap">Ingrese a su cuenta</p>
+						</div>
+
+						<!-- Input Correo -->
+						<div class="w-full lg:w-80 relative">
+							<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+								<span class="material-icons text-[var(--color-naranja)] text-2xl">mail</span>
+							</div>
+							<input
+								id="email"
+								name="email"
+								type="email"
+								placeholder="Correo electrónico"
+								required
+								value={ formaLogin.Email }
+								class="block w-full pl-12 pr-3 py-4 border-b-2 border-gray-400 bg-white/40 focus:border-[var(--color-naranja)] focus:ring-0 transition-all text-base font-medium placeholder:text-gray-500"
+							/>
+						</div>
+
+						<!-- Input Contraseña con link ABSOLUTO -->
+						<div class="w-full lg:w-80 relative">
+							<div class="relative">
+								<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+									<span class="material-icons text-[var(--color-naranja)] text-2xl">lock</span>
+								</div>
+								<input
+									id="password"
+									name="password"
+									type="password"
+									placeholder="Contraseña"
+									required
+									class="block w-full pl-12 pr-3 py-4 border-b-2 border-gray-400 bg-white/40 backdrop-blur-sm focus:border-[var(--color-naranja)] focus:ring-0 transition-all text-base font-medium placeholder:text-gray-500"
+								/>
+							</div>
+							<!-- Link posicionado absolutamente para no mover el input -->
+							<div class="lg:absolute lg:top-full lg:right-0 mt-3">
+								<a href="#" class="text-[10px] font-black text-gray-400 hover:text-[var(--color-guinda)] uppercase tracking-widest transition-colors whitespace-nowrap">
+									¿Olvidó su contraseña?
+								</a>
+							</div>
+						</div>
+
+						<!-- Botón de Acción -->
+						<div class="w-full lg:w-auto">
+							<button
+								type="submit"
+								class="w-full lg:w-auto bg-[var(--color-guinda)] px-14 py-4 text-sm font-black text-white uppercase tracking-[0.2em] hover:brightness-110 transition-all shadow-2xl active:scale-95 rounded-xl lg:rounded-none"
+							>
+								Entrar al sitio
+							</button>
+						</div>
+					</form>
+					
+					if formaLogin.Error != "" {
+						<div class="mt-16 flex items-center justify-center gap-3 text-rose-600 animate-bounce">
+							<span class="material-icons">error_outline</span>
+							<span class="text-xs font-black uppercase tracking-widest">{ formaLogin.Error }</span>
+						</div>
+					}
+				</div>
+			</div>
+
+			<!-- Footer sutil -->
+			<div class="pb-10 text-center">
+				<p class="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">
+					© 2026. ISSEMYM <span class="text-[var(--color-naranja)] mx-2">•</span> Tu opinión nos ayuda a mejorar
+				</p>
+			</div>
+		</div>
+	}
+}

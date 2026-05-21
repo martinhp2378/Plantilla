@@ -1,0 +1,19 @@
+package v2
+
+templ BotonPrimario(texto string) {
+	<button
+		type="button"
+		class="inline-flex items-center justify-center rounded-md bg-[var(--color-naranja)] px-4 py-2 text-sm font-bold text-white shadow-sm hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-naranja)]"
+	>
+		{ texto }
+	</button>
+}
+
+templ BotonSecundario(texto string) {
+	<button
+		type="button"
+		class="inline-flex items-center justify-center rounded-md bg-[var(--surface-arena-30)] px-4 py-2 text-sm font-bold text-gray-900 border border-[var(--color-arena)] hover:bg-[var(--surface-arena-40)]"
+	>
+		{ texto }
+	</button>
+}

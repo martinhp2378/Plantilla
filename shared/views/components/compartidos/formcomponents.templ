@@ -1,0 +1,177 @@
+package compartidos
+
+import "fmt"
+import "time"
+import "PlantillaInstitucional/shared/ui"
+
+// InputField es un componente reutilizable para campos de entrada de texto
+templ InputField(name, label, value string, errors map[string]string) {
+	<div>
+		<label class="block text-sm font-medium text-neutral-600 dark:text-slate-300 mb-1">{ label }</label>
+		<input
+			name={ name }
+			type="text"
+			value={ value }
+			required
+			class="w-full border border-neutral-300 dark:border-slate-700 rounded-sm bg-white dark:bg-slate-800/50 px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black dark:focus-visible:outline-white dark:text-slate-100"
+		/>
+		if errors[name] != "" {
+			<span class="text-red-500 text-sm mt-1 block">
+				{ errors[name] }
+			</span>
+		}
+	</div>
+}
+
+// SelectField es un componente reutilizable para campos de selección (select)
+templ SelectField(name, label string, options map[string]string, selectedValue string, errors map[string]string, defaultOptionText string) {
+	<div>
+		<label class="block text-sm font-medium text-neutral-600 dark:text-slate-300 mb-1">{ label }</label>
+		<select
+			name={ name }
+			required
+			class="w-full border border-neutral-300 dark:border-slate-700 rounded-sm bg-white dark:bg-slate-800/50 px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black dark:focus-visible:outline-white dark:text-slate-100"
+		>
+			<option value="" disabled selected class="text-neutral-400 dark:text-slate-100">
+				{ defaultOptionText }
+			</option>
+			for val, text := range options {
+				<option
+					value={ val }
+					if selectedValue == val {
+						selected
+					}
+					class="dark:text-slate-100"
+				>{ text }</option>
+			}
+		</select>
+		if errors[name] != "" {
+			<span class="text-red-500 text-sm mt-1 block">
+				{ errors[name] }
+			</span>
+		}
+	</div>
+}
+
+templ TextAreaField(name, label, value string, rows, cols int, errors map[string]string) {
+	<div>
+		<label class="block text-sm font-medium text-neutral-600 dark:text-slate-300 mb-1">{ label }</label>
+		<textarea
+			name={ name }
+			rows={ fmt.Sprintf("%d", rows) }
+			cols={ fmt.Sprintf("%d", cols) }
+			class="w-full border border-neutral-300 dark:border-slate-700 rounded-sm bg-white dark:bg-slate-800/50 px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black dark:focus-visible:outline-white dark:text-slate-100"
+		>{ value }</textarea>
+		if errors[name] != "" {
+			<span class="text-red-500 text-sm mt-1 block">
+				{ errors[name] }
+			</span>
+		}
+	</div>
+}
+
+templ NumberInputField(name, label string, value any, min int, errors map[string]string) {
+	<div>
+		<label class="block text-sm font-medium text-neutral-600 dark:text-slate-300 mb-1">{ label }</label>
+		<input
+			name={ name }
+			type="number"
+			value={ fmt.Sprintf("%d", value) }
+			min={ fmt.Sprintf("%d", min) }
+			required
+			class="w-full border border-neutral-300 dark:border-slate-700 rounded-sm bg-white dark:bg-slate-800/50 px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black dark:focus-visible:outline-white dark:text-slate-100"
+		/>
+		if errors[name] != "" {
+			<span class="text-red-500 text-sm mt-1 block">
+				{ errors[name] }
+			</span>
+		}
+	</div>
+}
+
+templ DateField(name, label string, value time.Time, minDate time.Time, errors map[string]string) {
+	<div>
+		<label class="block text-sm font-medium text-neutral-600 dark:text-slate-300 mb-1">{ label }</label>
+		<input
+			name={ name }
+			type="date"
+			value={ ui.ConvertToString(value) }
+			min={ ui.ConvertToString(minDate) }
+			required
+			class="w-full border border-neutral-300 dark:border-slate-700 rounded-sm bg-white dark:bg-slate-800/50 px-3 py-2
+					focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black dark:focus-visible:outline-white dark:text-slate-100
+					dark:[color-scheme:dark]"
+		/>
+		if errors[name] != "" {
+			<span class="text-red-500 text-sm mt-1 block">
+				{ errors[name] }
+			</span>
+		}
+	</div>
+}
+
+templ DocumentUploadField(fieldName, label, tipoDoc string, errors map[string]string) {
+	<div>
+		<label for={ fieldName } class="block text-sm font-medium text-neutral-600 dark:text-slate-300 mb-1">{ label }</label>
+		<input
+			type="file"
+			name={ fieldName }
+			id={ fieldName }
+			accept={ tipoDoc }
+			class="w-full border border-neutral-300 dark:border-slate-700 rounded-sm bg-white dark:bg-slate-800/50 px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black dark:focus-visible:outline-white dark:text-slate-100 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-neutral-50 file:text-neutral-700 hover:file:bg-neutral-100 dark:file:bg-neutral-800 dark:file:text-white dark:hover:file:bg-neutral-700"
+		/>
+		if errors[fieldName] != "" {
+			<span class="text-red-500 text-sm mt-1 block">
+				{ errors[fieldName] }
+			</span>
+		}
+	</div>
+}
+
+templ DownloadButton(capital, plazo float64, ruta, nombtn string) {
+	<div id="download-button-container" class="mt-6 flex justify-end">
+		<a
+			href={ templ.SafeURL(fmt.Sprintf("%s?capital=%.2f&plazo=%.2f", ruta, capital, plazo)) }
+			class="flex gap-2 items-center text-white px-6 py-2 rounded transition-all bg-gradient-to-r from-indigo-500 to-indigo-400 hover:from-indigo-400 hover:to-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#691C32]"
+
+			download="reporte_amortizacion.xlsx"
+		>
+			<span class="material-icons">download</span>
+			{ nombtn }
+		</a>
+	</div>
+}
+
+templ TextInputField(name, label, value string, errors map[string]string) {
+	<div>
+		<label for={ name } class="block text-sm font-medium text-neutral-600 dark:text-slate-300 mb-1">{ label }</label>
+		<input
+			type="text"
+			id={ name }
+			name={ name }
+			value={ value }
+			class="w-full border border-neutral-300 dark:border-slate-700 rounded-sm bg-white dark:bg-slate-800/50 px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black dark:focus-visible:outline-white dark:text-slate-100"
+			required
+		/>
+		if errors[name] != "" {
+			<span class="text-red-500 text-sm mt-1 block">{ errors[name] }</span>
+		}
+	</div>
+}
+
+templ DateInputField(name, label string, value string, errors map[string]string) {
+	<div>
+		<label for={ name } class="block text-sm font-medium text-neutral-600 dark:text-slate-300 mb-1">{ label }</label>
+		<input
+			type="date"
+			id={ name }
+			name={ name }
+			value={ value }
+			class="w-full border border-neutral-300 dark:border-slate-700 rounded-sm bg-white dark:bg-slate-800/50 px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black dark:focus-visible:outline-white dark:text-slate-100"
+			required
+		/>
+		if errors[name] != "" {
+			<span class="text-red-500 text-sm mt-1 block">{ errors[name] }</span>
+		}
+	</div>
+}

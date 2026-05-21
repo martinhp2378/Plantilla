@@ -1,0 +1,21 @@
+package layouts
+
+import (
+	"PlantillaInstitucional/configuracion/usuario"
+	"PlantillaInstitucional/configuracion/usuario/view/components"
+	"PlantillaInstitucional/pagination"
+	"PlantillaInstitucional/shared/pagina"
+	"PlantillaInstitucional/shared/views/layouts"
+)
+
+templ ViewUsuariosV2(titulo string, pag pagina.Pagina, criterios pagination.CriteriosPagina[usuario.Usuario], baseURL string) {
+	@layouts.BaseConNav(titulo, pag) {
+		@UsuarioContentV2(criterios, baseURL)
+	}
+}
+
+templ UsuarioContentV2(criterios pagination.CriteriosPagina[usuario.Usuario], baseURL string) {
+	<div id="usuario-content" class="animate-fade-in">
+		@components.TableV2(criterios, baseURL, false)
+	</div>
+}

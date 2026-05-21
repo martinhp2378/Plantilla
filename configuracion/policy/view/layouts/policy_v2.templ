@@ -1,0 +1,19 @@
+package layouts
+
+import (
+	"PlantillaInstitucional/configuracion/policy/view"
+	"PlantillaInstitucional/configuracion/policy/view/components"
+	"PlantillaInstitucional/shared/views/layouts"
+)
+
+templ ViewPoliciesV2(params view.ParamsPoliticas) {
+	@layouts.BaseConNav(params.Titulo, params.Pag) {
+		@PolicyContentV2(params)
+	}
+}
+
+templ PolicyContentV2(params view.ParamsPoliticas) {
+	<div id="policy-content" class="animate-fade-in">
+		@components.TableV2(params.Criterios, false)
+	</div>
+}

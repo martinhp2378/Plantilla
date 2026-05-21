@@ -1,0 +1,209 @@
+package v2
+
+import (
+	"PlantillaInstitucional/shared/views/components"
+	"fmt"
+)
+
+type InputPropsV2 struct {
+	Label        string
+	Name         string
+	Type         string // text, email, password, date, number, etc.
+	Placeholder  string
+	Value        string
+	Required     bool
+	Disabled     bool
+	Autocomplete string
+	Errors       map[string]string
+	ID           string
+	Class        string // Clases adicionales para el contenedor
+}
+
+templ InputFieldV2(props InputPropsV2) {
+	{{
+		id := props.ID
+		if id == "" {
+			id = props.Name
+		}
+		inputType := props.Type
+		if inputType == "" {
+			inputType = "text"
+		}
+		hasError := false
+		errorMsg := ""
+		if props.Errors != nil {
+			if msg, ok := props.Errors[props.Name]; ok {
+				hasError = true
+				errorMsg = msg
+			}
+		}
+	}}
+	<div class={ "space-y-2", props.Class }>
+		<div class="flex justify-between items-center px-2">
+			<label for={ id } class="block text-[10px] font-black text-gray-400 uppercase tracking-[0.15em]">
+				{ props.Label }
+				if props.Required {
+					<span class="text-[var(--color-naranja)] ml-1">*</span>
+				}
+			</label>
+		</div>
+		<div class="relative group">
+			<input
+				id={ id }
+				name={ props.Name }
+				type={ inputType }
+				placeholder={ props.Placeholder }
+				value={ props.Value }
+				required?={ props.Required }
+				disabled?={ props.Disabled }
+				autocomplete={ props.Autocomplete }
+				class={ "block w-full px-6 py-4 bg-[var(--surface-arena-20)] border-b-2 transition-all text-sm font-bold text-gray-700 rounded-t-xl placeholder:text-gray-400 focus:ring-0 outline-none",
+					templ.KV("border-gray-300 focus:border-[var(--color-naranja)]", !hasError),
+					templ.KV("border-rose-500 focus:border-rose-600 bg-rose-50/30", hasError),
+					templ.KV("opacity-50 cursor-not-allowed bg-gray-100", props.Disabled) }
+			/>
+			<!-- Efecto Glow al Focus -->
+			<div class="absolute inset-x-0 bottom-0 h-0.5 bg-[var(--color-naranja)] scale-x-0 group-focus-within:scale-x-100 transition-transform duration-300"></div>
+		</div>
+		if hasError {
+			<p class="px-2 text-[9px] font-black text-rose-600 uppercase tracking-widest flex items-center gap-1">
+				<span class="material-icons text-xs">error_outline</span>
+				{ errorMsg }
+			</p>
+		}
+	</div>
+}
+
+type SelectProps struct {
+	Label         string
+	Name          string
+	Options       []components.SelectOption
+	SelectedValue string
+	Required      bool
+	Disabled      bool
+	Errors        map[string]string
+	ID            string
+	Class         string
+	Attributes    templ.Attributes
+}
+
+templ SelectFieldV2(props SelectProps) {
+	{{
+		id := props.ID
+		if id == "" {
+			id = props.Name
+		}
+		hasError := false
+		errorMsg := ""
+		if props.Errors != nil {
+			if msg, ok := props.Errors[props.Name]; ok {
+				hasError = true
+				errorMsg = msg
+			}
+		}
+	}}
+	<div class={ "space-y-2", props.Class }>
+		<div class="flex justify-between items-center px-2">
+			<label for={ id } class="block text-[10px] font-black text-gray-400 uppercase tracking-[0.15em]">
+				{ props.Label }
+				if props.Required {
+					<span class="text-[var(--color-naranja)] ml-1">*</span>
+				}
+			</label>
+		</div>
+		<div class="relative group">
+			<select
+				id={ id }
+				name={ props.Name }
+				required?={ props.Required }
+				disabled?={ props.Disabled }
+				{ props.Attributes... }
+				class={ "block w-full px-6 py-4 bg-[var(--surface-arena-20)] border-b-2 transition-all text-sm font-bold text-gray-700 rounded-t-xl appearance-none focus:ring-0 outline-none cursor-pointer",
+					templ.KV("border-gray-300 focus:border-[var(--color-naranja)]", !hasError),
+					templ.KV("border-rose-500 focus:border-rose-600 bg-rose-50/30", hasError),
+					templ.KV("opacity-50 cursor-not-allowed bg-gray-100", props.Disabled) }
+			>
+				for _, opt := range props.Options {
+					<option value={ opt.Value } selected?={ opt.Value == props.SelectedValue }>{ opt.Text }</option>
+				}
+			</select>
+			<!-- Icono de flecha custom -->
+			<div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-[var(--color-guinda)]">
+				<span class="material-icons">expand_more</span>
+			</div>
+			<!-- Efecto Glow -->
+			<div class="absolute inset-x-0 bottom-0 h-0.5 bg-[var(--color-naranja)] scale-x-0 group-focus-within:scale-x-100 transition-transform duration-300"></div>
+		</div>
+		if hasError {
+			<p class="px-2 text-[9px] font-black text-rose-600 uppercase tracking-widest flex items-center gap-1">
+				<span class="material-icons text-xs">error_outline</span>
+				{ errorMsg }
+			</p>
+		}
+	</div>
+}
+
+type TextAreaPropsV2 struct {
+	Label       string
+	Name        string
+	Placeholder string
+	Value       string
+	Rows        int
+	Required    bool
+	Disabled    bool
+	Errors      map[string]string
+	ID          string
+	Class       string
+}
+
+templ TextAreaFieldV2(props TextAreaPropsV2) {
+	{{
+		id := props.ID
+		if id == "" {
+			id = props.Name
+		}
+		rows := props.Rows
+		if rows == 0 {
+			rows = 4
+		}
+		hasError := false
+		errorMsg := ""
+		if props.Errors != nil {
+			if msg, ok := props.Errors[props.Name]; ok {
+				hasError = true
+				errorMsg = msg
+			}
+		}
+	}}
+	<div class={ "space-y-2", props.Class }>
+		<div class="flex justify-between items-center px-2">
+			<label for={ id } class="block text-[10px] font-black text-gray-400 uppercase tracking-[0.15em]">
+				{ props.Label }
+				if props.Required {
+					<span class="text-[var(--color-naranja)] ml-1">*</span>
+				}
+			</label>
+		</div>
+		<div class="relative group">
+			<textarea
+				id={ id }
+				name={ props.Name }
+				placeholder={ props.Placeholder }
+				rows={ fmt.Sprintf("%d", rows) }
+				required?={ props.Required }
+				disabled?={ props.Disabled }
+				class={ "block w-full px-6 py-4 bg-[var(--surface-arena-20)] border-b-2 transition-all text-sm font-bold text-gray-700 rounded-t-xl placeholder:text-gray-400 focus:ring-0 outline-none resize-none",
+					templ.KV("border-gray-300 focus:border-[var(--color-naranja)]", !hasError),
+					templ.KV("border-rose-500 focus:border-rose-600 bg-rose-50/30", hasError),
+					templ.KV("opacity-50 cursor-not-allowed bg-gray-100", props.Disabled) }
+			>{ props.Value }</textarea>
+			<div class="absolute inset-x-0 bottom-0 h-0.5 bg-[var(--color-naranja)] scale-x-0 group-focus-within:scale-x-100 transition-transform duration-300"></div>
+		</div>
+		if hasError {
+			<p class="px-2 text-[9px] font-black text-rose-600 uppercase tracking-widest flex items-center gap-1">
+				<span class="material-icons text-xs">error_outline</span>
+				{ errorMsg }
+			</p>
+		}
+	</div>
+}

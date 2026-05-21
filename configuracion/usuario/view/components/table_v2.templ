@@ -1,0 +1,77 @@
+package components
+
+import (
+	"PlantillaInstitucional/configuracion/usuario"
+	"PlantillaInstitucional/pagination"
+	"PlantillaInstitucional/shared/views/components/v2"
+	"fmt"
+)
+
+templ TableV2(criterios pagination.CriteriosPagina[usuario.Usuario], baseURL string, oob bool) {
+	{{
+		// Helper para construir URLs de ordenamiento
+		buildSortURL := func(field string) string {
+			return criterios.WithSort(field).BuildURL("/configuracion/usuarios/tabla", 1)
+		}
+
+		headers := []v2.TableHeader{
+			{
+				Label:     "Nombre",
+				Key:       "nombre_completo",
+				Sortable:  true,
+				SortURL:   buildSortURL("nombre_completo"),
+				SortIcon:  criterios.SortIcon("nombre_completo"),
+				FilterVal: criterios.GetFilterValue("nombre_completo"),
+			},
+			{
+				Label:     "Email",
+				Key:       "email",
+				Sortable:  true,
+				SortURL:   buildSortURL("email"),
+				SortIcon:  criterios.SortIcon("email"),
+				FilterVal: criterios.GetFilterValue("email"),
+			},
+			{
+				Label:     "Perfil",
+				Key:       "perfil",
+				Sortable:  true,
+				SortURL:   buildSortURL("perfil"),
+				SortIcon:  criterios.SortIcon("perfil"),
+				FilterVal: criterios.GetFilterValue("perfil"),
+			},
+		}
+		tableProps := v2.DataTableV2Props{
+			Title:       "Gestión de Usuarios",
+			Subtitle:    "Catálogo de Personal",
+			Headers:     headers,
+			CreateURL:   "/configuracion/usuarios/modales/nuevo",
+			SearchURL:   "/configuracion/usuarios/tabla",
+			Target:      "#tablausuarios",
+			ModalTarget: "#modal",
+			OOB:         oob,
+			SortedBy:    criterios.SortedBy,
+			Direction:   criterios.Direction,
+			Page:        criterios.Index,
+			Size:        criterios.Size,
+			Total:       criterios.Count,
+			PDFExportURL:   "/configuracion/usuarios/reportes/pdf",
+			ExcelExportURL: "/configuracion/usuarios/reportes/excel",
+			ToastURL:       "/configuracion/usuarios/reportes/notificacion-exito",
+		}
+	}}
+	@v2.DataTableV2(tableProps) {
+		for _, u := range criterios.Data {
+			@v2.DataRowV2(v2.DataRowV2Props{
+				Cells: []string{
+					u.NombreCompleto,
+					u.Email,
+					u.Perfil,
+				},
+				EditURL:     fmt.Sprintf("/configuracion/usuarios/modales/editar/%s", u.UuidPersona),
+				DeleteURL:   fmt.Sprintf("/configuracion/usuarios/%s", u.UuidPersona),
+				Target:      "#tablausuarios",
+				ModalTarget: "#modal",
+			})
+		}
+	}
+}

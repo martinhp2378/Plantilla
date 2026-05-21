@@ -1,0 +1,19 @@
+package layouts
+
+import (
+	"PlantillaInstitucional/configuracion/perfil/view"
+	"PlantillaInstitucional/configuracion/perfil/view/components"
+	"PlantillaInstitucional/shared/views/layouts"
+)
+
+templ ViewPerfilesV2(params view.ParamsPerfiles) {
+	@layouts.BaseConNav(params.Titulo, params.Pag) {
+		@PerfilContentV2(params)
+	}
+}
+
+templ PerfilContentV2(params view.ParamsPerfiles) {
+	<div id="perfil-content" class="animate-fade-in">
+		@components.TableV2(params.Criterios, false)
+	</div>
+}

@@ -1,0 +1,136 @@
+package v2
+
+import (
+	"PlantillaInstitucional/shared/pagina"
+)
+
+templ SidebarV2(pag pagina.Pagina) {
+	<aside
+		id="barra-izquierda-v2"
+		x-show="navIzqAbierta"
+		x-transition:enter="transition transform duration-300 ease-in-out"
+		x-transition:enter-start="-translate-x-full"
+		x-transition:enter-end="translate-x-0"
+		x-transition:leave="transition transform duration-300 ease-in-out"
+		x-transition:leave-start="translate-x-0"
+		x-transition:leave-end="-translate-x-full"
+		class="fixed bottom-0 left-0 w-72 bg-white border-r border-[var(--color-arena)] shadow-2xl z-40 top-0 xl:top-36"
+		style="display: none;"
+	>
+		<div class="h-full flex flex-col pt-8 xl:pt-12 px-8 overflow-y-auto custom-scrollbar">
+			<div class="flex justify-end xl:hidden mb-4">
+				<button @click="navIzqAbierta = false" class="p-2 text-gray-400 hover:text-[var(--color-guinda)]">
+					<span class="material-icons">close</span>
+				</button>
+			</div>
+
+			<a href="/dashboard" class="flex items-center gap-4 mb-12 group shrink-0">
+				<div class="bg-[var(--color-naranja)] p-2 rounded-lg shrink-0 group-hover:scale-110 transition-transform shadow-lg">
+					<svg class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor">
+						<path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+					</svg>
+				</div>
+				<span class="text-2xl font-black text-gray-800 uppercase tracking-tighter leading-none">Plantilla<br/>Inst.</span>
+			</a>
+
+			<nav class="flex-1 space-y-12 pb-12">
+				<div>
+					<h3 class="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] mb-8 px-2 border-l-4 border-transparent">Módulos</h3>
+					<ul class="space-y-6">
+						@SidebarItem(pagina.Inicio, pag, "home", "Inicio")
+						@SidebarItem(pagina.Dashboard, pag, "dashboard", "Dashboard")
+						@SidebarItem(pagina.Personas, pag, "people", "Personas")
+						@SidebarItem(pagina.Usuarios, pag, "admin_panel_settings", "Usuarios")
+						@SidebarItem(pagina.Perfil, pag, "badge", "Perfiles")
+						@SidebarItem(pagina.Politicas, pag, "policy", "Políticas")
+						@SidebarItem(pagina.Parametros, pag, "settings", "Parámetros")
+						@SidebarItem(pagina.Ejemplo, pag, "extension", "Ejemplos")
+					</ul>
+				</div>
+			</nav>
+		</div>
+	</aside>
+
+	<style>
+		.custom-scrollbar::-webkit-scrollbar {
+			width: 4px;
+		}
+		.custom-scrollbar::-webkit-scrollbar-track {
+			background: transparent;
+		}
+		.custom-scrollbar::-webkit-scrollbar-thumb {
+			background: var(--color-arena);
+			border-radius: 10px;
+		}
+		.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+			background: var(--color-naranja);
+		}
+	</style>
+}
+
+templ SidebarItem(target, active pagina.Pagina, icon, label string) {
+	<li>
+		<a
+			href={ templ.SafeURL(target.URL()) }
+			class={ "flex items-center gap-4 py-1 transition-all group",
+				templ.KV("text-[var(--color-guinda)]", target == active),
+				templ.KV("text-gray-500 hover:text-[var(--color-guinda)]", target != active) }
+		>
+			<div class={ "w-10 h-10 flex items-center justify-center rounded-xl transition-all shadow-sm",
+				templ.KV("bg-[var(--surface-arena-30)] border border-[var(--color-arena)]", target == active),
+				templ.KV("bg-transparent border border-transparent group-hover:bg-[var(--surface-arena-20)]", target != active) }>
+				<span class={ "material-icons text-2xl",
+					templ.KV("text-[var(--color-guinda)]", target == active),
+					templ.KV("text-gray-400 group-hover:text-[var(--color-guinda)]", target != active) }>
+					{ icon }
+				</span>
+			</div>
+			<span class={ "text-xs uppercase tracking-widest transition-all text-left",
+				templ.KV("font-black", target == active),
+				templ.KV("font-bold", target != active) }>{ label }</span>
+		</a>
+	</li>
+}
+
+templ TopbarV2() {
+	<div class="fixed top-0 left-0 right-0 z-50 flex flex-col">
+		@EncabezadoInstitucional()
+
+		<div class="h-20 bg-white border-b border-[var(--color-arena)] px-4 sm:px-8 lg:px-12 flex items-center justify-between shadow-sm">
+			<div class="flex items-center gap-4 lg:gap-8 flex-1">
+				<button 
+					@click="navIzqAbierta = !navIzqAbierta"
+					class="w-10 h-10 flex items-center justify-center rounded-xl bg-[var(--surface-arena-20)] text-[var(--color-guinda)] hover:bg-[var(--color-naranja)] hover:text-white transition-all shadow-sm focus:outline-none"
+				>
+					<span class="material-icons" x-text="navIzqAbierta ? 'menu_open' : 'menu'">menu</span>
+				</button>
+			</div>
+
+			<div class="flex items-center gap-3 sm:gap-6" x-data="{ menuAbierto: false }">
+				<div class="relative">
+					<button 
+						@click="menuAbierto = !menuAbierto"
+						class="flex items-center gap-3 hover:opacity-80 transition-all focus:outline-none"
+					>
+						<div class="text-right hidden sm:block">
+							<p class="text-xs font-black text-gray-900 uppercase tracking-tighter">Usuario Demo</p>
+							<p class="text-[10px] font-bold text-gray-400 uppercase">Administrador</p>
+						</div>
+					</button>
+
+					<div
+						x-show="menuAbierto"
+						@click.away="menuAbierto = false"
+						class="absolute right-0 mt-3 w-56 bg-white border border-[var(--color-arena)] rounded-xl shadow-xl z-[60] py-2 overflow-hidden"
+						style="display: none;"
+					>
+						<a href="/login/salir" class="flex items-center gap-3 px-6 py-3 text-xs font-bold text-red-500 hover:bg-red-50 uppercase tracking-wider transition-colors">
+							<span class="material-icons text-lg">logout</span>
+							Cerrar Sesión
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+}

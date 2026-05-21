@@ -1,0 +1,15 @@
+package layouts
+
+import (
+	"PlantillaInstitucional/pagination"
+	"PlantillaInstitucional/parametros"
+	"PlantillaInstitucional/parametros/view/components"
+	"PlantillaInstitucional/shared/pagina"
+	"PlantillaInstitucional/shared/views/layouts"
+)
+
+templ ViewParametros(titulo string, pag pagina.Pagina, criterios pagination.CriteriosPagina[parametros.Parametro], baseURL string) {
+	@layouts.BaseConNav(titulo, pag) {
+		@components.TableV2(criterios, baseURL, false)
+	}
+}

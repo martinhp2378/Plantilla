@@ -1,0 +1,65 @@
+package view
+
+import (
+	"PlantillaInstitucional/modulo_ejemplo"
+	"PlantillaInstitucional/shared/pagina"
+	"PlantillaInstitucional/shared/views/layouts"
+	"PlantillaInstitucional/shared/views/components/v2"
+	"fmt"
+)
+
+templ List(examples []*modulo_ejemplo.Example) {
+	@layouts.BaseConNav("Módulo de Ejemplo", pagina.Ejemplo) {
+		@v2.DataTableV2(v2.DataTableV2Props{
+			Title:     "Módulo de Ejemplo",
+			Subtitle:  "Listado de Registros",
+			Target:    "#example-table",
+			SearchURL: "/examples/tabla",
+			Headers: []v2.TableHeader{
+				{Label: "ID", Key: "id", Sortable: true},
+				{Label: "Nombre", Key: "name", Sortable: true},
+			},
+			Total: len(examples),
+			Page:  1,
+			Size:  10,
+		}) {
+			<tbody id="example-list" class="divide-y divide-[var(--color-naranja)]/30">
+				for _, e := range examples {
+					@ExampleRow(e)
+				}
+			</tbody>
+		}
+
+		<div class="mt-12 bg-white rounded-2xl border-2 border-[var(--color-arena)] p-8 shadow-sm">
+			<h2 class="text-xl font-black text-gray-800 uppercase tracking-tight mb-6">Agregar Nuevo Registro</h2>
+			<form hx-post="/examples" hx-target="#example-list" hx-swap="beforeend" hx-on::after-request="this.reset()" class="space-y-6">
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:       "Nombre del Ejemplo",
+					Name:        "name",
+					Placeholder: "Ingrese un nombre...",
+					Required:    true,
+				})
+				<div class="flex justify-end">
+					@v2.BotonPrimario("Guardar Registro")
+				</div>
+			</form>
+		</div>
+	}
+}
+
+templ ExampleRow(e *modulo_ejemplo.Example) {
+	<tr class="hover:bg-[var(--surface-arena-20)] transition-colors group">
+		<td class="px-8 py-5 text-sm text-gray-600 font-bold">{ fmt.Sprint(e.ID) }</td>
+		<td class="px-8 py-5 text-sm text-gray-700 font-medium">{ e.Name }</td>
+		<td class="px-8 py-5 text-center">
+			<div class="flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+				<button class="text-[var(--color-guinda)] hover:scale-125 transition-transform">
+					<span class="material-icons text-xl">edit</span>
+				</button>
+				<button class="text-gray-400 hover:text-red-500 hover:scale-125 transition-transform">
+					<span class="material-icons text-xl">delete</span>
+				</button>
+			</div>
+		</td>
+	</tr>
+}

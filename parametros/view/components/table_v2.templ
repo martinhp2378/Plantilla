@@ -1,0 +1,102 @@
+package components
+
+import (
+	"PlantillaInstitucional/pagination"
+	"PlantillaInstitucional/parametros"
+	"PlantillaInstitucional/shared/views/components/v2"
+	"fmt"
+)
+
+templ TableV2(criterios pagination.CriteriosPagina[parametros.Parametro], baseURL string, oob bool) {
+	{{
+		// Helper para construir URLs de ordenamiento
+		buildSortURL := func(field string) string {
+			return criterios.WithSort(field).BuildURL("/parametros/tabla", 1)
+		}
+
+		headers := []v2.TableHeader{
+			{
+				Label:     "Clave",
+				Key:       "clave",
+				Sortable:  true,
+				SortURL:   buildSortURL("clave"),
+				SortIcon:  criterios.SortIcon("clave"),
+				FilterVal: criterios.GetFilterValue("clave"),
+			},
+			{
+				Label:     "Valor",
+				Key:       "valor",
+				Sortable:  true,
+				SortURL:   buildSortURL("valor"),
+				SortIcon:  criterios.SortIcon("valor"),
+				FilterVal: criterios.GetFilterValue("valor"),
+			},
+			{
+				Label:     "Descripción",
+				Key:       "descripcion",
+				Sortable:  true,
+				SortURL:   buildSortURL("descripcion"),
+				SortIcon:  criterios.SortIcon("descripcion"),
+				FilterVal: criterios.GetFilterValue("descripcion"),
+			},
+			{
+				Label:     "Tipo Dato",
+				Key:       "tipo_dato",
+				Sortable:  true,
+				SortURL:   buildSortURL("tipo_dato"),
+				SortIcon:  criterios.SortIcon("tipo_dato"),
+				FilterVal: criterios.GetFilterValue("tipo_dato"),
+			},
+			{
+				Label:     "Estado",
+				Key:       "is_active",
+				Sortable:  true,
+				SortURL:   buildSortURL("is_active"),
+				SortIcon:  criterios.SortIcon("is_active"),
+				FilterVal: criterios.GetFilterValue("is_active"),
+			},
+		}
+		
+		tableProps := v2.DataTableV2Props{
+			Title:       "Parámetros del Sistema",
+			Subtitle:    "Configuración Global",
+			Headers:     headers,
+			CreateURL:   "/parametros/modal",
+			SearchURL:   "/parametros/tabla",
+			Target:      "#tablaparametros",
+			ModalTarget: "#modal",
+			OOB:         oob,
+			SortedBy:    criterios.SortedBy,
+			Direction:   criterios.Direction,
+			Page:        criterios.Index,
+			Size:        criterios.Size,
+			Total:       criterios.Count,
+			PDFExportURL:   "/parametros/descargarpdf",
+			ExcelExportURL: "/parametros/descargarexcel",
+			ToastURL:       "/parametros/archivotoast",
+		}
+	}}
+	@v2.DataTableV2(tableProps) {
+		for _, p := range criterios.Data {
+			{{
+				estado := "Activo"
+				if !p.IsActive {
+					estado = "Inactivo"
+				}
+			}}
+			@v2.DataRowV2(v2.DataRowV2Props{
+				Cells: []string{
+					p.Clave,
+					p.Valor,
+					p.Descripcion,
+					p.TipoDato,
+					estado,
+				},
+				EditURL:     fmt.Sprintf("/parametros/modal/update/%s", p.ParametroId),
+				DeleteURL:   fmt.Sprintf("/parametros/%s", p.ParametroId),
+				Target:      "#tablaparametros",
+				ModalTarget: "#modal",
+			})
+		}
+	}
+}

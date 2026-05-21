@@ -1,0 +1,13 @@
+package layouts
+
+import (
+	"PlantillaInstitucional/institucion/view"
+	"PlantillaInstitucional/institucion/view/components"
+	"PlantillaInstitucional/shared/views/layouts"
+)
+
+templ PaginaListaPersonasV2(params view.ParamPersona) {
+	@layouts.BaseConNav(params.Titulo, params.Pag) {
+		@components.TableV2(params.Criterios, params.BaseURL, false)
+	}
+}

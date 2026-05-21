@@ -1,0 +1,124 @@
+package layouts
+
+import (
+	"PlantillaInstitucional/shared/pagina"
+	"PlantillaInstitucional/shared/views/components"
+	"PlantillaInstitucional/shared/views/components/v2"
+)
+
+templ Base(titulo string) {
+	<!DOCTYPE html>
+	<html class="h-full bg-[var(--surface-arena-20)]" lang="es-MX">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<meta name="description" content="Plantilla ISSEMYM - UI v2"/>
+			<meta name="theme-color" content="#9F2241"/>
+			<title>{ titulo }</title>
+			<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+			<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+			<style type="text/tailwindcss">
+				@font-face {
+					font-family: 'Gotham';
+					src: url('/static/public/font/Gotham/Gotham-Book.otf') format('opentype');
+					font-weight: 400;
+					font-style: normal;
+				}
+				@font-face {
+					font-family: 'Gotham';
+					src: url('/static/public/font/Gotham/Gotham-Medium.otf') format('opentype');
+					font-weight: 500;
+					font-style: normal;
+				}
+				@font-face {
+					font-family: 'Gotham';
+					src: url('/static/public/font/Gotham/Gotham-Bold.otf') format('opentype');
+					font-weight: 700;
+					font-style: normal;
+				}
+				@font-face {
+					font-family: 'Gotham';
+					src: url('/static/public/font/Gotham/Gotham-Black.otf') format('opentype');
+					font-weight: 900;
+					font-style: normal;
+				}
+
+				@theme {
+					--color-guinda: #9F2241;
+					--color-naranja: #FF6600;
+					--color-arena: #D6D1CA;
+					--color-negro: #000000;
+					--color-blanco: #FFFFFF;
+
+					--surface-arena-20: color-mix(in srgb, var(--color-arena), white 80%);
+					--surface-arena-30: color-mix(in srgb, var(--color-arena), white 70%);
+					--surface-arena-40: color-mix(in srgb, var(--color-arena), white 60%);
+					--surface-arena-60: color-mix(in srgb, var(--color-arena), white 40%);
+
+					--font-sans: 'Gotham', 'Montserrat', system-ui, sans-serif;
+					
+					--breakpoint-xs: 480px;
+				}
+
+				@layer base {
+					html {
+						font-family: var(--font-sans);
+					}
+				}
+			</style>
+			<script defer src="https://cdn.fusioncharts.com/fusioncharts/latest/fusioncharts.js"></script>
+			<script defer src="https://cdn.fusioncharts.com/fusioncharts/latest/fusioncharts.charts.js"></script>
+			<script defer src="https://cdn.fusioncharts.com/fusioncharts/latest/themes/fusioncharts.theme.fusion.js"></script>
+			<script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.6/dist/htmx.min.js"></script>
+			<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+		</head>
+		<body class="h-full bg-[var(--surface-arena-20)] text-gray-900">
+			<div id="modal" hx-swap-oob="true"></div>
+			<div id="toast-container" class="fixed top-4 right-4 z-[9999] space-y-2" hx-swap-oob="true"></div>
+			{ children... }
+			<script src="/static/public/js/export-actions.js" defer></script>
+		</body>
+	</html>
+}
+
+// BaseConNav es el layout principal v2, para usuarios firmados.
+templ BaseConNav(titulo string, pag pagina.Pagina) {
+	@Base(titulo) {
+		<div id="contenedor-app-v2" class="min-h-screen flex flex-col" x-data="{ navIzqAbierta: window.innerWidth >= 1280 }">
+			<!-- Sidebar con comportamiento responsivo -->
+			@v2.SidebarV2(pag)
+			<!-- Overlay para movil -->
+			<div
+				x-show="navIzqAbierta && window.innerWidth < 1280"
+				@click="navIzqAbierta = false"
+				class="fixed inset-0 bg-black/50 backdrop-blur-xs z-30 xl:hidden"
+				x-transition:enter="transition-opacity ease-linear duration-300"
+				x-transition:enter-start="opacity-0"
+				x-transition:enter-end="opacity-100"
+				x-transition:leave="transition-opacity ease-linear duration-300"
+				x-transition:leave-start="opacity-100"
+				x-transition:leave-end="opacity-0"
+			></div>
+			<!-- Contenido Principal -->
+			<div class="relative transition-all duration-300 flex flex-col flex-1" :class="{ 'xl:pl-72': navIzqAbierta, 'pl-0': !navIzqAbierta }">
+				@v2.TopbarV2()
+				<main class="flex-1 pt-48 pb-12 px-4 sm:px-8 lg:px-12">
+					{ children... }
+					@components.MensajesFlash()
+				</main>
+				@components.PiePagina()
+			</div>
+		</div>
+	}
+}
+
+// BaseSinNav es el layout v2 para páginas públicas.
+templ BaseSinNav(titulo string) {
+	@Base(titulo) {
+		<main class="min-h-screen">
+			{ children... }
+			@components.MensajesFlash()
+		</main>
+		@components.PiePagina()
+	}
+}

@@ -1,0 +1,62 @@
+package components
+
+import (
+	"PlantillaInstitucional/institucion"
+	"PlantillaInstitucional/pagination"
+	"PlantillaInstitucional/shared/views/components/v2"
+	"fmt"
+)
+
+templ TableV2(criterios pagination.CriteriosPagina[institucion.Persona], baseURL string, oob bool) {
+	{{
+		buildSortURL := func(field string) string {
+			return criterios.WithSort(field).BuildURL("/institucion/personas/tabla", 1)
+		}
+
+		headers := []v2.TableHeader{
+			{Label: "Nombre", Key: "nombre", Sortable: true, SortURL: buildSortURL("nombre"), SortIcon: criterios.SortIcon("nombre"), FilterVal: criterios.GetFilterValue("nombre")},
+			{Label: "Apellido Paterno", Key: "apellido1", Sortable: true, SortURL: buildSortURL("apellido1"), SortIcon: criterios.SortIcon("apellido1"), FilterVal: criterios.GetFilterValue("apellido1")},
+			{Label: "Apellido Materno", Key: "apellido2", Sortable: true, SortURL: buildSortURL("apellido2"), SortIcon: criterios.SortIcon("apellido2"), FilterVal: criterios.GetFilterValue("apellido2")},
+			{Label: "RFC", Key: "rfc", Sortable: true, SortURL: buildSortURL("rfc"), SortIcon: criterios.SortIcon("rfc"), FilterVal: criterios.GetFilterValue("rfc")},
+			{Label: "CURP", Key: "curp", Sortable: true, SortURL: buildSortURL("curp"), SortIcon: criterios.SortIcon("curp"), FilterVal: criterios.GetFilterValue("curp")},
+			{Label: "Clave ISSEMYM", Key: "clave_issemym", Sortable: true, SortURL: buildSortURL("clave_issemym"), SortIcon: criterios.SortIcon("clave_issemym"), FilterVal: criterios.GetFilterValue("clave_issemym")},
+		}
+		
+		tableProps := v2.DataTableV2Props{
+			Title:       "Catálogo de Personal",
+			Subtitle:    "Gestión de Identidad Institucional",
+			Headers:     headers,
+			CreateURL:   "/institucion/personas/modales/nuevo",
+			SearchURL:   "/institucion/personas/tabla",
+			Target:      "#tablapersonas",
+			ModalTarget: "#modal",
+			OOB:         oob,
+			SortedBy:    criterios.SortedBy,
+			Direction:   criterios.Direction,
+			Page:        criterios.Index,
+			Size:        criterios.Size,
+			Total:       criterios.Count,
+			PDFExportURL:   "/institucion/personas/reportes/pdf",
+			ExcelExportURL: "/institucion/personas/reportes/excel",
+			ToastURL:       "/institucion/personas/reportes/notificacion-exito",
+		}
+	}}
+	@v2.DataTableV2(tableProps) {
+		for _, p := range criterios.Data {
+			@v2.DataRowV2(v2.DataRowV2Props{
+				Cells: []string{
+					p.Nombre,
+					p.Apellido1,
+					p.Apellido2,
+					p.Rfc,
+					p.Curp,
+					p.ClaveIssemym,
+				},
+				EditURL:     fmt.Sprintf("/institucion/personas/modales/editar/%s", p.UuidPersona),
+				DeleteURL:   fmt.Sprintf("/institucion/personas/%s", p.UuidPersona),
+				Target:      "#tablapersonas",
+				ModalTarget: "#modal",
+			})
+		}
+	}
+}

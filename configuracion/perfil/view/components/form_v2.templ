@@ -1,0 +1,42 @@
+package components
+
+import (
+	"PlantillaInstitucional/configuracion/perfil"
+	"PlantillaInstitucional/shared/views/components/v2"
+)
+
+templ FormCreatePerfilV2(p perfil.Perfil, errors map[string]string) {
+	@v2.ModalV2("Nuevo Perfil") {
+		<form hx-post="/configuracion/perfiles" hx-target="#modal" hx-swap="innerHTML" class="space-y-8">
+			<div class="grid grid-cols-1 gap-y-6">
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label: "Nombre del Perfil",
+					Name: "nombre",
+					Placeholder: "Ej. ADMINISTRADOR",
+					Value: p.Nombre,
+					Required: true,
+					Errors: errors,
+				})
+			</div>
+			@v2.ModalFooterV2("Guardar Perfil")
+		</form>
+	}
+}
+
+templ FormUpdatePerfilV2(p *perfil.Perfil, errors map[string]string) {
+	@v2.ModalV2("Editar Perfil") {
+		<form hx-put={ "/configuracion/perfiles/" + p.Nombre } hx-target="#modal" hx-swap="innerHTML" class="space-y-8">
+			<div class="grid grid-cols-1 gap-y-6">
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label: "Nombre del Perfil",
+					Name: "nombre",
+					Value: p.Nombre,
+					Required: true,
+					Errors: errors,
+				})
+				<input type="hidden" name="nombre_original" value={ p.Nombre }/>
+			</div>
+			@v2.ModalFooterV2("Guardar Cambios")
+		</form>
+	}
+}

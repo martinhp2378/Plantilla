@@ -1,0 +1,50 @@
+package components
+
+import (
+	"PlantillaInstitucional/configuracion/policy"
+	"PlantillaInstitucional/shared/views/components"
+	"PlantillaInstitucional/shared/views/components/v2"
+)
+
+templ FormCreatePolicyV2(p policy.Politica, errors map[string]string, perfiles []string, recursos []string, acciones []string) {
+	@v2.ModalV2("Nueva Política ABAC") {
+		<form hx-post="/configuracion/politicas" hx-target="#modal" hx-swap="innerHTML" class="space-y-8">
+			@formFields(p, errors, perfiles, recursos, acciones)
+			@v2.ModalFooterV2("Guardar Política")
+		</form>
+	}
+}
+
+templ FormUpdatePolicyV2(p *policy.Politica, errors map[string]string, perfiles []string, recursos []string, acciones []string) {
+	@v2.ModalV2("Editar Política ABAC") {
+		<form hx-put={ "/configuracion/politicas/" + p.Nombre } hx-target="#modal" hx-swap="innerHTML" class="space-y-8">
+			@formFields(*p, errors, perfiles, recursos, acciones)
+			@v2.ModalFooterV2("Guardar Cambios")
+		</form>
+	}
+}
+
+templ formFields(p policy.Politica, errors map[string]string, perfiles []string, recursos []string, acciones []string) {
+	{{
+		perfilOpts := []components.SelectOption{{Value: "", Text: "Seleccione..."}}
+		for _, v := range perfiles {
+			perfilOpts = append(perfilOpts, components.SelectOption{Value: v, Text: v})
+		}
+		recursoOpts := []components.SelectOption{{Value: "", Text: "Seleccione..."}}
+		for _, v := range recursos {
+			recursoOpts = append(recursoOpts, components.SelectOption{Value: v, Text: v})
+		}
+		accionOpts := []components.SelectOption{{Value: "", Text: "Seleccione..."}}
+		for _, v := range acciones {
+			accionOpts = append(accionOpts, components.SelectOption{Value: v, Text: v})
+		}
+	}}
+	<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+		@v2.InputFieldV2(v2.InputPropsV2{Label: "Nombre", Name: "nombre", Value: p.Nombre, Required: true, Errors: errors})
+		@v2.InputFieldV2(v2.InputPropsV2{Label: "Path Prefix", Name: "path_prefix", Value: p.PathPrefix, Placeholder: "/configuracion", Required: true, Errors: errors})
+		@v2.SelectFieldV2(v2.SelectProps{Label: "Perfil", Name: "perfil", Options: perfilOpts, SelectedValue: p.Perfil, Required: true, Errors: errors})
+		@v2.SelectFieldV2(v2.SelectProps{Label: "Recurso", Name: "recurso", Options: recursoOpts, SelectedValue: p.Recurso, Required: true, Errors: errors})
+		@v2.SelectFieldV2(v2.SelectProps{Label: "Acción", Name: "accion", Options: accionOpts, SelectedValue: p.Accion, Required: true, Errors: errors})
+	</div>
+	@v2.TextAreaFieldV2(v2.TextAreaPropsV2{Label: "Descripción", Name: "descripcion", Value: p.Descripcion, Rows: 3, Errors: errors})
+}

@@ -1,0 +1,60 @@
+package components
+
+import (
+	"PlantillaInstitucional/configuracion/perfil"
+	"PlantillaInstitucional/pagination"
+	"PlantillaInstitucional/shared/views/components/v2"
+	"fmt"
+)
+
+templ TableV2(criterios pagination.CriteriosPagina[perfil.Perfil], oob bool) {
+	{{
+		// Helper para construir URLs de ordenamiento
+		buildSortURL := func(field string) string {
+			return criterios.WithSort(field).BuildURL("/configuracion/perfiles/tabla", 1)
+		}
+
+		headers := []v2.TableHeader{
+			{
+				Label:     "Nombre del Perfil",
+				Key:       "nombre",
+				Sortable:  true,
+				SortURL:   buildSortURL("nombre"),
+				SortIcon:  criterios.SortIcon("nombre"),
+				FilterVal: criterios.GetFilterValue("nombre"),
+			},
+		}
+		
+		tableProps := v2.DataTableV2Props{
+			Title:       "Gestión de Perfiles",
+			Subtitle:    "Catálogo de Roles y Permisos",
+			Headers:     headers,
+			CreateURL:   "/configuracion/perfiles/modales/nuevo",
+			SearchURL:   "/configuracion/perfiles/tabla",
+			Target:      "#tablaperfiles",
+			ModalTarget: "#modal",
+			OOB:         oob,
+			SortedBy:    criterios.SortedBy,
+			Direction:   criterios.Direction,
+			Page:        criterios.Index,
+			Size:        criterios.Size,
+			Total:       criterios.Count,
+			PDFExportURL:   "/configuracion/perfiles/reportes/pdf",
+			ExcelExportURL: "/configuracion/perfiles/reportes/excel",
+			ToastURL:       "/configuracion/perfiles/reportes/notificacion-exito",
+		}
+	}}
+	@v2.DataTableV2(tableProps) {
+		for _, p := range criterios.Data {
+			@v2.DataRowV2(v2.DataRowV2Props{
+				Cells: []string{
+					p.Nombre,
+				},
+				EditURL:     fmt.Sprintf("/configuracion/perfiles/modales/editar/%s", p.Nombre),
+				DeleteURL:   fmt.Sprintf("/configuracion/perfiles/%s", p.Nombre),
+				Target:      "#tablaperfiles",
+				ModalTarget: "#modal",
+			})
+		}
+	}
+}

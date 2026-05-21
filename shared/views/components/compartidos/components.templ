@@ -1,0 +1,61 @@
+package compartidos
+
+import (
+	"PlantillaInstitucional/shared/views/components"
+	"fmt"
+)
+
+templ ContenedorBase(titulo, icono, altura string) {
+	<div class={ "w-full bg-neutral-50 dark:bg-slate-800 rounded-md shadow border border-neutral-300 dark:border-slate-700 ",altura,"flex flex-col" }>
+		<div class="flex items-center justify-between px-6 py-4 border-b border-neutral-300 dark:border-slate-700">
+			<span class="text-neutral-800 dark:text-slate-100 uppercase font-semibold text-base">{ titulo }</span>
+			<span class="material-icons text-gray-400 dark:text-slate-300">{ icono }</span>
+		</div>
+		<div class="flex-1 px-6 py-4 overflow-auto">
+			{ children... }
+		</div>
+	</div>
+}
+
+templ CardV2(card components.CardVista) {
+	<div class={ "js-stagger p-6 rounded-xl ring-1 ring-slate-900/5 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 h-full flex flex-col justify-between", card.BgClass, card.BorderClass } >
+		<div class="flex items-center justify-between mb-2">
+			<span class={ "text-base font-semibold", card.TextClass }>{ card.Title }</span>
+			<span class={ "material-icons text-xl", card.IconClass }>{ card.Icon }</span>
+		</div>
+		<div class={ "flex justify-between text-3xl font-bold", card.TextClass }>
+			<span>{ card.Value }</span>
+			if card.Meta != "" {
+				<span class="text-xs mt-5">Meta: { card.Meta }</span>
+			}
+		</div>
+	</div>
+}
+
+templ ContenedorColapsable(titulo, icono, altura string, startOpen bool) {
+	// 1. "x-data" inicializa el estado
+	<div
+		x-data={ fmt.Sprintf("{ open: %t }", startOpen) }
+		class="w-full bg-neutral-50 dark:bg-slate-800 rounded-md shadow border border-neutral-300 dark:border-slate-700 flex flex-col transition-all"
+	>
+		<div
+			@click="open = !open"
+			class="flex items-center justify-between px-6 py-4 border-b border-neutral-300 dark:border-slate-700 cursor-pointer"
+		>
+			<div class="flex items-center space-x-3">
+				<span class="material-icons text-gray-400 dark:text-slate-300">{ icono }</span>
+				<span class="text-neutral-800 dark:text-slate-100 uppercase font-semibold text-base">{ titulo }</span>
+			</div>
+			<span class="material-icons text-gray-400 dark:text-slate-300 transition-transform" x-bind:class="open ? '' : '-rotate-90'">
+				expand_more
+			</span>
+		</div>
+		<div
+			x-show="open"
+			x-transition
+			class={ "flex-1 px-6 py-4 overflow-auto text-neutral-500 dark:text-slate-400", altura }
+		>
+			{ children... }
+		</div>
+	</div>
+}

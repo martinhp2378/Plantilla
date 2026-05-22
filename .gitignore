@@ -23,7 +23,15 @@ main
 .env.*.local
 
 # Go dependencies
-# vendor/ # Uncomment if you don't want to commit dependencies
+vendor/
+
+# User data and generated assets (Security)
+static/private/
+
+# Testing and debugging
+cover.out
+debug
+*.log
 
 # Templ generated files (Optional: some prefer to commit them)
 *_templ.go

@@ -34,3 +34,6 @@ main
 
 # Local docker
 docker-compose.override.yml
+
+# Agent Teams Lite (Local skills)
+.atl/

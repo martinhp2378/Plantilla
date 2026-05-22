@@ -10,7 +10,7 @@ import (
 
 templ FormCreateParametroV2(p parametros.Parametro, errors map[string]string) {
 	@v2.ModalV2("Nuevo Parámetro") {
-		<form hx-post="/parametros/" hx-target="#modal" hx-swap="innerHTML" class="space-y-8">
+		<form hx-post="/configuracion/parametros/" hx-target="#modal" hx-swap="innerHTML" class="space-y-8">
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
 				{{
 					optsTipo := []components.SelectOption{
@@ -83,7 +83,7 @@ templ FormCreateParametroV2(p parametros.Parametro, errors map[string]string) {
 
 templ FormUpdateParametroV2(p *parametros.Parametro, errors map[string]string) {
 	@v2.ModalV2("Editar Parámetro") {
-		<form hx-put={ fmt.Sprintf("/parametros/%s", p.ParametroId) } hx-target="#modal" hx-swap="innerHTML" class="space-y-8">
+		<form hx-put={ fmt.Sprintf("/configuracion/parametros/%s", p.ParametroId) } hx-target="#modal" hx-swap="innerHTML" class="space-y-8">
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
 				{{
 					optsTipo := []components.SelectOption{

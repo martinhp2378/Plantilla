@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"PlantillaInstitucional/app"
+	"PlantillaInstitucional/shared/pagina"
 	"net/http"
 	"strings"
 
@@ -14,7 +15,7 @@ func PolicyMiddleware(a *app.App) func(http.Handler) http.Handler {
 	rutasExcluidas := []string{
 		"/health",
 		"/static",
-		"/login/salir",
+		pagina.GlobalRutas.Login.Base + "salir",
 		"/sesion",
 	}
 
@@ -57,12 +58,12 @@ func PolicyMiddleware(a *app.App) func(http.Handler) http.Handler {
 				a.Logger.WarnContext(r.Context(), "acceso denegado por política", "path", path, "perfil", perfil)
 				
 				if esSolicitudHTMX(r) {
-					w.Header().Set("HX-Redirect", "/login") // O a una página de "Sin Permisos"
+					w.Header().Set("HX-Redirect", pagina.GlobalRutas.Login.Prefix) // O a una página de "Sin Permisos"
 					w.WriteHeader(http.StatusForbidden)
 					return
 				}
 				
-				http.Redirect(w, r, "/login", http.StatusSeeOther)
+				http.Redirect(w, r, pagina.GlobalRutas.Login.Prefix, http.StatusSeeOther)
 				return
 			}
 

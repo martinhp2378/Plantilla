@@ -2,6 +2,7 @@ package layouts
 
 import (
 	"PlantillaInstitucional/login/views"
+	"PlantillaInstitucional/shared/pagina"
 	"PlantillaInstitucional/shared/views/layouts"
 	"PlantillaInstitucional/shared/views/components/v2"
 )
@@ -32,7 +33,7 @@ templ LoginV2(formaLogin views.FormaLogin) {
 
 				<!-- Formulario Lineal: PERFECTAMENTE ALINEADO -->
 				<div class="w-full max-w-7xl">
-					<form action="/login" method="POST" class="flex flex-col lg:flex-row items-center justify-center gap-x-12 gap-y-10 bg-transparent">
+					<form action={ string(templ.SafeURL(pagina.GlobalRutas.Login.Prefix)) } method="POST" class="flex flex-col lg:flex-row items-center justify-center gap-x-12 gap-y-10 bg-transparent">
 						<!-- Label -->
 						<div class="flex-shrink-0">
 							<p class="text-xl font-bold text-gray-900 whitespace-nowrap">Ingrese a su cuenta</p>

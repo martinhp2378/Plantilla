@@ -47,7 +47,7 @@ func FormCreateUsuarioV2(u usuario.Usuario, personas []components.SelectOption, 
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<form hx-post=\"/configuracion/usuarios\" hx-target=\"#modal\" hx-swap=\"innerHTML\" class=\"space-y-8\"><div class=\"grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<form hx-post=\"/configuracion/usuarios/\" hx-target=\"#modal\" hx-swap=\"innerHTML\" class=\"space-y-8\"><div class=\"grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -149,9 +149,9 @@ func FormUpdateUsuarioV2(u *usuario.Usuario, personas []components.SelectOption,
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 string
-			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue("/configuracion/usuarios/" + u.UuidPersona.String())
+			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue("/configuracion/usuarios/" + u.UuidPersona.String() + "/")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `configuracion/usuario/view/components/form_v2.templ`, Line: 49, Col: 68}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `configuracion/usuario/view/components/form_v2.templ`, Line: 49, Col: 74}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
 			if templ_7745c5c3_Err != nil {

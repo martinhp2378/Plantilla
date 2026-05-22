@@ -11,8 +11,8 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"PlantillaInstitucional/configuracion/usuario"
 	"PlantillaInstitucional/pagination"
+	"PlantillaInstitucional/shared/pagina"
 	"PlantillaInstitucional/shared/views/components/v2"
-	"fmt"
 )
 
 func TableV2(criterios pagination.CriteriosPagina[usuario.Usuario], baseURL string, oob bool) templ.Component {
@@ -36,9 +36,10 @@ func TableV2(criterios pagination.CriteriosPagina[usuario.Usuario], baseURL stri
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
+		rutas := pagina.GlobalRutas.Usuarios
 		// Helper para construir URLs de ordenamiento
 		buildSortURL := func(field string) string {
-			return criterios.WithSort(field).BuildURL("/configuracion/usuarios/tabla", 1)
+			return criterios.WithSort(field).BuildURL(rutas.Tabla, 1)
 		}
 
 		headers := []v2.TableHeader{
@@ -71,8 +72,8 @@ func TableV2(criterios pagination.CriteriosPagina[usuario.Usuario], baseURL stri
 			Title:          "Gestión de Usuarios",
 			Subtitle:       "Catálogo de Personal",
 			Headers:        headers,
-			CreateURL:      "/configuracion/usuarios/modales/nuevo",
-			SearchURL:      "/configuracion/usuarios/tabla",
+			CreateURL:      rutas.Nuevo,
+			SearchURL:      rutas.Tabla,
 			Target:         "#tablausuarios",
 			ModalTarget:    "#modal",
 			OOB:            oob,
@@ -81,9 +82,9 @@ func TableV2(criterios pagination.CriteriosPagina[usuario.Usuario], baseURL stri
 			Page:           criterios.Index,
 			Size:           criterios.Size,
 			Total:          criterios.Count,
-			PDFExportURL:   "/configuracion/usuarios/reportes/pdf",
-			ExcelExportURL: "/configuracion/usuarios/reportes/excel",
-			ToastURL:       "/configuracion/usuarios/reportes/notificacion-exito",
+			PDFExportURL:   rutas.Export.PDF,
+			ExcelExportURL: rutas.Export.Excel,
+			ToastURL:       rutas.Export.Notificacion,
 		}
 		templ_7745c5c3_Var2 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -104,8 +105,8 @@ func TableV2(criterios pagination.CriteriosPagina[usuario.Usuario], baseURL stri
 						u.Email,
 						u.Perfil,
 					},
-					EditURL:     fmt.Sprintf("/configuracion/usuarios/modales/editar/%s", u.UuidPersona),
-					DeleteURL:   fmt.Sprintf("/configuracion/usuarios/%s", u.UuidPersona),
+					EditURL:     rutas.GetEditar(u.UuidPersona),
+					DeleteURL:   rutas.GetBorrar(u.UuidPersona),
 					Target:      "#tablausuarios",
 					ModalTarget: "#modal",
 				}).Render(ctx, templ_7745c5c3_Buffer)

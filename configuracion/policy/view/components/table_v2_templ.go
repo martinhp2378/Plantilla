@@ -11,8 +11,8 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"PlantillaInstitucional/configuracion/policy"
 	"PlantillaInstitucional/pagination"
+	"PlantillaInstitucional/shared/pagina"
 	"PlantillaInstitucional/shared/views/components/v2"
-	"fmt"
 )
 
 func TableV2(criterios pagination.CriteriosPagina[policy.Politica], oob bool) templ.Component {
@@ -36,8 +36,9 @@ func TableV2(criterios pagination.CriteriosPagina[policy.Politica], oob bool) te
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
+		rutas := pagina.GlobalRutas.Politicas
 		buildSortURL := func(field string) string {
-			return criterios.WithSort(field).BuildURL("/configuracion/politicas/tabla", 1)
+			return criterios.WithSort(field).BuildURL(rutas.Tabla, 1)
 		}
 		headers := []v2.TableHeader{
 			{Label: "Nombre", Key: "nombre", Sortable: true, SortURL: buildSortURL("nombre"), SortIcon: criterios.SortIcon("nombre"), FilterVal: criterios.GetFilterValue("nombre")},
@@ -46,7 +47,21 @@ func TableV2(criterios pagination.CriteriosPagina[policy.Politica], oob bool) te
 			{Label: "Acción", Key: "accion", Sortable: true, SortURL: buildSortURL("accion"), SortIcon: criterios.SortIcon("accion"), FilterVal: criterios.GetFilterValue("accion")},
 			{Label: "Path Prefix", Key: "path_prefix", Sortable: false},
 		}
-		props := v2.DataTableV2Props{Title: "Políticas ABAC", Subtitle: "Reglas de acceso por perfil, recurso y acción", Headers: headers, CreateURL: "/configuracion/politicas/modales/nuevo", SearchURL: "/configuracion/politicas/tabla", Target: "#tablapoliticas", ModalTarget: "#modal", OOB: oob, SortedBy: criterios.SortedBy, Direction: criterios.Direction, Page: criterios.Index, Size: criterios.Size, Total: criterios.Count}
+		props := v2.DataTableV2Props{
+			Title:       "Políticas ABAC",
+			Subtitle:    "Reglas de acceso por perfil, recurso y acción",
+			Headers:     headers,
+			CreateURL:   rutas.Nuevo,
+			SearchURL:   rutas.Tabla,
+			Target:      "#tablapoliticas",
+			ModalTarget: "#modal",
+			OOB:         oob,
+			SortedBy:    criterios.SortedBy,
+			Direction:   criterios.Direction,
+			Page:        criterios.Index,
+			Size:        criterios.Size,
+			Total:       criterios.Count,
+		}
 		templ_7745c5c3_Var2 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
@@ -60,7 +75,13 @@ func TableV2(criterios pagination.CriteriosPagina[policy.Politica], oob bool) te
 			}
 			ctx = templ.InitializeContext(ctx)
 			for _, p := range criterios.Data {
-				templ_7745c5c3_Err = v2.DataRowV2(v2.DataRowV2Props{Cells: []string{p.Nombre, p.Perfil, p.Recurso, p.Accion, p.PathPrefix}, EditURL: fmt.Sprintf("/configuracion/politicas/modales/editar/%s", p.Nombre), DeleteURL: fmt.Sprintf("/configuracion/politicas/%s", p.Nombre), Target: "#tablapoliticas", ModalTarget: "#modal"}).Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = v2.DataRowV2(v2.DataRowV2Props{
+					Cells:       []string{p.Nombre, p.Perfil, p.Recurso, p.Accion, p.PathPrefix},
+					EditURL:     rutas.GetEditar(p.Nombre),
+					DeleteURL:   rutas.GetBorrar(p.Nombre),
+					Target:      "#tablapoliticas",
+					ModalTarget: "#modal",
+				}).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

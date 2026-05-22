@@ -3,14 +3,15 @@ package components
 import (
 	"PlantillaInstitucional/institucion"
 	"PlantillaInstitucional/pagination"
+	"PlantillaInstitucional/shared/pagina"
 	"PlantillaInstitucional/shared/views/components/v2"
-	"fmt"
 )
 
 templ TableV2(criterios pagination.CriteriosPagina[institucion.Persona], baseURL string, oob bool) {
 	{{
+		rutas := pagina.GlobalRutas.Personas
 		buildSortURL := func(field string) string {
-			return criterios.WithSort(field).BuildURL("/institucion/personas/tabla", 1)
+			return criterios.WithSort(field).BuildURL(rutas.Tabla, 1)
 		}
 
 		headers := []v2.TableHeader{
@@ -26,8 +27,8 @@ templ TableV2(criterios pagination.CriteriosPagina[institucion.Persona], baseURL
 			Title:       "Catálogo de Personal",
 			Subtitle:    "Gestión de Identidad Institucional",
 			Headers:     headers,
-			CreateURL:   "/institucion/personas/modales/nuevo",
-			SearchURL:   "/institucion/personas/tabla",
+			CreateURL:   rutas.Nuevo,
+			SearchURL:   rutas.Tabla,
 			Target:      "#tablapersonas",
 			ModalTarget: "#modal",
 			OOB:         oob,
@@ -36,9 +37,9 @@ templ TableV2(criterios pagination.CriteriosPagina[institucion.Persona], baseURL
 			Page:        criterios.Index,
 			Size:        criterios.Size,
 			Total:       criterios.Count,
-			PDFExportURL:   "/institucion/personas/reportes/pdf",
-			ExcelExportURL: "/institucion/personas/reportes/excel",
-			ToastURL:       "/institucion/personas/reportes/notificacion-exito",
+			PDFExportURL:   rutas.Export.PDF,
+			ExcelExportURL: rutas.Export.Excel,
+			ToastURL:       rutas.Export.Notificacion,
 		}
 	}}
 	@v2.DataTableV2(tableProps) {
@@ -52,8 +53,8 @@ templ TableV2(criterios pagination.CriteriosPagina[institucion.Persona], baseURL
 					p.Curp,
 					p.ClaveIssemym,
 				},
-				EditURL:     fmt.Sprintf("/institucion/personas/modales/editar/%s", p.UuidPersona),
-				DeleteURL:   fmt.Sprintf("/institucion/personas/%s", p.UuidPersona),
+				EditURL:     rutas.GetEditar(p.UuidPersona),
+				DeleteURL:   rutas.GetBorrar(p.UuidPersona),
 				Target:      "#tablapersonas",
 				ModalTarget: "#modal",
 			})

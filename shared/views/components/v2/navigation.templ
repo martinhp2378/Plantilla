@@ -44,7 +44,6 @@ templ SidebarV2(pag pagina.Pagina) {
 						@SidebarItem(pagina.Perfil, pag, "badge", "Perfiles")
 						@SidebarItem(pagina.Politicas, pag, "policy", "Políticas")
 						@SidebarItem(pagina.Parametros, pag, "settings", "Parámetros")
-						@SidebarItem(pagina.Ejemplo, pag, "extension", "Ejemplos")
 					</ul>
 				</div>
 			</nav>
@@ -112,10 +111,14 @@ templ TopbarV2() {
 						@click="menuAbierto = !menuAbierto"
 						class="flex items-center gap-3 hover:opacity-80 transition-all focus:outline-none"
 					>
+						<div class="w-10 h-10 rounded-xl bg-[var(--surface-arena-20)] flex items-center justify-center text-[var(--color-guinda)] shadow-sm">
+							<span class="material-icons">account_circle</span>
+						</div>
 						<div class="text-right hidden sm:block">
 							<p class="text-xs font-black text-gray-900 uppercase tracking-tighter">Usuario Demo</p>
 							<p class="text-[10px] font-bold text-gray-400 uppercase">Administrador</p>
 						</div>
+						<span class="material-icons text-gray-400 transition-transform duration-200" :class="menuAbierto ? 'rotate-180' : ''">expand_more</span>
 					</button>
 
 					<div
@@ -124,7 +127,7 @@ templ TopbarV2() {
 						class="absolute right-0 mt-3 w-56 bg-white border border-[var(--color-arena)] rounded-xl shadow-xl z-[60] py-2 overflow-hidden"
 						style="display: none;"
 					>
-						<a href="/login/salir" class="flex items-center gap-3 px-6 py-3 text-xs font-bold text-red-500 hover:bg-red-50 uppercase tracking-wider transition-colors">
+						<a href={ templ.SafeURL(pagina.GlobalRutas.Login.Base + "salir") } class="flex items-center gap-3 px-6 py-3 text-xs font-bold text-red-500 hover:bg-red-50 uppercase tracking-wider transition-colors">
 							<span class="material-icons text-lg">logout</span>
 							Cerrar Sesión
 						</a>

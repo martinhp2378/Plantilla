@@ -65,10 +65,6 @@ func SidebarV2(pag pagina.Pagina) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = SidebarItem(pagina.Ejemplo, pag, "extension", "Ejemplos").Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
 		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</ul></div></nav></div></aside><style>\n\t\t.custom-scrollbar::-webkit-scrollbar {\n\t\t\twidth: 4px;\n\t\t}\n\t\t.custom-scrollbar::-webkit-scrollbar-track {\n\t\t\tbackground: transparent;\n\t\t}\n\t\t.custom-scrollbar::-webkit-scrollbar-thumb {\n\t\t\tbackground: var(--color-arena);\n\t\t\tborder-radius: 10px;\n\t\t}\n\t\t.custom-scrollbar::-webkit-scrollbar-thumb:hover {\n\t\t\tbackground: var(--color-naranja);\n\t\t}\n\t</style>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -116,7 +112,7 @@ func SidebarItem(target, active pagina.Pagina, icon, label string) templ.Compone
 		var templ_7745c5c3_Var4 templ.SafeURL
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(target.URL()))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/v2/navigation.templ`, Line: 74, Col: 37}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/v2/navigation.templ`, Line: 73, Col: 37}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -190,7 +186,7 @@ func SidebarItem(target, active pagina.Pagina, icon, label string) templ.Compone
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(icon)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/v2/navigation.templ`, Line: 85, Col: 11}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/v2/navigation.templ`, Line: 84, Col: 11}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -227,7 +223,7 @@ func SidebarItem(target, active pagina.Pagina, icon, label string) templ.Compone
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/v2/navigation.templ`, Line: 90, Col: 53}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/v2/navigation.templ`, Line: 89, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
@@ -270,7 +266,20 @@ func TopbarV2() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<div class=\"h-20 bg-white border-b border-[var(--color-arena)] px-4 sm:px-8 lg:px-12 flex items-center justify-between shadow-sm\"><div class=\"flex items-center gap-4 lg:gap-8 flex-1\"><button @click=\"navIzqAbierta = !navIzqAbierta\" class=\"w-10 h-10 flex items-center justify-center rounded-xl bg-[var(--surface-arena-20)] text-[var(--color-guinda)] hover:bg-[var(--color-naranja)] hover:text-white transition-all shadow-sm focus:outline-none\"><span class=\"material-icons\" x-text=\"navIzqAbierta ? 'menu_open' : 'menu'\">menu</span></button></div><div class=\"flex items-center gap-3 sm:gap-6\" x-data=\"{ menuAbierto: false }\"><div class=\"relative\"><button @click=\"menuAbierto = !menuAbierto\" class=\"flex items-center gap-3 hover:opacity-80 transition-all focus:outline-none\"><div class=\"text-right hidden sm:block\"><p class=\"text-xs font-black text-gray-900 uppercase tracking-tighter\">Usuario Demo</p><p class=\"text-[10px] font-bold text-gray-400 uppercase\">Administrador</p></div></button><div x-show=\"menuAbierto\" @click.away=\"menuAbierto = false\" class=\"absolute right-0 mt-3 w-56 bg-white border border-[var(--color-arena)] rounded-xl shadow-xl z-[60] py-2 overflow-hidden\" style=\"display: none;\"><a href=\"/login/salir\" class=\"flex items-center gap-3 px-6 py-3 text-xs font-bold text-red-500 hover:bg-red-50 uppercase tracking-wider transition-colors\"><span class=\"material-icons text-lg\">logout</span> Cerrar Sesión</a></div></div></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<div class=\"h-20 bg-white border-b border-[var(--color-arena)] px-4 sm:px-8 lg:px-12 flex items-center justify-between shadow-sm\"><div class=\"flex items-center gap-4 lg:gap-8 flex-1\"><button @click=\"navIzqAbierta = !navIzqAbierta\" class=\"w-10 h-10 flex items-center justify-center rounded-xl bg-[var(--surface-arena-20)] text-[var(--color-guinda)] hover:bg-[var(--color-naranja)] hover:text-white transition-all shadow-sm focus:outline-none\"><span class=\"material-icons\" x-text=\"navIzqAbierta ? 'menu_open' : 'menu'\">menu</span></button></div><div class=\"flex items-center gap-3 sm:gap-6\" x-data=\"{ menuAbierto: false }\"><div class=\"relative\"><button @click=\"menuAbierto = !menuAbierto\" class=\"flex items-center gap-3 hover:opacity-80 transition-all focus:outline-none\"><div class=\"w-10 h-10 rounded-xl bg-[var(--surface-arena-20)] flex items-center justify-center text-[var(--color-guinda)] shadow-sm\"><span class=\"material-icons\">account_circle</span></div><div class=\"text-right hidden sm:block\"><p class=\"text-xs font-black text-gray-900 uppercase tracking-tighter\">Usuario Demo</p><p class=\"text-[10px] font-bold text-gray-400 uppercase\">Administrador</p></div><span class=\"material-icons text-gray-400 transition-transform duration-200\" :class=\"menuAbierto ? 'rotate-180' : ''\">expand_more</span></button><div x-show=\"menuAbierto\" @click.away=\"menuAbierto = false\" class=\"absolute right-0 mt-3 w-56 bg-white border border-[var(--color-arena)] rounded-xl shadow-xl z-[60] py-2 overflow-hidden\" style=\"display: none;\"><a href=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var15 templ.SafeURL
+		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(pagina.GlobalRutas.Login.Base + "salir"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/v2/navigation.templ`, Line: 130, Col: 70}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\" class=\"flex items-center gap-3 px-6 py-3 text-xs font-bold text-red-500 hover:bg-red-50 uppercase tracking-wider transition-colors\"><span class=\"material-icons text-lg\">logout</span> Cerrar Sesión</a></div></div></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

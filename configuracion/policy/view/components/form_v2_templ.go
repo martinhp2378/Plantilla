@@ -47,7 +47,7 @@ func FormCreatePolicyV2(p policy.Politica, errors map[string]string, perfiles []
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<form hx-post=\"/configuracion/politicas\" hx-target=\"#modal\" hx-swap=\"innerHTML\" class=\"space-y-8\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<form hx-post=\"/configuracion/politicas/\" hx-target=\"#modal\" hx-swap=\"innerHTML\" class=\"space-y-8\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -111,9 +111,9 @@ func FormUpdatePolicyV2(p *policy.Politica, errors map[string]string, perfiles [
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 string
-			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue("/configuracion/politicas/" + p.Nombre)
+			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue("/configuracion/politicas/" + p.Nombre + "/")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `configuracion/policy/view/components/form_v2.templ`, Line: 20, Col: 55}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `configuracion/policy/view/components/form_v2.templ`, Line: 20, Col: 61}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
 			if templ_7745c5c3_Err != nil {

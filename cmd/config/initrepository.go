@@ -8,7 +8,6 @@ import (
 	usuario_repo "PlantillaInstitucional/configuracion/usuario/repository"
 	persona_repo "PlantillaInstitucional/institucion/repository"
 	login_repo "PlantillaInstitucional/login/db"
-	"PlantillaInstitucional/modulo_ejemplo/repository"
 	parametros_repo "PlantillaInstitucional/parametros/repository"
 	"PlantillaInstitucional/shared/tenants"
 )
@@ -17,7 +16,6 @@ func InitRepositories(a *app.App) {
 	// Pools
 	pools := &bd.AppPools{ReadPool: a.PqRead, WritePool: a.PqWrite}
 
-	a.Repositories.Example = repository.NewPGRepository(a.PqRead)
 	a.Repositories.Tenants = tenants.NewStaticRepository()
 	a.Repositories.Usuario = usuario_repo.NewUsuarioRepository(pools)
 	a.Repositories.Perfil = perfil_repo.NewPerfilRepository(pools)

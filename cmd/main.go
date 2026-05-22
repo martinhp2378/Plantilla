@@ -130,8 +130,6 @@ func main() {
 		a.Handlers.Policy.RegisterRoutes(r)
 		a.Handlers.Persona.RegisterRoutes(r)
 		a.Handlers.Parametro.RegisterRoutes(r)
-
-		a.Handlers.Example.RegisterRoutes(r)
 	})
 
 	app_middleware.RegistrarHandler404(r)

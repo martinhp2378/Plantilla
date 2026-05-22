@@ -11,6 +11,7 @@ import (
 	"PlantillaInstitucional/shared/pagina"
 	"PlantillaInstitucional/shared/utils"
 	"PlantillaInstitucional/shared/validacion"
+	shared_components "PlantillaInstitucional/shared/views/components/compartidos"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -149,4 +150,8 @@ func (h *ParametrosHandler) ReporteExcel_templ(w http.ResponseWriter, r *http.Re
 		return
 	}
 	http.Redirect(w, r, url, http.StatusFound)
+}
+
+func (h *ParametrosHandler) SuccessFileMessage(w http.ResponseWriter, r *http.Request) {
+	utils.RenderIgnore(r.Context(), w, shared_components.Mensaje("success", errores.MensajeOperacionExitosaArchivoGenerado))
 }

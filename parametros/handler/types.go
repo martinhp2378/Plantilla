@@ -7,6 +7,7 @@ import (
 	"PlantillaInstitucional/parametros"
 	"PlantillaInstitucional/shared/db"
 	errores "PlantillaInstitucional/shared/errores"
+	"PlantillaInstitucional/shared/pagina"
 	"fmt"
 	"net/http"
 
@@ -31,16 +32,21 @@ type ParametrosServiceProvider interface {
 }
 
 func (h *ParametrosHandler) RegisterRoutes(r chi.Router) {
-	r.Route("/configuracion/parametros", func(r chi.Router) {
+	rutas := pagina.GlobalRutas.Parametros
+	r.Route(rutas.Prefix, func(r chi.Router) {
 		r.Get("/", h.CargarPagina_templ)
 		r.Get("/tabla", h.CargarTabla_templ)
+		r.Get("/modales/nuevo", h.ModalCreate_templ)
 		r.Post("/", h.Create_templ)
-		r.Get("/{id}", h.ModalUpdate_templ)
+		r.Get("/modales/editar/{id}", h.ModalUpdate_templ)
 		r.Put("/{id}", h.Update_templ)
 		r.Delete("/{id}", h.Delete_templ)
-		r.Get("/nuevo", h.ModalCreate_templ)
-		r.Get("/pdf", h.ReportePDF_templ)
-		r.Get("/excel", h.ReporteExcel_templ)
+
+		r.Route("/reportes", func(r chi.Router) {
+			r.Get("/pdf", h.ReportePDF_templ)
+			r.Get("/excel", h.ReporteExcel_templ)
+			r.Get("/notificacion-exito", h.SuccessFileMessage)
+		})
 	})
 }
 

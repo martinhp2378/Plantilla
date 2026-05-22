@@ -4,6 +4,7 @@ import (
 	"PlantillaInstitucional/institucion"
 	"PlantillaInstitucional/pagination"
 	errores "PlantillaInstitucional/shared/errores"
+	"PlantillaInstitucional/shared/pagina"
 	"context"
 	"fmt"
 	"net/http"
@@ -72,16 +73,21 @@ func NewPersonaHandler(service PersonaServiceProvider, logger *logs.Logger, vali
 // --- Helpers de Parseo de Requests (Privados) ---
 
 func (h *personaHandler) RegisterRoutes(r chi.Router) {
-	r.Route("/institucion/personas", func(r chi.Router) {
+	rutas := pagina.GlobalRutas.Personas
+	r.Route(rutas.Prefix, func(r chi.Router) {
 		r.Get("/", h.Index)
 		r.Get("/tabla", h.SearchTable)
-		r.Get("/nuevo", h.ModalCreate)
+		r.Get("/modales/nuevo", h.ModalCreate)
 		r.Post("/", h.Create)
-		r.Get("/{id}", h.ModalUpdate)
+		r.Get("/modales/editar/{id}", h.ModalUpdate)
 		r.Put("/{id}", h.Update)
 		r.Delete("/{id}", h.Delete)
-		r.Get("/pdf", h.DownloadPDF)
-		r.Get("/excel", h.DownloadExcel)
+
+		r.Route("/reportes", func(r chi.Router) {
+			r.Get("/pdf", h.DownloadPDF)
+			r.Get("/excel", h.DownloadExcel)
+			r.Get("/notificacion-exito", h.SuccessFileMessage)
+		})
 	})
 }
 

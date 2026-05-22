@@ -8,7 +8,7 @@ import (
 
 templ FormCreatePolicyV2(p policy.Politica, errors map[string]string, perfiles []string, recursos []string, acciones []string) {
 	@v2.ModalV2("Nueva Política ABAC") {
-		<form hx-post="/configuracion/politicas" hx-target="#modal" hx-swap="innerHTML" class="space-y-8">
+		<form hx-post="/configuracion/politicas/" hx-target="#modal" hx-swap="innerHTML" class="space-y-8">
 			@formFields(p, errors, perfiles, recursos, acciones)
 			@v2.ModalFooterV2("Guardar Política")
 		</form>
@@ -17,7 +17,7 @@ templ FormCreatePolicyV2(p policy.Politica, errors map[string]string, perfiles [
 
 templ FormUpdatePolicyV2(p *policy.Politica, errors map[string]string, perfiles []string, recursos []string, acciones []string) {
 	@v2.ModalV2("Editar Política ABAC") {
-		<form hx-put={ "/configuracion/politicas/" + p.Nombre } hx-target="#modal" hx-swap="innerHTML" class="space-y-8">
+		<form hx-put={ "/configuracion/politicas/" + p.Nombre + "/" } hx-target="#modal" hx-swap="innerHTML" class="space-y-8">
 			@formFields(*p, errors, perfiles, recursos, acciones)
 			@v2.ModalFooterV2("Guardar Cambios")
 		</form>

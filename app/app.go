@@ -15,7 +15,6 @@ import (
 	persona_service "PlantillaInstitucional/institucion/service"
 	login_repo "PlantillaInstitucional/login/db"
 	login_handler "PlantillaInstitucional/login/handlers"
-	"PlantillaInstitucional/modulo_ejemplo"
 	"PlantillaInstitucional/pagination"
 	parametros_handler "PlantillaInstitucional/parametros/handler"
 	parametros_repo "PlantillaInstitucional/parametros/repository"
@@ -59,7 +58,6 @@ type App struct {
 }
 
 type Handlers struct {
-	Example   modulo_ejemplo.Handler
 	Usuario   *usuario_handler.UsuarioHandler
 	Perfil    *perfil_handler.PerfilHandler
 	Policy    *policy_handler.PolicyHandler
@@ -80,7 +78,6 @@ type PolicyResolver interface {
 }
 
 type Services struct {
-	Example   modulo_ejemplo.Service
 	Usuario   usuario_service.UsuarioServiceProvider
 	Perfil    perfil_service.PerfilServiceProvider
 	Policy    PolicyResolver
@@ -89,7 +86,6 @@ type Services struct {
 }
 
 type Repositories struct {
-	Example   modulo_ejemplo.Repository
 	Tenants   tenants.Repository
 	Usuario   *usuario_repo.UsuarioRepository
 	Perfil  *perfil_repo.PerfilRepository

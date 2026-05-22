@@ -11,8 +11,8 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"PlantillaInstitucional/institucion"
 	"PlantillaInstitucional/pagination"
+	"PlantillaInstitucional/shared/pagina"
 	"PlantillaInstitucional/shared/views/components/v2"
-	"fmt"
 )
 
 func TableV2(criterios pagination.CriteriosPagina[institucion.Persona], baseURL string, oob bool) templ.Component {
@@ -36,8 +36,9 @@ func TableV2(criterios pagination.CriteriosPagina[institucion.Persona], baseURL 
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
+		rutas := pagina.GlobalRutas.Personas
 		buildSortURL := func(field string) string {
-			return criterios.WithSort(field).BuildURL("/institucion/personas/tabla", 1)
+			return criterios.WithSort(field).BuildURL(rutas.Tabla, 1)
 		}
 
 		headers := []v2.TableHeader{
@@ -53,8 +54,8 @@ func TableV2(criterios pagination.CriteriosPagina[institucion.Persona], baseURL 
 			Title:          "Catálogo de Personal",
 			Subtitle:       "Gestión de Identidad Institucional",
 			Headers:        headers,
-			CreateURL:      "/institucion/personas/modales/nuevo",
-			SearchURL:      "/institucion/personas/tabla",
+			CreateURL:      rutas.Nuevo,
+			SearchURL:      rutas.Tabla,
 			Target:         "#tablapersonas",
 			ModalTarget:    "#modal",
 			OOB:            oob,
@@ -63,9 +64,9 @@ func TableV2(criterios pagination.CriteriosPagina[institucion.Persona], baseURL 
 			Page:           criterios.Index,
 			Size:           criterios.Size,
 			Total:          criterios.Count,
-			PDFExportURL:   "/institucion/personas/reportes/pdf",
-			ExcelExportURL: "/institucion/personas/reportes/excel",
-			ToastURL:       "/institucion/personas/reportes/notificacion-exito",
+			PDFExportURL:   rutas.Export.PDF,
+			ExcelExportURL: rutas.Export.Excel,
+			ToastURL:       rutas.Export.Notificacion,
 		}
 		templ_7745c5c3_Var2 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -89,8 +90,8 @@ func TableV2(criterios pagination.CriteriosPagina[institucion.Persona], baseURL 
 						p.Curp,
 						p.ClaveIssemym,
 					},
-					EditURL:     fmt.Sprintf("/institucion/personas/modales/editar/%s", p.UuidPersona),
-					DeleteURL:   fmt.Sprintf("/institucion/personas/%s", p.UuidPersona),
+					EditURL:     rutas.GetEditar(p.UuidPersona),
+					DeleteURL:   rutas.GetBorrar(p.UuidPersona),
 					Target:      "#tablapersonas",
 					ModalTarget: "#modal",
 				}).Render(ctx, templ_7745c5c3_Buffer)

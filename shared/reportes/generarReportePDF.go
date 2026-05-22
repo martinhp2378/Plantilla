@@ -26,7 +26,7 @@ const (
 	margenInferiorMax   = 185.0
 	margenLateralMin    = 20.0
 	margenTextoCelda    = 6.0
-	fuenteTabla         = "DejaVu"
+	fuenteTabla         = "Arial"
 	fuenteBold          = "B"
 	fuenteRegular       = ""
 )
@@ -62,10 +62,13 @@ func GenerarReportePDF[T any](
 		return "", fmt.Errorf("lista vacía")
 	}
 
-	pdf := gofpdf.New("L", "mm", "A4", "./static/public/font")
-	pdf.AddUTF8Font(fuenteTabla, fuenteRegular, "DejaVuSansCondensed.ttf")
-	pdf.AddUTF8Font(fuenteTabla, fuenteBold, "DejaVuSansCondensed-Bold.ttf")
-	pdf.SetFont(fuenteTabla, fuenteRegular, 12)
+	pdf := gofpdf.New("L", "mm", "A4", "")
+	// Comentamos Gotham OTF temporalmente ya que causa panic en SplitLines por falta de soporte UTF8 nativo para OTF
+	// pdf.AddUTF8Font(fuenteTabla, fuenteRegular, "Gotham-Book.otf")
+	// pdf.AddUTF8Font(fuenteTabla, fuenteBold, "Gotham-Bold.otf")
+	
+	// Usamos Arial (built-in) para validar la estructura del reporte
+	pdf.SetFont("Arial", fuenteRegular, 12)
 	pdf.AddPage()
 
 	pageWidth, _ := pdf.GetPageSize()
@@ -73,7 +76,7 @@ func GenerarReportePDF[T any](
 	usableWidth := pageWidth - leftMargin - rightMargin
 
 	// Bloque de la primera página (con imagen y título)
-	logoPath := "./static/public/img/Encabezado.hj.ByN.png"
+	logoPath := archivosMgr.LocalPathPublico("img/Encabezado.hj.ByN.png")
 	imgW_px, imgH_px, err := GetImageDimensions(logoPath)
 	if err != nil {
 		log.Printf("Advertencia: No se pudo obtener las dimensiones de la imagen, usando valores por defecto: %v", err)

@@ -8,6 +8,7 @@ import (
 	"PlantillaInstitucional/login/views"
 	"PlantillaInstitucional/login/views/layouts"
 	errores "PlantillaInstitucional/shared/errores"
+	"PlantillaInstitucional/shared/pagina"
 	"PlantillaInstitucional/shared/utils"
 
 	"github.com/go-chi/chi/v5"
@@ -15,20 +16,25 @@ import (
 )
 
 func (h *HandlerLogin) RegisterRoutes(r chi.Router) {
+	rutas := pagina.GlobalRutas.Login
+	r.Route(rutas.Prefix, func(r chi.Router) {
+		r.Get("/", h.HandlePaginaIngresar)
+		r.Post("/", h.HandlePostIngresar)
+		r.Get("/salir", h.HandleCerrarSesion)
+		r.Get("/sesion", h.HandleMostrarSesion)
+	})
+	
+	// La raíz se maneja fuera del prefijo /login para permitir la redirección inicial
 	r.Get("/", h.HandlePaginaInicio)
-	r.Get("/login", h.HandlePaginaIngresar)
-	r.Post("/login", h.HandlePostIngresar)
-	r.Get("/login/salir", h.HandleCerrarSesion)
-	r.Get("/sesion", h.HandleMostrarSesion)
 }
 
 func (h *HandlerLogin) HandlePaginaInicio(w http.ResponseWriter, r *http.Request) {
 	sesion := sesiones.RecuperarSesion(r.Context())
 	if sesion.EstaFirmado() {
-		http.Redirect(w, r, "/institucion/personas", http.StatusFound)
+		http.Redirect(w, r, pagina.GlobalRutas.Dashboard.Base, http.StatusFound)
 		return
 	}
-	http.Redirect(w, r, "/login", http.StatusFound)
+	http.Redirect(w, r, pagina.GlobalRutas.Login.Prefix, http.StatusFound)
 }
 
 func (h *HandlerLogin) HandlePaginaIngresar(w http.ResponseWriter, r *http.Request) {
@@ -39,7 +45,7 @@ func (h *HandlerLogin) HandlePaginaIngresar(w http.ResponseWriter, r *http.Reque
 func (h *HandlerLogin) HandleCerrarSesion(w http.ResponseWriter, r *http.Request) {
 	sesion := sesiones.RecuperarSesion(r.Context())
 	sesion.CerrarSesion()
-	http.Redirect(w, r, "/login", http.StatusFound)
+	http.Redirect(w, r, pagina.GlobalRutas.Login.Prefix, http.StatusFound)
 }
 
 func (h *HandlerLogin) HandleMostrarSesion(w http.ResponseWriter, r *http.Request) {
@@ -91,8 +97,8 @@ func (h *HandlerLogin) HandlePostIngresar(w http.ResponseWriter, r *http.Request
 
 	// Redirigir según perfil: administrador va al dashboard
 	if datosUsuario.Perfil == sesiones.PerfilSuperAdmin {
-		http.Redirect(w, r, "/dashboard", http.StatusFound)
+		http.Redirect(w, r, pagina.GlobalRutas.Dashboard.Base, http.StatusFound)
 		return
 	}
-	http.Redirect(w, r, "/institucion/personas", http.StatusFound)
+	http.Redirect(w, r, pagina.GlobalRutas.Personas.Base, http.StatusFound)
 }

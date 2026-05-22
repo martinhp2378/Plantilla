@@ -6,6 +6,7 @@ import (
 	"PlantillaInstitucional/configuracion/perfil"
 	"PlantillaInstitucional/pagination"
 	shared "PlantillaInstitucional/shared/errores"
+	"PlantillaInstitucional/shared/pagina"
 	"fmt"
 	"net/http"
 
@@ -47,16 +48,21 @@ func NewPerfilHandler(svc PerfilServiceProvider, logger *logs.Logger, validate *
 // --- Helpers de Parseo de Requests (Privados) ---
 
 func (h *PerfilHandler) RegisterRoutes(r chi.Router) {
-	r.Route("/configuracion/perfiles", func(r chi.Router) {
+	rutas := pagina.GlobalRutas.Perfiles
+	r.Route(rutas.Prefix, func(r chi.Router) {
 		r.Get("/", h.Index)
 		r.Get("/tabla", h.SearchTable)
-		r.Get("/nuevo", h.ModalCreate)
+		r.Get("/modales/nuevo", h.ModalCreate)
 		r.Post("/", h.Create)
-		r.Get("/{id}", h.ModalUpdate)
+		r.Get("/modales/editar/{id}", h.ModalUpdate)
 		r.Put("/{id}", h.Update)
 		r.Delete("/{id}", h.Delete)
-		r.Get("/pdf", h.DownloadPDF)
-		r.Get("/excel", h.DownloadExcel)
+
+		r.Route("/reportes", func(r chi.Router) {
+			r.Get("/pdf", h.DownloadPDF)
+			r.Get("/excel", h.DownloadExcel)
+			r.Get("/notificacion-exito", h.SuccessFileMessage)
+		})
 	})
 }
 

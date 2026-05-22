@@ -4,6 +4,7 @@ import (
 	"PlantillaInstitucional/configuracion/policy"
 	"PlantillaInstitucional/pagination"
 	shared "PlantillaInstitucional/shared/errores"
+	"PlantillaInstitucional/shared/pagina"
 	"context"
 	"fmt"
 	"net/http"
@@ -32,12 +33,13 @@ func NewPolicyHandler(svc PolicyServiceProvider, logger *logs.Logger) *PolicyHan
 }
 
 func (h *PolicyHandler) RegisterRoutes(r chi.Router) {
-	r.Route("/configuracion/politicas", func(r chi.Router) {
+	rutas := pagina.GlobalRutas.Politicas
+	r.Route(rutas.Prefix, func(r chi.Router) {
 		r.Get("/", h.Index)
 		r.Get("/tabla", h.SearchTable)
-		r.Get("/nuevo", h.ModalCreate)
+		r.Get("/modales/nuevo", h.ModalCreate)
 		r.Post("/", h.Create)
-		r.Get("/{id}", h.ModalUpdate)
+		r.Get("/modales/editar/{id}", h.ModalUpdate)
 		r.Put("/{id}", h.Update)
 		r.Delete("/{id}", h.Delete)
 	})

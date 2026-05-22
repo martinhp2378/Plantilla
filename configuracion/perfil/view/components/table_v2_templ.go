@@ -11,8 +11,8 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"PlantillaInstitucional/configuracion/perfil"
 	"PlantillaInstitucional/pagination"
+	"PlantillaInstitucional/shared/pagina"
 	"PlantillaInstitucional/shared/views/components/v2"
-	"fmt"
 )
 
 func TableV2(criterios pagination.CriteriosPagina[perfil.Perfil], oob bool) templ.Component {
@@ -36,9 +36,10 @@ func TableV2(criterios pagination.CriteriosPagina[perfil.Perfil], oob bool) temp
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
+		rutas := pagina.GlobalRutas.Perfiles
 		// Helper para construir URLs de ordenamiento
 		buildSortURL := func(field string) string {
-			return criterios.WithSort(field).BuildURL("/configuracion/perfiles/tabla", 1)
+			return criterios.WithSort(field).BuildURL(rutas.Tabla, 1)
 		}
 
 		headers := []v2.TableHeader{
@@ -56,8 +57,8 @@ func TableV2(criterios pagination.CriteriosPagina[perfil.Perfil], oob bool) temp
 			Title:          "Gestión de Perfiles",
 			Subtitle:       "Catálogo de Roles y Permisos",
 			Headers:        headers,
-			CreateURL:      "/configuracion/perfiles/modales/nuevo",
-			SearchURL:      "/configuracion/perfiles/tabla",
+			CreateURL:      rutas.Nuevo,
+			SearchURL:      rutas.Tabla,
 			Target:         "#tablaperfiles",
 			ModalTarget:    "#modal",
 			OOB:            oob,
@@ -66,9 +67,9 @@ func TableV2(criterios pagination.CriteriosPagina[perfil.Perfil], oob bool) temp
 			Page:           criterios.Index,
 			Size:           criterios.Size,
 			Total:          criterios.Count,
-			PDFExportURL:   "/configuracion/perfiles/reportes/pdf",
-			ExcelExportURL: "/configuracion/perfiles/reportes/excel",
-			ToastURL:       "/configuracion/perfiles/reportes/notificacion-exito",
+			PDFExportURL:   rutas.Export.PDF,
+			ExcelExportURL: rutas.Export.Excel,
+			ToastURL:       rutas.Export.Notificacion,
 		}
 		templ_7745c5c3_Var2 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -87,8 +88,8 @@ func TableV2(criterios pagination.CriteriosPagina[perfil.Perfil], oob bool) temp
 					Cells: []string{
 						p.Nombre,
 					},
-					EditURL:     fmt.Sprintf("/configuracion/perfiles/modales/editar/%s", p.Nombre),
-					DeleteURL:   fmt.Sprintf("/configuracion/perfiles/%s", p.Nombre),
+					EditURL:     rutas.GetEditar(p.Nombre),
+					DeleteURL:   rutas.GetBorrar(p.Nombre),
 					Target:      "#tablaperfiles",
 					ModalTarget: "#modal",
 				}).Render(ctx, templ_7745c5c3_Buffer)

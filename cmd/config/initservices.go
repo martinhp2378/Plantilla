@@ -8,7 +8,6 @@ import (
 	usuario_listeners "PlantillaInstitucional/configuracion/usuario/listeners"
 	usuario_service "PlantillaInstitucional/configuracion/usuario/service"
 	persona_service "PlantillaInstitucional/institucion/service"
-	"PlantillaInstitucional/modulo_ejemplo/service"
 	parametros_service "PlantillaInstitucional/parametros/service"
 	sharedEvents "PlantillaInstitucional/shared/events"
 
@@ -23,7 +22,6 @@ func InitServices(a *app.App) {
 	a.EventDispatcher = dispatcher
 
 	// 2. Core Services
-	a.Services.Example = service.NewExampleService(a.Repositories.Example)
 	a.Services.Parametro = parametros_service.NewService(a.Logger, a.Repositories.Parametro, validate, a.ManejadorArchivos)
 	
 	// Inject Parameters into Email Service

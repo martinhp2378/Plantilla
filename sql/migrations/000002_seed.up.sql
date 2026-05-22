@@ -45,8 +45,7 @@ INSERT INTO politica (nombre, descripcion, perfil, recurso, accion, reglas, razo
 ('Acceso Perfiles', 'Gestión de perfiles', 'superadmin', 'superadmin', 'consultar', '{"path_prefix": "/configuracion/perfiles"}', 'Carga Inicial'),
 ('Acceso Politicas', 'Gestión de políticas', 'superadmin', 'superadmin', 'consultar', '{"path_prefix": "/configuracion/politicas"}', 'Carga Inicial'),
 ('Acceso Dashboard', 'Acceso al dashboard', 'superadmin', 'dashboard', 'consultar', '{"path_prefix": "/dashboard"}', 'Carga Inicial'),
-('Acceso Personas', 'Catálogo de personas', 'superadmin', 'institucion', 'consultar', '{"path_prefix": "/institucion/personas"}', 'Carga Inicial'),
-('Acceso Ejemplos', 'Módulo de ejemplo', 'superadmin', 'dashboard', 'consultar', '{"path_prefix": "/examples"}', 'Carga Inicial')
+('Acceso Personas', 'Catálogo de personas', 'superadmin', 'institucion', 'consultar', '{"path_prefix": "/institucion/personas"}', 'Carga Inicial')
 ON CONFLICT DO NOTHING;
 
 -- 5. TENANT INICIAL

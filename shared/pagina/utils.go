@@ -3,21 +3,23 @@ package pagina
 func (p Pagina) URL() string {
 	switch p {
 	case Inicio:
-		return "/dashboard"
+		return GlobalRutas.Dashboard.Base
 	case Usuarios:
-		return "/configuracion/usuarios"
+		return GlobalRutas.Usuarios.Base
 	case Perfil:
-		return "/configuracion/perfiles"
+		return GlobalRutas.Perfiles.Base
 	case Politicas:
-		return "/configuracion/politicas"
+		return GlobalRutas.Politicas.Base
 	case Parametros:
-		return "/configuracion/parametros"
+		return GlobalRutas.Parametros.Base
+	case Personas:
+		return GlobalRutas.Personas.Base
+	
+	// Páginas legacy o pendientes de migrar a GlobalRutas
 	case Regiones:
 		return "/regiones/region"
 	case Clinicas:
 		return "/clinicas/clinica"
-	case Personas:
-		return "/institucion/personas"
 	case Dimensiones:
 		return "/dimensiones/dimension"
 	case Secciones:
@@ -58,8 +60,6 @@ func (p Pagina) URL() string {
 		return "/reporte-general"
 	case Mapas:
 		return "/mapas/resultados"
-	case Ejemplo:
-		return "/examples"
 	default:
 		return "#"
 	}

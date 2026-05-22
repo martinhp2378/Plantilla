@@ -257,6 +257,18 @@ func (m *ManejadorArchivos) PrefijoUrlPublico() string {
 	return fmt.Sprintf("https://storage.googleapis.com/%s/%s/static", m.config.CubetaPublicaGCP, m.config.Servicio)
 }
 
+func (m *ManejadorArchivos) Config() *Config {
+	return m.config
+}
+
+func (m *ManejadorArchivos) LocalPathPublico(filePath string) string {
+	return filepath.Join(m.config.DirArchivosLocal, "public", filePath)
+}
+
+func (m *ManejadorArchivos) LocalPathPrivado(filePath string) string {
+	return filepath.Join(m.config.DirArchivosLocal, "private", filePath)
+}
+
 func (m *ManejadorArchivos) Close() error {
 	var errs []error
 

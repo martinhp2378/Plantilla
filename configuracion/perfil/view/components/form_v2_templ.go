@@ -46,7 +46,7 @@ func FormCreatePerfilV2(p perfil.Perfil, errors map[string]string) templ.Compone
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<form hx-post=\"/configuracion/perfiles\" hx-target=\"#modal\" hx-swap=\"innerHTML\" class=\"space-y-8\"><div class=\"grid grid-cols-1 gap-y-6\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<form hx-post=\"/configuracion/perfiles/\" hx-target=\"#modal\" hx-swap=\"innerHTML\" class=\"space-y-8\"><div class=\"grid grid-cols-1 gap-y-6\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -121,9 +121,9 @@ func FormUpdatePerfilV2(p *perfil.Perfil, errors map[string]string) templ.Compon
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 string
-			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue("/configuracion/perfiles/" + p.Nombre)
+			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue("/configuracion/perfiles/" + p.Nombre + "/")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `configuracion/perfil/view/components/form_v2.templ`, Line: 28, Col: 54}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `configuracion/perfil/view/components/form_v2.templ`, Line: 28, Col: 60}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
 			if templ_7745c5c3_Err != nil {

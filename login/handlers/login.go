@@ -1,9 +1,9 @@
 package handlers
+
 import (
 	"encoding/json"
 	"errors"
 	"net/http"
-
 
 	"PlantillaInstitucional/login/views"
 	"PlantillaInstitucional/login/views/layouts"
@@ -23,7 +23,7 @@ func (h *HandlerLogin) RegisterRoutes(r chi.Router) {
 		r.Get("/salir", h.HandleCerrarSesion)
 		r.Get("/sesion", h.HandleMostrarSesion)
 	})
-	
+
 	// La raíz se maneja fuera del prefijo /login para permitir la redirección inicial
 	r.Get("/", h.HandlePaginaInicio)
 }
@@ -97,7 +97,7 @@ func (h *HandlerLogin) HandlePostIngresar(w http.ResponseWriter, r *http.Request
 
 	// Redirigir según perfil: administrador va al dashboard
 	if datosUsuario.Perfil == sesiones.PerfilSuperAdmin {
-		http.Redirect(w, r, pagina.GlobalRutas.Dashboard.Base, http.StatusFound)
+		http.Redirect(w, r, pagina.GlobalRutas.Personas.Prefix, http.StatusFound)
 		return
 	}
 	http.Redirect(w, r, pagina.GlobalRutas.Personas.Base, http.StatusFound)

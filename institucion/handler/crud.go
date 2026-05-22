@@ -10,8 +10,6 @@ import (
 	"net/http"
 )
 
-const baseUrl = "/institucion/personas/tabla"
-
 // --- Actions ---
 
 func (h *personaHandler) Create(w http.ResponseWriter, r *http.Request) {

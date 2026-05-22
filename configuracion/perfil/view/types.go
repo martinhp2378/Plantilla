@@ -11,10 +11,3 @@ type ParamsPerfiles struct {
 	Pag       pagina.Pagina
 	Criterios pagination.CriteriosPagina[perfil.Perfil]
 }
-
-const (
-	BaseUrlPerfiles  = "/configuracion/perfil"
-	TablaUrlPerfiles = BaseUrlPerfiles + "/tabla"
-	XlsUrlPerfiles   = BaseUrlPerfiles + "/reportes/excel"
-	PdfUrlPerfiles   = BaseUrlPerfiles + "/reportes/pdf"
-)

@@ -12,8 +12,6 @@ import (
 	"net/http"
 )
 
-const baseUrl = "/configuracion/usuarios/tabla"
-
 // --- Actions ---
 
 func (h *UsuarioHandler) Create(w http.ResponseWriter, r *http.Request) {

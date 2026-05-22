@@ -26,11 +26,11 @@ func (h *UsuarioHandler) Index(w http.ResponseWriter, r *http.Request) {
 
 	// Si es peticion HTMX (desde el sidebar), mandamos solo el componente de tabla
 	if r.Header.Get("HX-Request") == "true" {
-		utils.RenderIgnore(ctx, w, layouts.UsuarioContentV2(data, baseUrl))
+		utils.RenderIgnore(ctx, w, layouts.UsuarioContentV2(data, pagina.GlobalRutas.Usuarios.Tabla))
 		return
 	}
 
-	utils.RenderIgnore(ctx, w, layouts.ViewUsuariosV2("Usuarios", pagina.Usuarios, data, baseUrl))
+	utils.RenderIgnore(ctx, w, layouts.ViewUsuariosV2("Usuarios", pagina.Usuarios, data, pagina.GlobalRutas.Usuarios.Tabla))
 }
 
 func (h *UsuarioHandler) SearchTable(w http.ResponseWriter, r *http.Request) {
@@ -45,7 +45,7 @@ func (h *UsuarioHandler) SearchTable(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Renderizamos solo la tabla fragmento para HTMX
-	utils.RenderIgnore(ctx, w, components.TableV2(data, baseUrl, false))
+	utils.RenderIgnore(ctx, w, components.TableV2(data, pagina.GlobalRutas.Usuarios.Tabla, false))
 }
 
 // --- Render Helpers (Privados) ---
@@ -59,9 +59,9 @@ func (h *UsuarioHandler) renderErrorGeneric(w http.ResponseWriter, r *http.Reque
 
 	// Si es una peticion HTMX, mandamos solo el fragmento
 	if r.Header.Get("HX-Request") == "true" {
-		utils.RenderIgnore(ctx, &sb, components.TableV2(data, baseUrl, false))
+		utils.RenderIgnore(ctx, &sb, components.TableV2(data, pagina.GlobalRutas.Usuarios.Tabla, false))
 	} else {
-		utils.RenderIgnore(ctx, &sb, layouts.ViewUsuariosV2("Usuarios", pagina.Usuarios, data, baseUrl))
+		utils.RenderIgnore(ctx, &sb, layouts.ViewUsuariosV2("Usuarios", pagina.Usuarios, data, pagina.GlobalRutas.Usuarios.Tabla))
 	}
 	utils.RenderIgnore(ctx, &sb, compartidos.Mensaje("error", msg))
 
@@ -79,7 +79,7 @@ func (h *UsuarioHandler) renderSuccess(w http.ResponseWriter, r *http.Request, m
 	// 2. Recargar Tabla con datos frescos
 	criterios := pagination.NewCriteriosPaginaDefault[usuario.Usuario]()
 	data, _ := h.service.ListarUsuarios(ctx, criterios)
-	utils.RenderIgnore(ctx, &sb, components.TableV2(data, baseUrl, true))
+	utils.RenderIgnore(ctx, &sb, components.TableV2(data, pagina.GlobalRutas.Usuarios.Tabla, true))
 
 	// 3. Mostrar Toast/Mensaje
 	utils.RenderIgnore(ctx, &sb, compartidos.Mensaje("success", msg))

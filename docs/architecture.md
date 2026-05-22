@@ -23,11 +23,19 @@ Ubicada en `service/`.
 Ubicada en `repository/`.
 *   **Función**: Gestionar la persistencia.
 *   **Responsabilidad**: Ejecutar queries SQL mediante `Pgxpool`.
-*   **Aislamiento**: Solo esta capa conoce los detalles de la base de datos (nombres de tablas, esquemas, etc.).
+*   **Aislamiento**: Solo esta capa conoce los detalles de la base de datos. Se debe evitar el uso de prefijos de esquema explícitos (`sistema.`, `institucion.`) para permitir la flexibilidad del `search_path` en entornos multi-tenant.
+
+## 🔗 Gestión de Rutas (`GlobalRutas`)
+
+Para asegurar la consistencia entre el ruteador del servidor (Chi) y las URLs en las vistas (HTMX/Templ), el proyecto utiliza un sistema centralizado en `shared/pagina/rutas.go`.
+
+*   **Prefix**: Ruta base sin slash final (ej. `/configuracion/usuarios`), ideal para `r.Route()`.
+*   **Base**: Ruta base con slash final (ej. `/configuracion/usuarios/`), ideal para enlaces de navegación.
+*   **Helpers**: Métodos como `GetEditar(id)` o `GetBorrar(id)` generan automáticamente URLs consistentes.
 
 ## 💉 Inyección de Dependencias (DI)
 
-La DI se realiza de forma manual en la carpeta `cmd/config/`. Esto proporciona control total sobre el ciclo de vida de los objetos sin la magia oculta de los frameworks de DI.
+La DI se realiza de forma manual en la carpeta `cmd/config/`. Esto proporciona control total sobre el ciclo de vida de los objetos.
 *   `initrepository.go`: Instancia los repositorios.
 *   `initservices.go`: Instancia los servicios pasando los repositorios requeridos.
 *   `inithandlers.go`: Instancia los handlers pasando los servicios requeridos.
@@ -37,6 +45,4 @@ La DI se realiza de forma manual en la carpeta `cmd/config/`. Esto proporciona c
 La plantilla implementa un modelo de **Aislamiento por Esquemas**:
 1.  **Detección**: El `TenantMiddleware` identifica el tenant basado en el subdominio (ej. `admin.localhost`).
 2.  **Contexto**: El esquema asociado se inyecta en el `context.Context`.
-3.  **Ejecución**: Antes de cada operación de BD, el pool de conexiones ejecuta `SET search_path TO <tenant_schema>, public`.
-
-Esto permite compartir una única base de datos y un único pool de conexiones, manteniendo los datos lógicamente separados.
+3.  **Ejecución**: El pool de conexiones resuelve las tablas dinámicamente usando el orden: `tenant_schema, sesion, institucion, sistema, public`.

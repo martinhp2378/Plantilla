@@ -6,22 +6,21 @@ Esta sección detalla cómo trabajar en el día a día con la plantilla.
 
 *   **Go**: Versión 1.22+.
 *   **Templ CLI**: Para generar código Go a partir de archivos `.templ`.
-*   **Air**: Para recarga en vivo del servidor Go.
-*   **Docker Desktop/OrbStack**: Para gestionar la base de datos local.
+*   **Docker Desktop/OrbStack**: Para gestionar el entorno completo.
 *   **VS Code / GoLand**: Con plugins de Go y Templ activados.
 
 ## 🏃 Flujo de Trabajo Local
 
-### 1. Variables de Entorno
-Copia el archivo de ejemplo y ajusta los valores si es necesario:
+### 1. Variables de Env
+Copia el archivo de ejemplo:
 ```bash
 cp .env.example .env
 ```
 
-### 2. Base de Datos
-Levanta el contenedor de PostgreSQL (esquemas y seeds se cargan automáticamente):
+### 2. Entorno Docker (Visualización)
+Para ver el sistema con todos sus servicios (incluyendo generadores de PDF y DB):
 ```bash
-docker-compose -f docker-compose.local.yml up -d db
+docker-compose -f docker-compose.local.yml up --build -d
 ```
 
 ### 3. Generación de Vistas
@@ -29,36 +28,33 @@ Si modificas archivos `.templ`, debes regenerar el código Go:
 ```bash
 templ generate
 ```
-También puedes usar el modo "watch": `templ generate --watch`.
 
-### 4. Ejecución con Live Reload
-Usa Air para que el servidor se reinicie automáticamente al detectar cambios:
-```bash
-air
-```
+## 📊 Reportes PDF y Assets
+
+El sistema de reportes utiliza la librería de archivos interna para localizar recursos.
+*   **Fuentes**: Se encuentran en `static/public/font/Gotham`.
+    *   *Nota*: Se requiere formato **.ttf** para soporte UTF-8 completo en PDF.
+*   **Imágenes**: Logos institucionales en `static/public/img/`.
 
 ## 🧪 Pruebas (Testing)
 
-El proyecto fomenta el uso de pruebas unitarias. Ejecuta todas las pruebas con:
+Ejecuta todas las pruebas con:
 ```bash
 go test ./...
 ```
 
 ## 📦 Gestión de Dependencias
 
-Usamos `go mod`. Si agregas una nueva dependencia, ejecuta:
+El proyecto utiliza el directorio `vendor/` para garantizar compilaciones consistentes.
 ```bash
 go mod tidy
 go mod vendor
 ```
-*(Nota: El proyecto prefiere mantener las dependencias en `vendor/` para compilaciones consistentes).*
 
 ---
 
-## 📝 Convenciones de Código
+## 📝 Convenciones
 
-*   **Idiomas**: Código e identificadores en inglés. Comentarios y documentación en español (o inglés según el equipo).
-*   **Naming**: 
-    *   Interfaces: `Service`, `Repository`, `Handler`.
-    *   Funciones: PascalCase para exportadas, camelCase para privadas.
-*   **Errores**: Siempre envolver errores con contexto: `fmt.Errorf("error al hacer X: %w", err)`.
+*   **Rutas**: NUNCA hardcodear rutas como strings manuales. Usa siempre `pagina.GlobalRutas`.
+*   **SQL**: NUNCA usar prefijos de esquema explícitos en las queries de los repositorios para no romper el multi-tenant.
+*   **Naming**: PascalCase para exportadas, camelCase para privadas.

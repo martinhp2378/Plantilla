@@ -11,15 +11,15 @@ services:
       - ID_PROYECTO=aplicativos-issemym-dev
       - VERSION=v0.1.0
       - LISTEN_ADDR=:8080
-      - PQ_WRITE_DB=fossil
-      - PQ_WRITE_USER=fossil
-      - PQ_WRITE_PASSWORD=j91r04m25p
+      - PQ_WRITE_DB=plantilla
+      - PQ_WRITE_USER=postgres
+      - PQ_WRITE_PASSWORD=postgres
       - PQ_WRITE_HOST=db
       - PQ_WRITE_PORT=5432
       - PQ_WRITE_SSL_MODE=disable
-      - PQ_READ_DB=fossil
-      - PQ_READ_USER=fossil
-      - PQ_READ_PASSWORD=j91r04m25p
+      - PQ_READ_DB=plantilla
+      - PQ_READ_USER=postgres
+      - PQ_READ_PASSWORD=postgres
       - PQ_READ_HOST=db
       - PQ_READ_PORT=5432
       - PQ_READ_SSL_MODE=disable
@@ -30,9 +30,9 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      - POSTGRES_USER=fossil
-      - POSTGRES_PASSWORD=j91r04m25p
-      - POSTGRES_DB=fossil
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=plantilla
     ports:
       - "5432:5432"
     volumes:

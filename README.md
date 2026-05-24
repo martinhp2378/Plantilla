@@ -11,7 +11,7 @@ Esta plantilla ha sido diseñada para reducir el tiempo de arranque de proyectos
 ### Pilares Clave:
 - **Productividad**: Desarrollo rápido con recarga en vivo (Air).
 - **Simplicidad**: Menos JavaScript, más HTML interactivo (HTMX).
-- **Seguridad**: Tipado fuerte desde la base de datos hasta la capa de vista (Templ).
+- **Seguridad Proactiva**: Tipado fuerte y protección integrada contra CSRF y Clickjacking.
 - **Escalabilidad**: Arquitectura hexagonal lista para crecer.
 
 ---
@@ -20,51 +20,31 @@ Esta plantilla ha sido diseñada para reducir el tiempo de arranque de proyectos
 
 | Tecnología | Propósito |
 | :--- | :--- |
-| **Go (1.22+)** | Lenguaje core de alto rendimiento. |
-| **Chi** | Router HTTP ligero e idiomático. |
+| **Go (1.25+)** | Lenguaje core de alto rendimiento. |
+| **Chi v5** | Router HTTP ligero e idiomático. |
 | **Templ** | Generación de componentes HTML con seguridad de tipos. |
-| **HTMX** | Interactividad AJAX moderna sin frameworks pesados. |
-| **Tailwind CSS** | Estilizado rápido y consistente. |
-| **PostgreSQL** | Motor de base de datos relacional robusto. |
-| **Pgx** | Driver de PostgreSQL con soporte nativo para pools. |
+| **HTMX v2** | Interactividad AJAX moderna sin frameworks pesados. |
+| **Tailwind CSS v4** | Estilizado rápido y consistente. |
+| **PostgreSQL 16** | Motor de base de datos relacional robusto. |
+| **Pgx v5** | Driver de PostgreSQL con soporte nativo para pools. |
 | **Alpine.js** | Interactividad mínima en el cliente (modales, tabs). |
 
 ---
 
-## 📐 Arquitectura
+## 🛡️ Seguridad
 
-El proyecto sigue una **Arquitectura Hexagonal (Puertos y Adaptadores)** simplificada:
-
-1.  **Handler**: Capa de transporte (HTTP/HTMX). Se encarga de recibir peticiones y renderizar respuestas.
-2.  **Service**: Lógica de negocio pura. Orquestación de casos de uso.
-3.  **Repository**: Adaptadores de persistencia. Consultas SQL específicas.
-4.  **View**: Componentes Templ y Layouts base.
-
-### Multi-tenancy
-Soporte nativo para aislamiento de datos por esquemas de base de datos, identificado mediante subdominios.
-
----
-
-## 📁 Estructura del Proyecto
-
-```bash
-├── app/                  # Lógica central y Middlewares globales
-├── cmd/                  # Punto de entrada y configuración de DI
-├── configuracion/        # Módulos transversales (Usuarios, Perfiles, Políticas)
-├── institucion/          # Módulos de dominio institucional
-├── shared/               # Utilidades compartidas y componentes UI globales
-├── sql/                  # Migraciones de base de datos
-├── static/               # Assets estáticos (CSS, JS, Imágenes)
-└── vendor/               # Dependencias locales
-```
+El sistema incluye una capa de hardenización por defecto:
+- **CSRF**: Protección global mediante `nosurf`, integrada automáticamente con HTMX.
+- **Headers**: Implementación de cabeceras OWASP (HSTS, X-Frame-Options, X-Content-Type-Options).
+- **Validación ABAC**: Middleware de políticas basado en perfiles y rutas.
 
 ---
 
 ## 🏁 Inicio Rápido
 
 ### Prerrequisitos
-- Go 1.22 o superior
-- Docker y Docker Compose
+- Go 1.25 o superior
+- Docker Desktop / OrbStack
 - [Templ CLI](https://templ.guide/quick-start/installation)
 
 ### Configuración Local
@@ -74,35 +54,23 @@ Soporte nativo para aislamiento de datos por esquemas de base de datos, identifi
     cp .env.example .env
     ```
 
-2.  **Levantar Base de Datos**:
+2.  **Levantar con Docker**:
+    El proyecto está configurado para sincronizar las variables del `.env` directamente con los contenedores.
     ```bash
-    docker-compose -f docker-compose.local.yml up -d db
+    docker compose -f docker-compose.local.yml up --build -d
     ```
 
-3.  **Generar Código Templ**:
+3.  **Generar Código Templ (Manual)**:
+    Si no usas Docker para el desarrollo, recordá generar los componentes:
     ```bash
     templ generate
     ```
 
-4.  **Ejecutar la Aplicación**:
-    ```bash
-    go run cmd/main.go
-    ```
-
 ---
 
-## 📦 Despliegue y Migraciones
+## 📦 Migraciones
 
-### Migraciones
-Utilizamos `golang-migrate`. Las migraciones se ejecutan automáticamente al iniciar la aplicación.
-
-Para crear una nueva migración:
+Las migraciones se ejecutan automáticamente al iniciar la aplicación. Para crear una nueva:
 ```bash
 migrate create -ext sql -dir sql/migrations -seq nombre_de_la_migración
 ```
-
----
-
-## 📜 Licencia
-
-MIT - Ver el archivo [LICENSE](LICENSE) para más detalles.

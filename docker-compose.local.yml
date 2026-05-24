@@ -6,33 +6,33 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - AMBIENTE=LOCAL
-      - SERVICIO=plantilla
-      - ID_PROYECTO=aplicativos-issemym-dev
-      - VERSION=v0.1.0
-      - LISTEN_ADDR=:8080
-      - PQ_WRITE_DB=plantilla
-      - PQ_WRITE_USER=postgres
-      - PQ_WRITE_PASSWORD=postgres
+      - AMBIENTE=${AMBIENTE:-LOCAL}
+      - SERVICIO=${SERVICIO:-plantilla}
+      - ID_PROYECTO=${ID_PROYECTO:-aplicativos-issemym-dev}
+      - VERSION=${VERSION:-v0.1.0}
+      - LISTEN_ADDR=${LISTEN_ADDR:-:8080}
+      - PQ_WRITE_DB=${PQ_WRITE_DB:-plantilla}
+      - PQ_WRITE_USER=${PQ_WRITE_USER:-postgres}
+      - PQ_WRITE_PASSWORD=${PQ_WRITE_PASSWORD:-postgres}
       - PQ_WRITE_HOST=db
       - PQ_WRITE_PORT=5432
       - PQ_WRITE_SSL_MODE=disable
-      - PQ_READ_DB=plantilla
-      - PQ_READ_USER=postgres
-      - PQ_READ_PASSWORD=postgres
+      - PQ_READ_DB=${PQ_READ_DB:-plantilla}
+      - PQ_READ_USER=${PQ_READ_USER:-postgres}
+      - PQ_READ_PASSWORD=${PQ_READ_PASSWORD:-postgres}
       - PQ_READ_HOST=db
       - PQ_READ_PORT=5432
       - PQ_READ_SSL_MODE=disable
-      - LOGS_CON_COLORES=true
+      - LOGS_CON_COLORES=${LOGS_CON_COLORES:-true}
     depends_on:
       - db
 
   db:
     image: postgres:16-alpine
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=plantilla
+      - POSTGRES_USER=${PQ_WRITE_USER:-postgres}
+      - POSTGRES_PASSWORD=${PQ_WRITE_PASSWORD:-postgres}
+      - POSTGRES_DB=${PQ_WRITE_DB:-plantilla}
     ports:
       - "5432:5432"
     volumes:

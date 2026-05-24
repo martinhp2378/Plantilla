@@ -50,8 +50,13 @@ func main() {
 		logger.Fatal("error al conectar a postgres", err)
 	}
 
-	if err := bd.RunMigrations(env); err != nil {
-		logger.Fatal("error ejecutando migraciones", err)
+	if !env.SkipMigrations {
+		logger.Info("Ejecutando migraciones de base de datos...")
+		if err := bd.RunMigrations(env); err != nil {
+			logger.Fatal("error ejecutando migraciones", err)
+		}
+	} else {
+		logger.Info("SKIP_MIGRATIONS habilitado, omitiendo ejecución de migraciones")
 	}
 
 	pqWrite := pools.WritePool

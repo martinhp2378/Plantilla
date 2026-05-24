@@ -24,15 +24,20 @@ FROM alpine:latest
 # Install CA certificates for HTTPS requests (useful for private repos/APIs)
 RUN apk add --no-cache ca-certificates
 
+# Create system group and user with UID 10001
+RUN addgroup -g 10001 -S appuser && adduser -u 10001 -S -G appuser appuser
+
 WORKDIR /app
 
-# Copy the binary from builder
-COPY --from=builder /app/main .
-COPY --from=builder /app/.env.example .env
+# Copy the binary from builder with correct ownership
+COPY --chown=appuser:appuser --from=builder /app/main .
 
-# Copy necessary runtime assets
-COPY --from=builder /app/sql ./sql
-COPY --from=builder /app/static ./static
+# Copy necessary runtime assets with correct ownership
+COPY --chown=appuser:appuser --from=builder /app/sql ./sql
+COPY --chown=appuser:appuser --from=builder /app/static ./static
+
+# Switch to non-root user
+USER 10001
 
 # Expose port
 EXPOSE 8080

@@ -125,6 +125,7 @@ type Env struct {
 	SMTPUseTLS   bool   `json:"smtpUseTLS"`
 
 	VariablePersonal string `json:"variabePersonal"`
+	SkipMigrations   bool   `json:"skipMigrations"`
 }
 
 func GetEnv(envPaths ...string) (*Env, error) {
@@ -173,6 +174,19 @@ func GetEnv(envPaths ...string) (*Env, error) {
 	}
 
 	serverListen := os.Getenv("LISTEN_ADDR")
+	if serverListen == "" {
+		port := os.Getenv("PORT")
+		if port == "" {
+			serverListen = ":8080"
+		} else {
+			if strings.HasPrefix(port, ":") {
+				serverListen = port
+			} else {
+				serverListen = ":" + port
+			}
+		}
+	}
+
 	if !strings.Contains(serverListen, ":") {
 		return nil, fmt.Errorf("el puerto del server debe tener el formato :8080")
 	} else {
@@ -186,30 +200,25 @@ func GetEnv(envPaths ...string) (*Env, error) {
 	env.PqWritePort = os.Getenv("PQ_WRITE_PORT")
 	env.PqWriteSSLMode = os.Getenv("PQ_WRITE_SSL_MODE")
 
-	writeMaxConns, err := strconv.ParseInt(os.Getenv("PQ_WRITE_MAX_CONNS"), 10, 32)
+	writeMaxConns, err := parseEnvInt32OrDefault("PQ_WRITE_MAX_CONNS", 25)
 	if err != nil {
-		return nil, fmt.Errorf("error al parsear %s, se esperaba valor Int",
-			"PQ_WRITE_MAX_CONNS")
+		return nil, err
 	}
-	writeMinConns, err := strconv.ParseInt(os.Getenv("PQ_WRITE_MIN_CONNS"), 10, 32)
+	writeMinConns, err := parseEnvInt32OrDefault("PQ_WRITE_MIN_CONNS", 2)
 	if err != nil {
-		return nil, fmt.Errorf("error al parsear %s, se esperaba valor Int",
-			"PQ_WRITE_MIN_CONNS")
+		return nil, err
 	}
-	writeMaxConnIdle, err := strconv.ParseInt(os.Getenv("PQ_WRITE_MAX_CONN_IDLE"), 10, 32)
+	writeMaxConnIdle, err := parseEnvInt64OrDefault("PQ_WRITE_MAX_CONN_IDLE", 0)
 	if err != nil {
-		return nil, fmt.Errorf("error al parsear %s, se esperaba valor Int",
-			"PQ_WRITE_MAX_CONN_IDLE")
+		return nil, err
 	}
-	writeMaxConnLife, err := strconv.ParseInt(os.Getenv("PQ_WRITE_MAX_CONN_LIFE"), 10, 32)
+	writeMaxConnLife, err := parseEnvInt64OrDefault("PQ_WRITE_MAX_CONN_LIFE", 0)
 	if err != nil {
-		return nil, fmt.Errorf("error al parsear %s, se esperaba valor Int",
-			"PQ_WRITE_MAX_CONN_LIFE")
+		return nil, err
 	}
-	writeQueryTimeout, err := strconv.ParseInt(os.Getenv("PQ_WRITE_QUERY_TIMEOUT"), 10, 32)
+	writeQueryTimeout, err := parseEnvInt64OrDefault("PQ_WRITE_QUERY_TIMEOUT", 0)
 	if err != nil {
-		return nil, fmt.Errorf("error al parsear %s, se esperaba valor Int",
-			"PQ_WRITE_QUERY_TIMEOUT")
+		return nil, err
 	}
 
 	env.PqReadDb = os.Getenv("PQ_READ_DB")
@@ -219,30 +228,25 @@ func GetEnv(envPaths ...string) (*Env, error) {
 	env.PqReadPort = os.Getenv("PQ_READ_PORT")
 	env.PqReadSSLMode = os.Getenv("PQ_READ_SSL_MODE")
 
-	readMaxConns, err := strconv.ParseInt(os.Getenv("PQ_READ_MAX_CONNS"), 10, 32)
+	readMaxConns, err := parseEnvInt32OrDefault("PQ_READ_MAX_CONNS", 25)
 	if err != nil {
-		return nil, fmt.Errorf("error al parsear %s, se esperaba valor Int",
-			"PQ_READ_MAX_CONNS")
+		return nil, err
 	}
-	readMinConns, err := strconv.ParseInt(os.Getenv("PQ_READ_MIN_CONNS"), 10, 32)
+	readMinConns, err := parseEnvInt32OrDefault("PQ_READ_MIN_CONNS", 2)
 	if err != nil {
-		return nil, fmt.Errorf("error al parsear %s, se esperaba valor Int",
-			"PQ_READ_MIN_CONNS")
+		return nil, err
 	}
-	readMaxConnIdle, err := strconv.ParseInt(os.Getenv("PQ_READ_MAX_CONN_IDLE"), 10, 32)
+	readMaxConnIdle, err := parseEnvInt64OrDefault("PQ_READ_MAX_CONN_IDLE", 0)
 	if err != nil {
-		return nil, fmt.Errorf("error al parsear %s, se esperaba valor Int",
-			"PQ_READ_MAX_CONN_IDLE")
+		return nil, err
 	}
-	readMaxConnLife, err := strconv.ParseInt(os.Getenv("PQ_READ_MAX_CONN_LIFE"), 10, 32)
+	readMaxConnLife, err := parseEnvInt64OrDefault("PQ_READ_MAX_CONN_LIFE", 0)
 	if err != nil {
-		return nil, fmt.Errorf("error al parsear %s, se esperaba valor Int",
-			"PQ_READ_MAX_CONN_LIFE")
+		return nil, err
 	}
-	readQueryTimeout, err := strconv.ParseInt(os.Getenv("PQ_READ_QUERY_TIMEOUT"), 10, 32)
+	readQueryTimeout, err := parseEnvInt64OrDefault("PQ_READ_QUERY_TIMEOUT", 0)
 	if err != nil {
-		return nil, fmt.Errorf("error al parsear %s, se esperaba valor Int",
-			"PQ_READ_QUERY_TIMEOUT")
+		return nil, err
 	}
 
 	env.PqWriteMaxConns = int32(writeMaxConns)
@@ -560,6 +564,14 @@ func GetEnv(envPaths ...string) (*Env, error) {
 		env.VariablePersonal = "La VariablePersonal no fue encontrada"
 	}
 
+	if skipMigrationsStr := os.Getenv("SKIP_MIGRATIONS"); skipMigrationsStr != "" {
+		skipMigrations, err := strconv.ParseBool(skipMigrationsStr)
+		if err != nil {
+			return nil, fmt.Errorf("error al parsear %s: se esperaba un bool", "SKIP_MIGRATIONS")
+		}
+		env.SkipMigrations = skipMigrations
+	}
+
 	return env, nil
 }
 
@@ -583,6 +595,30 @@ func EnvDeContexto(ctx context.Context) *Env {
 		}
 	}
 	return nil
+}
+
+func parseEnvInt32OrDefault(key string, defaultValue int32) (int32, error) {
+	valStr := os.Getenv(key)
+	if valStr == "" {
+		return defaultValue, nil
+	}
+	val, err := strconv.ParseInt(valStr, 10, 32)
+	if err != nil {
+		return 0, fmt.Errorf("error al parsear %s, se esperaba valor Int", key)
+	}
+	return int32(val), nil
+}
+
+func parseEnvInt64OrDefault(key string, defaultValue int64) (int64, error) {
+	valStr := os.Getenv(key)
+	if valStr == "" {
+		return defaultValue, nil
+	}
+	val, err := strconv.ParseInt(valStr, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("error al parsear %s, se esperaba valor Int", key)
+	}
+	return val, nil
 }
 
 // utilerías para librería de archivos

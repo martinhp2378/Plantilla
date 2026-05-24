@@ -55,7 +55,7 @@ func nuevaRuta(base string) Rutas {
 		Nuevo:  base + "/modales/nuevo",
 		Crear:  base + "/",
 		Editar: base + "/modales/editar/%s",
-		Update: base + "/%s/",
+		Update: base + "/%s",
 		Borrar: base + "/%s",
 		Export: RutasExport{
 			PDF:          base + "/reportes/pdf",

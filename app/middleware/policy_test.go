@@ -83,7 +83,7 @@ func TestPolicyMiddleware(t *testing.T) {
 			signedIn:       true,
 			profile:        "user",
 			allowed:        false,
-			expectedStatus: http.StatusSeeOther,
+			expectedStatus: http.StatusForbidden,
 		},
 		{
 			name:           "HTMX request denied with 403",

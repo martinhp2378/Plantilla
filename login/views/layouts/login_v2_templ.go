@@ -11,6 +11,7 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"PlantillaInstitucional/login/views"
 	"PlantillaInstitucional/shared/pagina"
+	"PlantillaInstitucional/shared/utils"
 	"PlantillaInstitucional/shared/views/components/v2"
 	"PlantillaInstitucional/shared/views/layouts"
 )
@@ -63,49 +64,62 @@ func LoginV2(formaLogin views.FormaLogin) templ.Component {
 			var templ_7745c5c3_Var3 templ.SafeURL
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinURLErrs(string(templ.SafeURL(pagina.GlobalRutas.Login.Prefix)))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `login/views/layouts/login_v2.templ`, Line: 36, Col: 74}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `login/views/layouts/login_v2.templ`, Line: 37, Col: 74}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" method=\"POST\" class=\"flex flex-col lg:flex-row items-center justify-center gap-x-12 gap-y-10 bg-transparent\"><!-- Label --><div class=\"flex-shrink-0\"><p class=\"text-xl font-bold text-gray-900 whitespace-nowrap\">Ingrese a su cuenta</p></div><!-- Input Correo --><div class=\"w-full lg:w-80 relative\"><div class=\"absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none\"><span class=\"material-icons text-[var(--color-naranja)] text-2xl\">mail</span></div><input id=\"email\" name=\"email\" type=\"email\" placeholder=\"Correo electrónico\" required value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" method=\"POST\" class=\"flex flex-col lg:flex-row items-center justify-center gap-x-12 gap-y-10 bg-transparent\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var4 string
-			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.ResolveAttributeValue(formaLogin.Email)
+			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.ResolveAttributeValue(utils.GetCSRFToken(ctx))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `login/views/layouts/login_v2.templ`, Line: 53, Col: 32}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `login/views/layouts/login_v2.templ`, Line: 38, Col: 76}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var4)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\" class=\"block w-full pl-12 pr-3 py-4 border-b-2 border-gray-400 bg-white/40 focus:border-[var(--color-naranja)] focus:ring-0 transition-all text-base font-medium placeholder:text-gray-500\"></div><!-- Input Contraseña con link ABSOLUTO --><div class=\"w-full lg:w-80 relative\"><div class=\"relative\"><div class=\"absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none\"><span class=\"material-icons text-[var(--color-naranja)] text-2xl\">lock</span></div><input id=\"password\" name=\"password\" type=\"password\" placeholder=\"Contraseña\" required class=\"block w-full pl-12 pr-3 py-4 border-b-2 border-gray-400 bg-white/40 backdrop-blur-sm focus:border-[var(--color-naranja)] focus:ring-0 transition-all text-base font-medium placeholder:text-gray-500\"></div><!-- Link posicionado absolutamente para no mover el input --><div class=\"lg:absolute lg:top-full lg:right-0 mt-3\"><a href=\"#\" class=\"text-[10px] font-black text-gray-400 hover:text-[var(--color-guinda)] uppercase tracking-widest transition-colors whitespace-nowrap\">¿Olvidó su contraseña?</a></div></div><!-- Botón de Acción --><div class=\"w-full lg:w-auto\"><button type=\"submit\" class=\"w-full lg:w-auto bg-[var(--color-guinda)] px-14 py-4 text-sm font-black text-white uppercase tracking-[0.2em] hover:brightness-110 transition-all shadow-2xl active:scale-95 rounded-xl lg:rounded-none\">Entrar al sitio</button></div></form>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\"><!-- Label --><div class=\"flex-shrink-0\"><p class=\"text-xl font-bold text-gray-900 whitespace-nowrap\">Ingrese a su cuenta</p></div><!-- Input Correo --><div class=\"w-full lg:w-80 relative\"><div class=\"absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none\"><span class=\"material-icons text-[var(--color-naranja)] text-2xl\">mail</span></div><input id=\"email\" name=\"email\" type=\"email\" placeholder=\"Correo electrónico\" required value=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var5 string
+			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue(formaLogin.Email)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `login/views/layouts/login_v2.templ`, Line: 55, Col: 32}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" class=\"block w-full pl-12 pr-3 py-4 border-b-2 border-gray-400 bg-white/40 focus:border-[var(--color-naranja)] focus:ring-0 transition-all text-base font-medium placeholder:text-gray-500\"></div><!-- Input Contraseña con link ABSOLUTO --><div class=\"w-full lg:w-80 relative\"><div class=\"relative\"><div class=\"absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none\"><span class=\"material-icons text-[var(--color-naranja)] text-2xl\">lock</span></div><input id=\"password\" name=\"password\" type=\"password\" placeholder=\"Contraseña\" required class=\"block w-full pl-12 pr-3 py-4 border-b-2 border-gray-400 bg-white/40 backdrop-blur-sm focus:border-[var(--color-naranja)] focus:ring-0 transition-all text-base font-medium placeholder:text-gray-500\"></div><!-- Link posicionado absolutamente para no mover el input --><div class=\"lg:absolute lg:top-full lg:right-0 mt-3\"><a href=\"#\" class=\"text-[10px] font-black text-gray-400 hover:text-[var(--color-guinda)] uppercase tracking-widest transition-colors whitespace-nowrap\">¿Olvidó su contraseña?</a></div></div><!-- Botón de Acción --><div class=\"w-full lg:w-auto\"><button type=\"submit\" class=\"w-full lg:w-auto bg-[var(--color-guinda)] px-14 py-4 text-sm font-black text-white uppercase tracking-[0.2em] hover:brightness-110 transition-all shadow-2xl active:scale-95 rounded-xl lg:rounded-none\">Entrar al sitio</button></div></form>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if formaLogin.Error != "" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div class=\"mt-16 flex items-center justify-center gap-3 text-rose-600 animate-bounce\"><span class=\"material-icons\">error_outline</span> <span class=\"text-xs font-black uppercase tracking-widest\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div class=\"mt-16 flex items-center justify-center gap-3 text-rose-600 animate-bounce\"><span class=\"material-icons\">error_outline</span> <span class=\"text-xs font-black uppercase tracking-widest\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var5 string
-				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(formaLogin.Error)
+				var templ_7745c5c3_Var6 string
+				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(formaLogin.Error)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `login/views/layouts/login_v2.templ`, Line: 95, Col: 84}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `login/views/layouts/login_v2.templ`, Line: 97, Col: 84}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</span></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</span></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div></div><!-- Footer sutil --><div class=\"pb-10 text-center\"><p class=\"text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]\">© 2026. ISSEMYM <span class=\"text-[var(--color-naranja)] mx-2\">•</span> Tu opinión nos ayuda a mejorar</p></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div></div><!-- Footer sutil --><div class=\"pb-10 text-center\"><p class=\"text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]\">© 2026. ISSEMYM <span class=\"text-[var(--color-naranja)] mx-2\">•</span> Tu opinión nos ayuda a mejorar</p></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

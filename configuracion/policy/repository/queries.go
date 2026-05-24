@@ -47,7 +47,7 @@ WHERE p.nombre = $1
 
 const insertPolitica = `
 INSERT INTO sesion.politica (nombre, descripcion, perfil, recurso, accion, reglas)
-VALUES ($1, $2, $3, $4, $5, jsonb_build_object('path_prefix', $6))
+VALUES ($1, $2, $3, $4, $5, jsonb_build_object('path_prefix', $6::text))
 RETURNING nombre
 `
 
@@ -58,7 +58,7 @@ SET nombre = $1,
     perfil = $3,
     recurso = $4,
     accion = $5,
-    reglas = jsonb_build_object('path_prefix', $6)
+    reglas = jsonb_build_object('path_prefix', $6::text)
 WHERE nombre = $7
 `
 

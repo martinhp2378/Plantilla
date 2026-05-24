@@ -120,4 +120,51 @@ func Pagina500() templ.Component {
 	})
 }
 
+func Pagina403() templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var6 == nil {
+			templ_7745c5c3_Var6 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Var7 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+			if !templ_7745c5c3_IsBuffer {
+				defer func() {
+					templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+					if templ_7745c5c3_Err == nil {
+						templ_7745c5c3_Err = templ_7745c5c3_BufErr
+					}
+				}()
+			}
+			ctx = templ.InitializeContext(ctx)
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div class=\"min-h-screen flex items-center justify-center p-6 sm:p-12 bg-[var(--surface-arena-20)] relative overflow-hidden\"><!-- Fondo Decorativo --><div class=\"absolute top-0 right-0 w-96 h-96 bg-[var(--color-guinda)] opacity-5 rounded-full -translate-y-1/2 translate-x-1/2\"></div><div class=\"max-w-2xl w-full text-center space-y-12 relative z-10\"><!-- Código de Error --><div class=\"relative inline-block\"><h2 class=\"text-[12rem] sm:text-[16rem] font-black text-white leading-none tracking-tighter drop-shadow-2xl\">403</h2><div class=\"absolute inset-0 flex items-center justify-center\"><span class=\"text-4xl sm:text-6xl font-black text-[var(--color-guinda)] uppercase tracking-widest\">Bloqueado</span></div></div><div class=\"space-y-6\"><h1 class=\"text-3xl sm:text-4xl font-black text-gray-800 uppercase tracking-tighter\">Acceso <span class=\"text-[var(--color-naranja)]\">restringido</span></h1><p class=\"text-sm sm:text-base font-bold text-gray-400 uppercase tracking-widest leading-relaxed max-w-lg mx-auto\">Lo sentimos, no tenés los permisos necesarios para acceder a este módulo. Si creés que esto es un error, contactá al administrador.</p></div><div class=\"pt-8\"><a href=\"/dashboard\" class=\"inline-flex items-center gap-4 bg-[var(--color-guinda)] text-white px-10 py-5 rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-2xl hover:brightness-110 hover:-translate-y-1 active:scale-95 transition-all\"><span class=\"material-icons\">lock_person</span> Volver al Panel</a></div></div></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			return nil
+		})
+		templ_7745c5c3_Err = BaseSinNav("Acceso Denegado").Render(templ.WithChildren(ctx, templ_7745c5c3_Var7), templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
 var _ = templruntime.GeneratedTemplate

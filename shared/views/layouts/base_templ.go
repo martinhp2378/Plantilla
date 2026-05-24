@@ -10,6 +10,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"PlantillaInstitucional/shared/pagina"
+	"PlantillaInstitucional/shared/utils"
 	"PlantillaInstitucional/shared/views/components"
 	"PlantillaInstitucional/shared/views/components/v2"
 )
@@ -35,20 +36,33 @@ func Base(titulo string) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html class=\"h-full bg-[var(--surface-arena-20)]\" lang=\"es-MX\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><meta name=\"description\" content=\"Plantilla ISSEMYM - UI v2\"><meta name=\"theme-color\" content=\"#9F2241\"><title>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html class=\"h-full bg-[var(--surface-arena-20)]\" lang=\"es-MX\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><meta name=\"description\" content=\"Plantilla ISSEMYM - UI v2\"><meta name=\"theme-color\" content=\"#9F2241\"><meta name=\"csrf-token\" content=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var2 string
-		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(titulo)
+		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.ResolveAttributeValue(utils.GetCSRFToken(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/layouts/base.templ`, Line: 17, Col: 18}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/layouts/base.templ`, Line: 18, Col: 60}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><link href=\"https://fonts.googleapis.com/icon?family=Material+Icons\" rel=\"stylesheet\"><script src=\"https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4\"></script><style type=\"text/tailwindcss\">\n\t\t\t\t@font-face {\n\t\t\t\t\tfont-family: 'Gotham';\n\t\t\t\t\tsrc: url('/static/public/font/Gotham/Gotham-Book.otf') format('opentype');\n\t\t\t\t\tfont-weight: 400;\n\t\t\t\t\tfont-style: normal;\n\t\t\t\t}\n\t\t\t\t@font-face {\n\t\t\t\t\tfont-family: 'Gotham';\n\t\t\t\t\tsrc: url('/static/public/font/Gotham/Gotham-Medium.otf') format('opentype');\n\t\t\t\t\tfont-weight: 500;\n\t\t\t\t\tfont-style: normal;\n\t\t\t\t}\n\t\t\t\t@font-face {\n\t\t\t\t\tfont-family: 'Gotham';\n\t\t\t\t\tsrc: url('/static/public/font/Gotham/Gotham-Bold.otf') format('opentype');\n\t\t\t\t\tfont-weight: 700;\n\t\t\t\t\tfont-style: normal;\n\t\t\t\t}\n\t\t\t\t@font-face {\n\t\t\t\t\tfont-family: 'Gotham';\n\t\t\t\t\tsrc: url('/static/public/font/Gotham/Gotham-Black.otf') format('opentype');\n\t\t\t\t\tfont-weight: 900;\n\t\t\t\t\tfont-style: normal;\n\t\t\t\t}\n\n\t\t\t\t@theme {\n\t\t\t\t\t--color-guinda: #9F2241;\n\t\t\t\t\t--color-naranja: #FF6600;\n\t\t\t\t\t--color-arena: #D6D1CA;\n\t\t\t\t\t--color-negro: #000000;\n\t\t\t\t\t--color-blanco: #FFFFFF;\n\n\t\t\t\t\t--surface-arena-20: color-mix(in srgb, var(--color-arena), white 80%);\n\t\t\t\t\t--surface-arena-30: color-mix(in srgb, var(--color-arena), white 70%);\n\t\t\t\t\t--surface-arena-40: color-mix(in srgb, var(--color-arena), white 60%);\n\t\t\t\t\t--surface-arena-60: color-mix(in srgb, var(--color-arena), white 40%);\n\n\t\t\t\t\t--font-sans: 'Gotham', 'Montserrat', system-ui, sans-serif;\n\t\t\t\t\t\n\t\t\t\t\t--breakpoint-xs: 480px;\n\t\t\t\t}\n\n\t\t\t\t@layer base {\n\t\t\t\t\thtml {\n\t\t\t\t\t\tfont-family: var(--font-sans);\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t</style><script defer src=\"https://cdn.fusioncharts.com/fusioncharts/latest/fusioncharts.js\"></script><script defer src=\"https://cdn.fusioncharts.com/fusioncharts/latest/fusioncharts.charts.js\"></script><script defer src=\"https://cdn.fusioncharts.com/fusioncharts/latest/themes/fusioncharts.theme.fusion.js\"></script><script src=\"https://cdn.jsdelivr.net/npm/htmx.org@2.0.6/dist/htmx.min.js\"></script><script defer src=\"https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js\"></script></head><body class=\"h-full bg-[var(--surface-arena-20)] text-gray-900\"><div id=\"modal\" hx-swap-oob=\"true\"></div><div id=\"toast-container\" class=\"fixed top-4 right-4 z-[9999] space-y-2\" hx-swap-oob=\"true\"></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\"><title>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var3 string
+		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(titulo)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/layouts/base.templ`, Line: 19, Col: 18}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</title><link href=\"https://fonts.googleapis.com/icon?family=Material+Icons\" rel=\"stylesheet\"><script src=\"https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4\"></script><style type=\"text/tailwindcss\">\n\t\t\t\t@font-face {\n\t\t\t\t\tfont-family: 'Gotham';\n\t\t\t\t\tsrc: url('/static/public/font/Gotham/Gotham-Book.otf') format('opentype');\n\t\t\t\t\tfont-weight: 400;\n\t\t\t\t\tfont-style: normal;\n\t\t\t\t}\n\t\t\t\t@font-face {\n\t\t\t\t\tfont-family: 'Gotham';\n\t\t\t\t\tsrc: url('/static/public/font/Gotham/Gotham-Medium.otf') format('opentype');\n\t\t\t\t\tfont-weight: 500;\n\t\t\t\t\tfont-style: normal;\n\t\t\t\t}\n\t\t\t\t@font-face {\n\t\t\t\t\tfont-family: 'Gotham';\n\t\t\t\t\tsrc: url('/static/public/font/Gotham/Gotham-Bold.otf') format('opentype');\n\t\t\t\t\tfont-weight: 700;\n\t\t\t\t\tfont-style: normal;\n\t\t\t\t}\n\t\t\t\t@font-face {\n\t\t\t\t\tfont-family: 'Gotham';\n\t\t\t\t\tsrc: url('/static/public/font/Gotham/Gotham-Black.otf') format('opentype');\n\t\t\t\t\tfont-weight: 900;\n\t\t\t\t\tfont-style: normal;\n\t\t\t\t}\n\n\t\t\t\t@theme {\n\t\t\t\t\t--color-guinda: #9F2241;\n\t\t\t\t\t--color-naranja: #FF6600;\n\t\t\t\t\t--color-arena: #D6D1CA;\n\t\t\t\t\t--color-negro: #000000;\n\t\t\t\t\t--color-blanco: #FFFFFF;\n\n\t\t\t\t\t--surface-arena-20: color-mix(in srgb, var(--color-arena), white 80%);\n\t\t\t\t\t--surface-arena-30: color-mix(in srgb, var(--color-arena), white 70%);\n\t\t\t\t\t--surface-arena-40: color-mix(in srgb, var(--color-arena), white 60%);\n\t\t\t\t\t--surface-arena-60: color-mix(in srgb, var(--color-arena), white 40%);\n\n\t\t\t\t\t--font-sans: 'Gotham', 'Montserrat', system-ui, sans-serif;\n\t\t\t\t\t\n\t\t\t\t\t--breakpoint-xs: 480px;\n\t\t\t\t}\n\n\t\t\t\t@layer base {\n\t\t\t\t\thtml {\n\t\t\t\t\t\tfont-family: var(--font-sans);\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t</style><script defer src=\"https://cdn.fusioncharts.com/fusioncharts/latest/fusioncharts.js\"></script><script defer src=\"https://cdn.fusioncharts.com/fusioncharts/latest/fusioncharts.charts.js\"></script><script defer src=\"https://cdn.fusioncharts.com/fusioncharts/latest/themes/fusioncharts.theme.fusion.js\"></script><script src=\"https://cdn.jsdelivr.net/npm/htmx.org@2.0.6/dist/htmx.min.js\"></script><script defer src=\"https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js\"></script><script>\n\t\t\t\tdocument.addEventListener('htmx:configRequest', (event) => {\n\t\t\t\t\tconst csrfToken = document.querySelector('meta[name=\"csrf-token\"]').getAttribute('content');\n\t\t\t\t\tif (csrfToken) {\n\t\t\t\t\t\tevent.detail.headers['X-CSRF-Token'] = csrfToken;\n\t\t\t\t\t}\n\t\t\t\t});\n\t\t\t</script></head><body class=\"h-full bg-[var(--surface-arena-20)] text-gray-900\"><div id=\"modal\" hx-swap-oob=\"true\"></div><div id=\"toast-container\" class=\"fixed top-4 right-4 z-[9999] space-y-2\" hx-swap-oob=\"true\"></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -56,7 +70,7 @@ func Base(titulo string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<script src=\"/static/public/js/export-actions.js\" defer></script></body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<script src=\"/static/public/js/export-actions.js\" defer></script></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -81,12 +95,12 @@ func BaseConNav(titulo string, pag pagina.Pagina) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var3 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var3 == nil {
-			templ_7745c5c3_Var3 = templ.NopComponent
+		templ_7745c5c3_Var4 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var4 == nil {
+			templ_7745c5c3_Var4 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Var4 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_Var5 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 			if !templ_7745c5c3_IsBuffer {
@@ -98,7 +112,7 @@ func BaseConNav(titulo string, pag pagina.Pagina) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div id=\"contenedor-app-v2\" class=\"min-h-screen flex flex-col\" x-data=\"{ navIzqAbierta: window.innerWidth >= 1280 }\"><!-- Sidebar con comportamiento responsivo -->")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div id=\"contenedor-app-v2\" class=\"min-h-screen flex flex-col\" x-data=\"{ navIzqAbierta: window.innerWidth >= 1280 }\"><!-- Sidebar con comportamiento responsivo -->")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -106,7 +120,7 @@ func BaseConNav(titulo string, pag pagina.Pagina) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<!-- Overlay para movil --><div x-show=\"navIzqAbierta && window.innerWidth < 1280\" @click=\"navIzqAbierta = false\" class=\"fixed inset-0 bg-black/50 backdrop-blur-xs z-30 xl:hidden\" x-transition:enter=\"transition-opacity ease-linear duration-300\" x-transition:enter-start=\"opacity-0\" x-transition:enter-end=\"opacity-100\" x-transition:leave=\"transition-opacity ease-linear duration-300\" x-transition:leave-start=\"opacity-100\" x-transition:leave-end=\"opacity-0\"></div><!-- Contenido Principal --><div class=\"relative transition-all duration-300 flex flex-col flex-1\" :class=\"{ 'xl:pl-72': navIzqAbierta, 'pl-0': !navIzqAbierta }\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<!-- Overlay para movil --><div x-show=\"navIzqAbierta && window.innerWidth < 1280\" @click=\"navIzqAbierta = false\" class=\"fixed inset-0 bg-black/50 backdrop-blur-xs z-30 xl:hidden\" x-transition:enter=\"transition-opacity ease-linear duration-300\" x-transition:enter-start=\"opacity-0\" x-transition:enter-end=\"opacity-100\" x-transition:leave=\"transition-opacity ease-linear duration-300\" x-transition:leave-start=\"opacity-100\" x-transition:leave-end=\"opacity-0\"></div><!-- Contenido Principal --><div class=\"relative transition-all duration-300 flex flex-col flex-1\" :class=\"{ 'xl:pl-72': navIzqAbierta, 'pl-0': !navIzqAbierta }\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -114,11 +128,11 @@ func BaseConNav(titulo string, pag pagina.Pagina) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<main class=\"flex-1 pt-48 pb-12 px-4 sm:px-8 lg:px-12\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<main class=\"flex-1 pt-48 pb-12 px-4 sm:px-8 lg:px-12\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templ_7745c5c3_Var3.Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = templ_7745c5c3_Var4.Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -126,7 +140,7 @@ func BaseConNav(titulo string, pag pagina.Pagina) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</main>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</main>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -134,13 +148,13 @@ func BaseConNav(titulo string, pag pagina.Pagina) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = Base(titulo).Render(templ.WithChildren(ctx, templ_7745c5c3_Var4), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Base(titulo).Render(templ.WithChildren(ctx, templ_7745c5c3_Var5), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -165,12 +179,12 @@ func BaseSinNav(titulo string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var5 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var5 == nil {
-			templ_7745c5c3_Var5 = templ.NopComponent
+		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var6 == nil {
+			templ_7745c5c3_Var6 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Var6 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_Var7 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 			if !templ_7745c5c3_IsBuffer {
@@ -182,11 +196,11 @@ func BaseSinNav(titulo string) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<main class=\"min-h-screen\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<main class=\"min-h-screen\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templ_7745c5c3_Var5.Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = templ_7745c5c3_Var6.Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -194,7 +208,7 @@ func BaseSinNav(titulo string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</main>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</main>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -204,7 +218,7 @@ func BaseSinNav(titulo string) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = Base(titulo).Render(templ.WithChildren(ctx, templ_7745c5c3_Var6), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Base(titulo).Render(templ.WithChildren(ctx, templ_7745c5c3_Var7), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

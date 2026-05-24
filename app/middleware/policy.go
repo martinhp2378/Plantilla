@@ -3,6 +3,8 @@ package middleware
 import (
 	"PlantillaInstitucional/app"
 	"PlantillaInstitucional/shared/pagina"
+	"PlantillaInstitucional/shared/utils"
+	"PlantillaInstitucional/shared/views/layouts"
 	"net/http"
 	"strings"
 
@@ -57,13 +59,16 @@ func PolicyMiddleware(a *app.App) func(http.Handler) http.Handler {
 			if !permitido {
 				a.Logger.WarnContext(r.Context(), "acceso denegado por política", "path", path, "perfil", perfil)
 				
+				w.WriteHeader(http.StatusForbidden)
+				
 				if esSolicitudHTMX(r) {
-					w.Header().Set("HX-Redirect", pagina.GlobalRutas.Login.Prefix) // O a una página de "Sin Permisos"
-					w.WriteHeader(http.StatusForbidden)
+					// Si es HTMX, podemos renderizar el error en el contenedor principal o mostrar alerta
+					w.Header().Set("HX-Retarget", "body")
+					utils.RenderIgnore(r.Context(), w, layouts.Pagina403())
 					return
 				}
 				
-				http.Redirect(w, r, pagina.GlobalRutas.Login.Prefix, http.StatusSeeOther)
+				utils.RenderIgnore(r.Context(), w, layouts.Pagina403())
 				return
 			}
 

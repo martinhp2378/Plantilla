@@ -15,6 +15,25 @@ Soportado para APIs o comunicaciones stateless.
 *   Configurado mediante `ConstructorSesionJWT`.
 *   Permite autenticación mediante el header `Authorization: Bearer <token>`.
 
+## 🛡️ Capa de Seguridad (Hardenización)
+
+Además de la autenticación, el sistema implementa medidas proactivas contra ataques comunes de la web.
+
+### Protección CSRF (Cross-Site Request Forgery)
+Gestionada mediante la librería `nosurf` en `app/middleware/security.go`.
+*   **Funcionamiento**: Todas las peticiones mutables (POST, PUT, DELETE) requieren un token válido.
+*   **Integración HTMX**: El token se inyecta automáticamente en los headers de cada petición AJAX gracias a la configuración en `base.templ`.
+*   **Uso en Formularios**: En formularios tradicionales, se debe incluir un campo oculto:
+    ```templ
+    <input type="hidden" name="csrf_token" value={ utils.GetCSRFToken(ctx) } />
+    ```
+
+### Cabeceras de Seguridad (OWASP)
+El `SecurityHeadersMiddleware` inyecta automáticamente cabeceras recomendadas:
+*   `X-Frame-Options: DENY`: Previene ataques de Clickjacking.
+*   `X-Content-Type-Options: nosniff`: Evita que el navegador adivine el tipo MIME.
+*   `Strict-Transport-Security (HSTS)`: Fuerza el uso de HTTPS.
+
 ## 📜 Autorización (Middleware de Políticas)
 
 No basta con estar autenticado; el usuario debe tener permiso para acceder al recurso específico.

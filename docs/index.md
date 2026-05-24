@@ -24,6 +24,11 @@ Bienvenido a la documentación detallada de la **Plantilla Institucional**. Este
     *   Estructura de esquemas.
     *   Gestión de migraciones con golang-migrate.
     *   Repositores y Pgxpool.
+6.  **[Despliegue en Cloud Run](./cloud_run_deployment.md)**
+    *   Diseño de compatibilidad serverless (puerto dinámico, stateless).
+    *   Variables de entorno en producción.
+    *   Estrategia de migraciones desacopladas (SKIP_MIGRATIONS).
+    *   Securización del contenedor no-root.
 
 ---
 

@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"time"
@@ -93,7 +94,7 @@ func GenerarReporteExcel[T any](
 		log.Printf("Advertencia: No se pudo fusionar las celdas para la imagen: %v", err)
 	}
 
-	logoPath := "./static/public/img/Encabezado.hj.ByN.png"
+	logoPath := archivosMgr.LocalPathPublico(filepath.FromSlash("img/Encabezado.hj.ByN.png"))
 	opts := &excelize.GraphicOptions{
 		Positioning: "oneCell",
 		OffsetX:     5,

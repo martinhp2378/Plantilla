@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 
 	"PlantillaInstitucional/shared/qrcode"
@@ -42,7 +43,7 @@ func GenerarReportePDFMaroto[T any](
 	m.RegisterHeader(func() {
 		m.Row(25, func() {
 			m.Col(12, func() {
-				logoPath := archivosMgr.LocalPathPublico("img/Encabezado.hj.ByN.png")
+				logoPath := archivosMgr.LocalPathPublico(filepath.FromSlash("img/Encabezado.hj.ByN.png"))
 				if _, err := os.Stat(logoPath); err == nil {
 					_ = m.FileImage(logoPath, props.Rect{
 						Center:  true,

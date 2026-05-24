@@ -9,6 +9,7 @@ import (
 	_ "image/png"
 	"log"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"time"
@@ -76,7 +77,7 @@ func GenerarReportePDF[T any](
 	usableWidth := pageWidth - leftMargin - rightMargin
 
 	// Bloque de la primera página (con imagen y título)
-	logoPath := archivosMgr.LocalPathPublico("img/Encabezado.hj.ByN.png")
+	logoPath := archivosMgr.LocalPathPublico(filepath.FromSlash("img/Encabezado.hj.ByN.png"))
 	imgW_px, imgH_px, err := GetImageDimensions(logoPath)
 	if err != nil {
 		log.Printf("Advertencia: No se pudo obtener las dimensiones de la imagen, usando valores por defecto: %v", err)

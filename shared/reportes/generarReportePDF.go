@@ -1,6 +1,7 @@
 package shared
 
 import (
+	"PlantillaInstitucional/shared/entorno"
 	"bytes"
 	"context"
 	"fmt"
@@ -77,7 +78,12 @@ func GenerarReportePDF[T any](
 	usableWidth := pageWidth - leftMargin - rightMargin
 
 	// Bloque de la primera página (con imagen y título)
-	logoPath := archivosMgr.LocalPathPublico(filepath.FromSlash("img/Encabezado.hj.ByN.png"))
+	env := entorno.EnvDeContexto(ctx)
+	dirArchivosLocal := "./static"
+	if env != nil {
+		dirArchivosLocal = env.DirArchivosLocal
+	}
+	logoPath := filepath.Join(dirArchivosLocal, "public", filepath.FromSlash("img/Encabezado.hj.ByN.png"))
 	imgW_px, imgH_px, err := GetImageDimensions(logoPath)
 	if err != nil {
 		log.Printf("Advertencia: No se pudo obtener las dimensiones de la imagen, usando valores por defecto: %v", err)

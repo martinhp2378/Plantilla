@@ -24,6 +24,9 @@ const AnioKey contextKey = "anio"
 // TenantSchemaKey es la clave para inyectar y leer el esquema del tenant desde el contexto.
 const TenantSchemaKey contextKey = "tenantSchema"
 
+// CSRFTokenKey es la clave para inyectar y leer el token CSRF desde el contexto.
+const CSRFTokenKey contextKey = "csrfToken"
+
 // GetAplicacionID retrieves the aplicacionID from context, returns zero UUID if not set.
 func GetAplicacionID(ctx interface{ Value(interface{}) interface{} }) uuid.UUID {
 	if v := ctx.Value(AplicacionIDKey); v != nil {

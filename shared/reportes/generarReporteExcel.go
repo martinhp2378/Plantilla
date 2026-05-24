@@ -1,6 +1,7 @@
 package shared
 
 import (
+	"PlantillaInstitucional/shared/entorno"
 	"bytes"
 	"context"
 	"fmt"
@@ -94,7 +95,12 @@ func GenerarReporteExcel[T any](
 		log.Printf("Advertencia: No se pudo fusionar las celdas para la imagen: %v", err)
 	}
 
-	logoPath := archivosMgr.LocalPathPublico(filepath.FromSlash("img/Encabezado.hj.ByN.png"))
+	env := entorno.EnvDeContexto(ctx)
+	dirArchivosLocal := "./static"
+	if env != nil {
+		dirArchivosLocal = env.DirArchivosLocal
+	}
+	logoPath := filepath.Join(dirArchivosLocal, "public", filepath.FromSlash("img/Encabezado.hj.ByN.png"))
 	opts := &excelize.GraphicOptions{
 		Positioning: "oneCell",
 		OffsetX:     5,

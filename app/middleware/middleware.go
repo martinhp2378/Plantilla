@@ -20,6 +20,9 @@ type serviciosMiddleware struct {
 func RegistrarMiddlewaresApp(r chi.Router, a *app.App) {
 	sm := &serviciosMiddleware{a: a}
 
+	r.Use(SecurityHeadersMiddleware)
+	r.Use(CSRFMiddleware)
+
 	r.Use(TenantMiddleware(a))
 
 	r.Use(middleware.RequestID)

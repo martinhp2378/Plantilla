@@ -1,6 +1,8 @@
 package shared
 
 import (
+	"PlantillaInstitucional/shared/entorno"
+	"PlantillaInstitucional/shared/qrcode"
 	"bytes"
 	"context"
 	"encoding/base64"
@@ -10,7 +12,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"PlantillaInstitucional/shared/qrcode"
 	"github.com/issemym-repos/archivos"
 	"github.com/johnfercher/maroto/pkg/color"
 	"github.com/johnfercher/maroto/pkg/consts"
@@ -43,7 +44,12 @@ func GenerarReportePDFMaroto[T any](
 	m.RegisterHeader(func() {
 		m.Row(25, func() {
 			m.Col(12, func() {
-				logoPath := archivosMgr.LocalPathPublico(filepath.FromSlash("img/Encabezado.hj.ByN.png"))
+				env := entorno.EnvDeContexto(ctx)
+				dirArchivosLocal := "./static"
+				if env != nil {
+					dirArchivosLocal = env.DirArchivosLocal
+				}
+				logoPath := filepath.Join(dirArchivosLocal, "public", filepath.FromSlash("img/Encabezado.hj.ByN.png"))
 				if _, err := os.Stat(logoPath); err == nil {
 					_ = m.FileImage(logoPath, props.Rect{
 						Center:  true,
@@ -138,7 +144,7 @@ func GenerarReportePDFMaroto[T any](
 	})
 
 	// Generar en archivo temporal y luego leer
-	tempFile := fmt.Sprintf("/tmp/%s_%d.pdf", nombreArchivo, time.Now().UnixNano())
+	tempFile := filepath.Join(os.TempDir(), fmt.Sprintf("%s_%d.pdf", nombreArchivo, time.Now().UnixNano()))
 	if err := m.OutputFileAndClose(tempFile); err != nil {
 		return "", fmt.Errorf("error generando PDF Maroto: %v", err)
 	}

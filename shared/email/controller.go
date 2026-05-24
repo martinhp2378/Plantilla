@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -151,7 +152,7 @@ func (s *EmailService) SendUserCredentials(to, name, username, password string, 
 
 // ParseTemplate parses an HTML template with the provided data.
 func (s *EmailService) ParseTemplate(templateName string, data interface{}) (string, error) {
-	tmplPath := fmt.Sprintf("shared/email/templates/%s", templateName)
+	tmplPath := filepath.Join("shared", "email", "templates", templateName)
 
 	t, err := template.ParseFiles(tmplPath)
 	if err != nil {

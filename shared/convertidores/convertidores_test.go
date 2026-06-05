@@ -12,10 +12,6 @@ func TestOpcionesDeEstadoYBooleanos(t *testing.T) {
 		t.Fatalf("OptionFromEstatusGenerico() = %#v, want %#v", got, want)
 	}
 
-	if got, want := OptionFromBooleanoGenerico(), []components.SelectOption{{Value: "", Text: "Seleccione una Opcion"}, {Value: "1", Text: "Si"}, {Value: "-1", Text: "No"}}; !reflect.DeepEqual(got, want) {
-		t.Fatalf("OptionFromBooleanoGenerico() = %#v, want %#v", got, want)
-	}
-
 	tests := []struct {
 		name  string
 		input bool

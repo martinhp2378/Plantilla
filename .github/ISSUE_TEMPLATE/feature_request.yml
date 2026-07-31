@@ -1,0 +1,75 @@
+name: Solicitud de mejora
+description: Proponé una mejora funcional, técnica, de seguridad u operación.
+title: "feat: "
+labels:
+  - enhancement
+  - status:needs-review
+body:
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Verificaciones previas
+      options:
+        - label: Busqué issues existentes y confirmé que no es un duplicado.
+          required: true
+        - label: Entiendo que este issue necesita la etiqueta `status:approved` antes de abrir un pull request.
+          required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema
+      description: Describí la necesidad, quién resulta afectado y por qué vale la pena resolverla.
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Solución propuesta
+      description: Explicá el resultado esperado desde la perspectiva de quienes usan o mantienen la plantilla.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área afectada
+      options:
+        - Arquitectura
+        - Seguridad y autenticación
+        - Multi-tenancy y base de datos
+        - Backend y API
+        - Interfaz y accesibilidad
+        - Infraestructura y CI/CD
+        - Pruebas y calidad
+        - Documentación
+        - Otra
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Criterios de aceptación
+      description: Indicá resultados observables y verificables.
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencias y bloqueos
+      description: Enumerá decisiones, políticas, migraciones u otros issues necesarios.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternativas consideradas
+  - type: textarea
+    id: exclusions
+    attributes:
+      label: Fuera de alcance
+      description: Aclarar límites protege la revisión y evita cambios sobredimensionados.
+  - type: textarea
+    id: validation
+    attributes:
+      label: Estrategia de validación y rollback
+      description: Indicá pruebas, evidencia operativa y cómo revertir el cambio de forma segura.

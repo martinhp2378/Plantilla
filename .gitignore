@@ -43,6 +43,11 @@ debug
 # Local docker
 docker-compose.override.yml
 
-# Agent Teams Lite (Local skills)
+# Local agent and analysis state
 .atl/
 .antigravitycli
+.codegraph/
+.pi/
+
+# SDD artifacts (Engram is the active store)
+openspec/

@@ -1,0 +1,76 @@
+name: Reporte de error
+description: Informá un comportamiento incorrecto o una regresión reproducible.
+title: "fix: "
+labels:
+  - bug
+  - status:needs-review
+body:
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Verificaciones previas
+      options:
+        - label: Busqué issues existentes y confirmé que no es un duplicado.
+          required: true
+        - label: Entiendo que este issue necesita la etiqueta `status:approved` antes de abrir un pull request.
+          required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Descripción del error
+      description: Explicá claramente qué comportamiento es incorrecto y cuál es su impacto.
+      placeholder: El sistema...
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Pasos para reproducirlo
+      description: Incluí datos de entrada y condiciones relevantes, sin secretos ni información personal.
+      placeholder: |
+        1. Iniciar...
+        2. Navegar a...
+        3. Ejecutar...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Comportamiento esperado
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Comportamiento actual
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área afectada
+      options:
+        - Seguridad y autenticación
+        - Multi-tenancy y base de datos
+        - Backend y API
+        - Interfaz y accesibilidad
+        - Infraestructura y CI/CD
+        - Documentación
+        - Otra
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Versión o commit afectado
+      placeholder: v1.2.3 o SHA
+  - type: textarea
+    id: environment
+    attributes:
+      label: Entorno
+      description: Indicá sistema operativo, versión de Go, navegador y modo de despliegue cuando corresponda.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidencia adicional
+      description: Adjuntá logs redactados, capturas o referencias. No incluyas secretos, tokens ni datos personales.

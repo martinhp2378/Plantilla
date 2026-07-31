@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Preguntas y soporte
+    url: https://github.com/issemym-repos/PlantillaInstitucional/discussions
+    about: Usá Discussions para preguntas que no representen errores ni mejoras concretas.

@@ -17,9 +17,11 @@ func TestNewApp(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	_, err := NewApp(ctx, env, nil, nil, nil, nil, nil, nil, nil, nil, nil)
-	
+	a, err := NewApp(ctx, env, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	if err != nil {
 		t.Errorf("expected nil error for simple constructor, got %v", err)
+	}
+	if err := a.TenantPolicy.Validate(); err != nil {
+		t.Errorf("default tenant policy must be valid, got %v", err)
 	}
 }

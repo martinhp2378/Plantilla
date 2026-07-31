@@ -22,8 +22,10 @@ import (
 	"PlantillaInstitucional/shared/email"
 	"PlantillaInstitucional/shared/entorno"
 	sharedEvents "PlantillaInstitucional/shared/events"
+	"PlantillaInstitucional/shared/securitypolicy"
 	"PlantillaInstitucional/shared/tenants"
 	"context"
+	"fmt"
 	"os"
 	"strings"
 	"sync"
@@ -52,6 +54,7 @@ type App struct {
 	Handlers     Handlers
 	Services     Services
 	Repositories Repositories
+	TenantPolicy securitypolicy.TenantPolicy
 
 	tenants   map[string]string
 	tenantsMu sync.RWMutex
@@ -88,37 +91,40 @@ type Services struct {
 type Repositories struct {
 	Tenants   tenants.Repository
 	Usuario   *usuario_repo.UsuarioRepository
-	Perfil  *perfil_repo.PerfilRepository
-	Policy  *policy_repo.PolicyRepository
-	Persona *persona_repo.PersonaRepository
-	Login   *login_repo.RepositorioPsql
+	Perfil    *perfil_repo.PerfilRepository
+	Policy    *policy_repo.PolicyRepository
+	Persona   *persona_repo.PersonaRepository
+	Login     *login_repo.RepositorioPsql
 	Parametro *parametros_repo.ParametrosRepository
 }
 
 func NewApp(ctx context.Context, env *entorno.Env,
-	pqWrite *pgxpool.Pool,
-	pqRead *pgxpool.Pool,
-	conexionRedis *redis.Client,
-	logger *logs.Logger,
-	instrumentacion *logs.Instrumentacion,
-	constructorSesion *sesiones.ConstructorSesion,
-	constructorSesionJWT *sesiones.ConstructorSesionJWT,
-	manejadorArchivos *archivos.ManejadorArchivos,
-	servicioEmail *email.EmailService) (*App, error) {
+	pqWrite *pgxpool.Pool, pqRead *pgxpool.Pool, conexionRedis *redis.Client,
+	logger *logs.Logger, instrumentacion *logs.Instrumentacion,
+	constructorSesion *sesiones.ConstructorSesion, constructorSesionJWT *sesiones.ConstructorSesionJWT,
+	manejadorArchivos *archivos.ManejadorArchivos, servicioEmail *email.EmailService) (*App, error) {
+	return NewAppWithTenantPolicy(ctx, env, pqWrite, pqRead, conexionRedis, logger, instrumentacion,
+		constructorSesion, constructorSesionJWT, manejadorArchivos, servicioEmail, defaultTenantPolicy())
+}
 
-	return &App{
-		Env:                  env,
-		Logger:               logger,
-		Instrumentacion:      instrumentacion,
-		ConexionRedis:        conexionRedis,
-		PqWrite:              pqWrite,
-		PqRead:               pqRead,
-		ConstructorSesion:    constructorSesion,
-		ConstructorSesionJWT: constructorSesionJWT,
-		ManejadorArchivos:    manejadorArchivos,
-		ServicioEmail:        servicioEmail,
-		tenants:              make(map[string]string),
-	}, nil
+func NewAppWithTenantPolicy(ctx context.Context, env *entorno.Env,
+	pqWrite *pgxpool.Pool, pqRead *pgxpool.Pool, conexionRedis *redis.Client,
+	logger *logs.Logger, instrumentacion *logs.Instrumentacion,
+	constructorSesion *sesiones.ConstructorSesion, constructorSesionJWT *sesiones.ConstructorSesionJWT,
+	manejadorArchivos *archivos.ManejadorArchivos, servicioEmail *email.EmailService, tenantPolicy securitypolicy.TenantPolicy) (*App, error) {
+	if err := tenantPolicy.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid tenant policy: %w", err)
+	}
+	return &App{Env: env, Logger: logger, Instrumentacion: instrumentacion, ConexionRedis: conexionRedis,
+		PqWrite: pqWrite, PqRead: pqRead, ConstructorSesion: constructorSesion,
+		ConstructorSesionJWT: constructorSesionJWT, ManejadorArchivos: manejadorArchivos,
+		ServicioEmail: servicioEmail, TenantPolicy: tenantPolicy, tenants: make(map[string]string)}, nil
+}
+
+func defaultTenantPolicy() securitypolicy.TenantPolicy {
+	return securitypolicy.TenantPolicy{EnforcementEnabled: true,
+		CanonicalHosts: []securitypolicy.CanonicalHostRule{{Host: "localhost", TenantID: "local", Schema: "local", Active: true}},
+		AllowedSchemes: []string{"http", "https"}, GlobalAccessPolicyID: "global-readers-v1"}
 }
 
 func (a *App) Close() {

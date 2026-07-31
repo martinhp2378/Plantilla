@@ -8,10 +8,12 @@ import (
 	"net/http/httptest"
 	"net/netip"
 	"testing"
+	"time"
 )
 
 func tenantPolicy() securitypolicy.TenantPolicy {
-	return securitypolicy.TenantPolicy{EnforcementEnabled: true, CanonicalHosts: []securitypolicy.CanonicalHostRule{{Host: "tenant1.localhost", TenantID: "tenant1", Schema: "tenant1", Active: true}}, AllowedSchemes: []string{"https"}, GlobalAccessPolicyID: "global-readers-v1"}
+	now := time.Date(2026, 7, 30, 0, 0, 0, 0, time.UTC)
+	return securitypolicy.TenantPolicy{EnforcementEnabled: true, DeploymentProfile: securitypolicy.LocalDirect, CanonicalHosts: []securitypolicy.CanonicalHostRule{{Host: "tenant1.localhost", TenantID: "tenant1", Schema: "tenant1", Active: true}}, AllowedSchemes: []string{"https"}, GlobalAccessPolicyID: "global-readers-v1", Catalog: securitypolicy.AuthoritativeCatalogSnapshot{Source: "test", Version: "v1", ValidFrom: now.Add(-time.Hour), ValidUntil: now.Add(time.Hour), Entries: []securitypolicy.TenantCatalogEntry{{Host: "tenant1.localhost", TenantID: "tenant1", Schema: "tenant1", Lifecycle: securitypolicy.TenantActive, InstitutionOwner: "institution", PlatformOwner: "platform", InstitutionApproved: true, PlatformApproved: true, EvidenceApproved: true, Source: "test", Version: "v1", ValidFrom: now.Add(-time.Hour), ValidUntil: now.Add(time.Hour)}}}}
 }
 func TestTenantMiddlewareResolvesOnlyCanonicalActiveAuthority(t *testing.T) {
 	a, called := &app.App{TenantPolicy: tenantPolicy()}, false
@@ -36,17 +38,17 @@ func TestTenantMiddlewareDeniesDisallowedSchemeBeforeNextHandler(t *testing.T) {
 		t.Fatalf("status/called = %d/%t, want 421/false", rr.Code, called)
 	}
 }
-func TestTenantMiddlewareUsesForwardedAuthorityOnlyFromTrustedProxy(t *testing.T) {
+func TestTenantMiddlewareDeniesLegacyForwardedAuthoritySelector(t *testing.T) {
 	policy := tenantPolicy()
 	policy.ForwardedAuthorityMode, policy.TrustedProxyCIDRs = securitypolicy.TrustedProxyOnly, []netip.Prefix{netip.MustParsePrefix("127.0.0.0/8")}
-	var source tenantcontext.Source
-	next := http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) { source, _ = tenantFromRequest(r) })
+	called := false
+	next := http.HandlerFunc(func(http.ResponseWriter, *http.Request) { called = true })
 	req := httptest.NewRequest(http.MethodGet, "https://edge.invalid", nil)
 	req.RemoteAddr, req.Header = "127.0.0.1:1234", http.Header{"X-Forwarded-Host": []string{"tenant1.localhost"}}
 	rr := httptest.NewRecorder()
 	TenantMiddleware(&app.App{TenantPolicy: policy})(next).ServeHTTP(rr, req)
-	if rr.Code != http.StatusOK || source != tenantcontext.TrustedForwardedHost {
-		t.Fatalf("status/source = %d/%q", rr.Code, source)
+	if rr.Code != http.StatusMisdirectedRequest || called {
+		t.Fatalf("status/called = %d/%t", rr.Code, called)
 	}
 }
 func TestTenantMiddlewareDeniesUntrustedAuthorityBeforeNextHandler(t *testing.T) {

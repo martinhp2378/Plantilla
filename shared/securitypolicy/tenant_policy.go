@@ -24,6 +24,9 @@ type CanonicalHostRule struct {
 }
 type TenantPolicy struct {
 	EnforcementEnabled     bool
+	DeploymentProfile      DeploymentTrustProfile
+	NginxTrustedCIDRs      []netip.Prefix
+	Catalog                AuthoritativeCatalogSnapshot
 	CanonicalHosts         []CanonicalHostRule
 	TrustedProxyCIDRs      []netip.Prefix
 	ForwardedAuthorityMode ForwardedAuthorityMode
@@ -33,31 +36,34 @@ type TenantPolicy struct {
 
 func (p TenantPolicy) Validate() error {
 	if !p.EnforcementEnabled {
-		return errors.New("tenant_policy_enforcement_disabled")
+		return errors.New(StartupPolicyIncomplete)
 	}
-	if len(p.CanonicalHosts) == 0 {
-		return errors.New("tenant_policy_missing_canonical_hosts")
+	if p.DeploymentProfile != GCPCloudRunALB && p.DeploymentProfile != OnPremNginxSingleHop && p.DeploymentProfile != LocalDirect ||
+		p.ForwardedAuthorityMode != "" || len(p.TrustedProxyCIDRs) != 0 ||
+		(p.DeploymentProfile == OnPremNginxSingleHop && !validNginxCIDRs(p.NginxTrustedCIDRs)) ||
+		(p.DeploymentProfile != OnPremNginxSingleHop && len(p.NginxTrustedCIDRs) != 0) {
+		return errors.New(StartupProfileInvalid)
 	}
-	if len(p.AllowedSchemes) == 0 {
-		return errors.New("tenant_policy_missing_allowed_schemes")
+	if len(p.AllowedSchemes) == 0 || p.GlobalAccessPolicyID == "" {
+		return errors.New(StartupPolicyIncomplete)
 	}
-	if p.GlobalAccessPolicyID == "" {
-		return errors.New("tenant_policy_missing_global_access_policy")
+	if err := p.Catalog.Validate(); err != nil {
+		return err
 	}
-	if p.ForwardedAuthorityMode == "" {
-		p.ForwardedAuthorityMode = ForwardedAuthorityDisabled
-	}
-	if p.ForwardedAuthorityMode != ForwardedAuthorityDisabled && p.ForwardedAuthorityMode != TrustedProxyOnly {
-		return errors.New("tenant_policy_invalid_forwarded_authority_mode")
-	}
-	if p.ForwardedAuthorityMode == TrustedProxyOnly && len(p.TrustedProxyCIDRs) == 0 {
-		return errors.New("tenant_policy_missing_trusted_proxy_cidrs")
+	activeCatalog := map[[3]string]struct{}{}
+	for _, entry := range p.Catalog.Entries {
+		if entry.Lifecycle == TenantActive {
+			activeCatalog[[3]string{entry.Host, entry.TenantID, entry.Schema}] = struct{}{}
+		}
 	}
 	seenHosts, seenSchemas := map[string]struct{}{}, map[string]struct{}{}
 	for _, rule := range p.CanonicalHosts {
 		host := strings.TrimSuffix(strings.ToLower(rule.Host), ".")
 		if host == "" || host != rule.Host || rule.TenantID == "" || rule.Schema == "public" || !schemaPattern.MatchString(rule.Schema) {
 			return errors.New("tenant_policy_invalid_host_rule")
+		}
+		if _, ok := activeCatalog[[3]string{host, rule.TenantID, rule.Schema}]; rule.Active && !ok {
+			return errors.New(StartupCatalogInvalid)
 		}
 		if _, ok := seenHosts[host]; ok {
 			return errors.New("tenant_policy_duplicate_host")

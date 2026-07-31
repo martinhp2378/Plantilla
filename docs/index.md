@@ -29,6 +29,8 @@ Bienvenido a la documentación detallada de la **Plantilla Institucional**. Este
     *   Variables de entorno en producción.
     *   Estrategia de migraciones desacopladas (SKIP_MIGRATIONS).
     *   Securización del contenedor no-root.
+7.  **[Contrato de autoridad de tenant](./tenant-authority-contract.md)**
+    *   Perfiles de confianza, denegación segura y límites de evidencia de despliegue.
 
 ---
 

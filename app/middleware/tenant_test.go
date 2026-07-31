@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/netip"
+	"strings"
 	"testing"
 	"time"
 )
@@ -151,6 +152,88 @@ func TestTenantMiddlewareAllowsTerminatedTLS(t *testing.T) {
 		})
 	}
 }
+
+func TestTenantMiddlewareTriangulatesSafeDenials(t *testing.T) {
+	tests := []struct {
+		name      string
+		policy    func(securitypolicy.TenantPolicy) securitypolicy.TenantPolicy
+		remote    string
+		host      string
+		headers   http.Header
+		sensitive []string
+	}{
+		{"unknown", func(p securitypolicy.TenantPolicy) securitypolicy.TenantPolicy { return p }, "127.0.0.1:443", "unknown.example", nil, []string{"unknown.example", "https://unknown.example", "127.0.0.1"}},
+		{"inactive", func(p securitypolicy.TenantPolicy) securitypolicy.TenantPolicy {
+			p.CanonicalHosts[0].Active = false
+			return p
+		}, "127.0.0.1:443", "tenant1.localhost", nil, []string{"tenant1", "schema"}},
+		{"conflicting", func(p securitypolicy.TenantPolicy) securitypolicy.TenantPolicy {
+			p.DeploymentProfile = securitypolicy.GCPCloudRunALB
+			return p
+		}, "198.51.100.77:443", "tenant1.localhost", http.Header{"X-Forwarded-Host": {"secret.example"}, "Authorization": {"secret-token"}, "X-Requester": {"person@example.test"}}, []string{"secret.example", "secret-token", "person@example.test", "198.51.100.77", "X-Forwarded-Host", "Authorization"}},
+		{"multivalued", nginxPolicy, "10.0.0.2:443", "upstream.internal", http.Header{"X-Forwarded-Host": {"tenant1.localhost"}, "X-Forwarded-Proto": {"https", "https"}}, []string{"upstream.internal", "10.0.0.2", "X-Forwarded-Proto"}},
+		{"multihop", nginxPolicy, "10.0.0.2:443", "upstream.internal", http.Header{"X-Forwarded-Host": {"tenant1.localhost, secret.example"}, "X-Forwarded-Proto": {"https"}}, []string{"secret.example", "upstream.internal", "X-Forwarded-Host"}},
+		{"untrusted", nginxPolicy, "198.51.100.77:443", "upstream.internal", http.Header{"X-Forwarded-Host": {"tenant1.localhost"}, "X-Forwarded-Proto": {"https"}}, []string{"198.51.100.77", "upstream.internal", "X-Forwarded-Host"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			called, databaseTouched := false, false
+			req := httptest.NewRequest(http.MethodGet, "https://"+tt.host, nil)
+			req.Host, req.RemoteAddr, req.Header = tt.host, tt.remote, tt.headers
+			rr := httptest.NewRecorder()
+			TenantMiddleware(&app.App{TenantPolicy: tt.policy(tenantPolicy())})(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+				called, databaseTouched = true, true
+			})).ServeHTTP(rr, req)
+			if rr.Code != http.StatusMisdirectedRequest || called || databaseTouched {
+				t.Fatalf("status/downstream/database = %d/%t/%t, want 421/false/false", rr.Code, called, databaseTouched)
+			}
+			for _, value := range tt.sensitive {
+				if strings.Contains(rr.Body.String(), value) {
+					t.Fatalf("denial body leaked %q: %q", value, rr.Body.String())
+				}
+			}
+		})
+	}
+}
+
+func TestTenantMiddlewareXFFDoesNotSelectTenant(t *testing.T) {
+	for _, tt := range []struct {
+		name    string
+		policy  func(securitypolicy.TenantPolicy) securitypolicy.TenantPolicy
+		host    string
+		headers http.Header
+	}{
+		{"gcp", func(p securitypolicy.TenantPolicy) securitypolicy.TenantPolicy {
+			p.DeploymentProfile = securitypolicy.GCPCloudRunALB
+			return p
+		}, "tenant1.localhost", http.Header{"X-Forwarded-For": {"203.0.113.99"}}},
+		{"nginx", nginxPolicy, "upstream.internal", http.Header{"X-Forwarded-Host": {"tenant1.localhost"}, "X-Forwarded-Proto": {"https"}, "X-Forwarded-For": {"203.0.113.99"}}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			resolved := ""
+			req := httptest.NewRequest(http.MethodGet, "https://"+tt.host, nil)
+			req.Host, req.RemoteAddr, req.Header = tt.host, "10.0.0.2:443", tt.headers
+			rr := httptest.NewRecorder()
+			TenantMiddleware(&app.App{TenantPolicy: tt.policy(tenantPolicy())})(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+				tenant, err := tenantcontext.TenantFromContext(r.Context())
+				if err != nil {
+					t.Fatal(err)
+				}
+				resolved = tenant.ID
+			})).ServeHTTP(rr, req)
+			if rr.Code != http.StatusOK || resolved != "tenant1" {
+				t.Fatalf("status/tenant = %d/%q, want 200/tenant1", rr.Code, resolved)
+			}
+		})
+	}
+}
+
+func nginxPolicy(p securitypolicy.TenantPolicy) securitypolicy.TenantPolicy {
+	p.DeploymentProfile = securitypolicy.OnPremNginxSingleHop
+	p.NginxTrustedCIDRs = []netip.Prefix{netip.MustParsePrefix("10.0.0.0/8")}
+	return p
+}
+
 func tenantFromRequest(r *http.Request) (tenantcontext.Source, error) {
 	tenant, err := tenantcontext.TenantFromContext(r.Context())
 	return tenant.Source, err

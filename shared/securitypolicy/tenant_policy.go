@@ -82,10 +82,10 @@ func (p TenantPolicy) RuleForHost(host string) (CanonicalHostRule, error) {
 	for _, rule := range p.CanonicalHosts {
 		if rule.Host == host {
 			if !rule.Active {
-				return CanonicalHostRule{}, errors.New("tenant_policy_inactive_tenant")
+				return CanonicalHostRule{}, errors.New("tenant_inactive")
 			}
 			return rule, nil
 		}
 	}
-	return CanonicalHostRule{}, errors.New("tenant_policy_unknown_host")
+	return CanonicalHostRule{}, errors.New("tenant_unknown")
 }

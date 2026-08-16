@@ -10,7 +10,7 @@ import (
 func validStartupPolicy() TenantPolicy {
 	now := time.Date(2026, 7, 30, 0, 0, 0, 0, time.UTC)
 	return TenantPolicy{
-		EnforcementEnabled: true, DeploymentProfile: LocalDirect, AllowedSchemes: []string{"https"}, GlobalAccessPolicyID: "global-v1",
+		EnforcementEnabled: true, DeploymentProfile: LocalDirect, EnvironmentClass: EnvironmentLocal, AllowedSchemes: []string{"https"}, GlobalAccessPolicyID: "global-v1",
 		Catalog: AuthoritativeCatalogSnapshot{Source: "catalog", Version: "v1", ValidFrom: now.Add(-time.Hour), ValidUntil: now.Add(time.Hour), Entries: []TenantCatalogEntry{{
 			Host: "tenant.example.test", TenantID: "tenant-a", Schema: "tenant_a", Lifecycle: TenantActive,
 			InstitutionOwner: "institution", PlatformOwner: "platform", InstitutionApproved: true, PlatformApproved: true,
@@ -47,6 +47,31 @@ func TestTenantPolicyValidateRejectsUnsafeStartupProfiles(t *testing.T) {
 			}
 			if strings.Contains(err.Error(), "tenant-a") {
 				t.Fatalf("diagnosis leaked tenant: %v", err)
+			}
+		})
+	}
+}
+
+func TestTenantPolicyValidateRestrictsLocalDirectToExplicitNonProductionEnvironment(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		env     EnvironmentClass
+		wantErr string
+	}{
+		{"explicit local is accepted", EnvironmentLocal, ""},
+		{"explicit non-production is accepted", EnvironmentNonProduction, ""},
+		{"production is rejected", EnvironmentProduction, StartupProfileInvalid},
+		{"missing environment is rejected", "", StartupProfileInvalid},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			policy := validStartupPolicy()
+			policy.EnvironmentClass = tc.env
+			err := policy.Validate()
+			if tc.wantErr == "" && err != nil {
+				t.Fatalf("Validate() = %v, want nil", err)
+			}
+			if tc.wantErr != "" && (err == nil || err.Error() != tc.wantErr) {
+				t.Fatalf("Validate() = %v, want %s", err, tc.wantErr)
 			}
 		})
 	}

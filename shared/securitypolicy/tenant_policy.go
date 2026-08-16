@@ -25,6 +25,7 @@ type CanonicalHostRule struct {
 type TenantPolicy struct {
 	EnforcementEnabled     bool
 	DeploymentProfile      DeploymentTrustProfile
+	EnvironmentClass       EnvironmentClass
 	NginxTrustedCIDRs      []netip.Prefix
 	Catalog                AuthoritativeCatalogSnapshot
 	CanonicalHosts         []CanonicalHostRule
@@ -40,6 +41,7 @@ func (p TenantPolicy) Validate() error {
 	}
 	if p.DeploymentProfile != GCPCloudRunALB && p.DeploymentProfile != OnPremNginxSingleHop && p.DeploymentProfile != LocalDirect ||
 		p.ForwardedAuthorityMode != "" || len(p.TrustedProxyCIDRs) != 0 ||
+		(p.DeploymentProfile == LocalDirect && p.EnvironmentClass != EnvironmentLocal && p.EnvironmentClass != EnvironmentNonProduction) ||
 		(p.DeploymentProfile == OnPremNginxSingleHop && !validNginxCIDRs(p.NginxTrustedCIDRs)) ||
 		(p.DeploymentProfile != OnPremNginxSingleHop && len(p.NginxTrustedCIDRs) != 0) {
 		return errors.New(StartupProfileInvalid)

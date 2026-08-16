@@ -124,7 +124,7 @@ func NewAppWithTenantPolicy(ctx context.Context, env *entorno.Env,
 
 func defaultTenantPolicy() securitypolicy.TenantPolicy {
 	now := time.Now().UTC()
-	return securitypolicy.TenantPolicy{EnforcementEnabled: true, DeploymentProfile: securitypolicy.LocalDirect,
+	return securitypolicy.TenantPolicy{EnforcementEnabled: true, DeploymentProfile: securitypolicy.LocalDirect, EnvironmentClass: securitypolicy.EnvironmentLocal,
 		CanonicalHosts: []securitypolicy.CanonicalHostRule{{Host: "localhost", TenantID: "local", Schema: "local", Active: true}},
 		AllowedSchemes: []string{"http", "https"}, GlobalAccessPolicyID: "global-readers-v1",
 		Catalog: securitypolicy.AuthoritativeCatalogSnapshot{Source: "local-fixture", Version: "v1", ValidFrom: now.Add(-time.Hour), ValidUntil: now.Add(time.Hour), Entries: []securitypolicy.TenantCatalogEntry{{Host: "localhost", TenantID: "local", Schema: "local", Lifecycle: securitypolicy.TenantActive, InstitutionOwner: "local", PlatformOwner: "local", InstitutionApproved: true, PlatformApproved: true, EvidenceApproved: true, Source: "local-fixture", Version: "v1", ValidFrom: now.Add(-time.Hour), ValidUntil: now.Add(time.Hour)}}}}

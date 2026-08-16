@@ -18,8 +18,8 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	contextkeys "PlantillaInstitucional/shared/contextkey"
 	"PlantillaInstitucional/shared/entorno"
+	"PlantillaInstitucional/shared/tenantcontext"
 )
 
 var tenantSchemaRegex = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)
@@ -95,10 +95,14 @@ func ConnectPostgres(ctx context.Context, env *entorno.Env, instrumentacion *log
 	}
 
 	readPoolConfig.BeforeAcquire = func(ctx context.Context, pgxConn *pgx.Conn) bool {
-		schema := getTenantSchema(ctx)
+		schema, err := getTenantSchema(ctx)
+		if err != nil {
+			log.Printf("[WARN-DB-READ] tenant context rejected")
+			return false
+		}
 		searchPath, err := buildTenantSearchPath(schema)
 		if err != nil {
-			log.Printf("[WARN-DB-READ] tenant schema inválido; usando fallback seguro")
+			log.Printf("[WARN-DB-READ] tenant schema rejected")
 			return false
 		}
 		_, err = pgxConn.Exec(ctx, fmt.Sprintf("SET search_path TO %s", searchPath))
@@ -147,10 +151,14 @@ func ConnectPostgres(ctx context.Context, env *entorno.Env, instrumentacion *log
 
 	// Multi-tenant: Cambiar el esquema antes de adquirir la conexión
 	writePoolConfig.BeforeAcquire = func(ctx context.Context, pgxConn *pgx.Conn) bool {
-		schema := getTenantSchema(ctx)
+		schema, err := getTenantSchema(ctx)
+		if err != nil {
+			log.Printf("[WARN-DB-WRITE] tenant context rejected")
+			return false
+		}
 		searchPath, err := buildTenantSearchPath(schema)
 		if err != nil {
-			log.Printf("[WARN-DB-WRITE] tenant schema inválido; usando fallback seguro")
+			log.Printf("[WARN-DB-WRITE] tenant schema rejected")
 			return false
 		}
 		_, err = pgxConn.Exec(ctx, fmt.Sprintf("SET search_path TO %s", searchPath))
@@ -183,23 +191,19 @@ func ConnectPostgres(ctx context.Context, env *entorno.Env, instrumentacion *log
 	}, nil
 }
 
-func getTenantSchema(ctx context.Context) string {
-	if v := ctx.Value(contextkeys.TenantSchemaKey); v != nil {
-		if schema, ok := v.(string); ok {
-			return schema
-		}
+func getTenantSchema(ctx context.Context) (string, error) {
+	tenant, err := tenantcontext.TenantFromContext(ctx)
+	if err != nil {
+		return "", err
 	}
-	return "public"
+	return tenant.Schema, nil
 }
 
 // buildTenantSearchPath centraliza la construcción segura de search_path tenant-aware.
 func buildTenantSearchPath(schema string) (string, error) {
 	s := strings.TrimSpace(schema)
-	if s == "" {
-		s = "public"
-	}
-	if !tenantSchemaRegex.MatchString(s) {
+	if s == "" || s == "public" || !tenantSchemaRegex.MatchString(s) {
 		return "", fmt.Errorf("tenant schema inválido")
 	}
-	return fmt.Sprintf("%s, sesion, institucion, sistema, public", pgx.Identifier{s}.Sanitize()), nil
+	return fmt.Sprintf("%s, sesion, institucion, sistema", pgx.Identifier{s}.Sanitize()), nil
 }

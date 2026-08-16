@@ -9,14 +9,19 @@ import (
 
 type DeploymentTrustProfile string
 
+type EnvironmentClass string
+
 const (
-	GCPCloudRunALB          DeploymentTrustProfile = "gcp_cloud_run_alb"
-	OnPremNginxSingleHop    DeploymentTrustProfile = "onprem_nginx_single_hop"
-	LocalDirect             DeploymentTrustProfile = "local_direct"
-	StartupProfileInvalid                          = "startup_profile_invalid"
-	StartupCatalogInvalid                          = "startup_catalog_invalid"
-	StartupCatalogMissing                          = "startup_catalog_missing"
-	StartupPolicyIncomplete                        = "startup_policy_incomplete"
+	GCPCloudRunALB           DeploymentTrustProfile = "gcp_cloud_run_alb"
+	OnPremNginxSingleHop     DeploymentTrustProfile = "onprem_nginx_single_hop"
+	LocalDirect              DeploymentTrustProfile = "local_direct"
+	StartupProfileInvalid                           = "startup_profile_invalid"
+	StartupCatalogInvalid                           = "startup_catalog_invalid"
+	StartupCatalogMissing                           = "startup_catalog_missing"
+	StartupPolicyIncomplete                         = "startup_policy_incomplete"
+	EnvironmentLocal         EnvironmentClass       = "local"
+	EnvironmentNonProduction EnvironmentClass       = "non_production"
+	EnvironmentProduction    EnvironmentClass       = "production"
 )
 
 type TenantLifecycle string

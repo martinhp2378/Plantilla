@@ -15,7 +15,7 @@ func TestTenantTxRunnerFailsClosedBeforeBeginningTransaction(t *testing.T) {
 	t.Parallel()
 
 	pool := &fakeTxStarter{}
-	runner := NewTenantTxRunner(pool)
+	runner := NewTenantTxRunner(pool, pool)
 	unsafeTenant := tenantcontext.WithTenant(context.Background(), tenantcontext.TenantContext{
 		ID: "tenant-secret", Schema: "public", CanonicalHost: "institution.example",
 	})
@@ -54,7 +54,7 @@ func TestTenantTxRunnerReadSetsTransactionLocalContextBeforeCallback(t *testing.
 
 	tx := &fakeTx{}
 	pool := &fakeTxStarter{tx: tx}
-	runner := NewTenantTxRunner(pool)
+	runner := NewTenantTxRunner(pool, pool)
 	ctx := tenantContext("tenant-1", "institution_one")
 
 	err := runner.Read(ctx, func(got pgx.Tx) error {
@@ -70,11 +70,11 @@ func TestTenantTxRunnerReadSetsTransactionLocalContextBeforeCallback(t *testing.
 	if pool.options.AccessMode != pgx.ReadOnly {
 		t.Fatalf("read access mode = %v, want ReadOnly", pool.options.AccessMode)
 	}
-	want := []string{"begin", `SET LOCAL search_path TO "institution_one", pg_catalog`, "set_config", "callback", "commit"}
+	want := []string{"begin", `SET LOCAL search_path TO "institution_one", pg_catalog`, "set_config", "set_config", "callback", "commit"}
 	if diff := strings.Join(tx.calls, ","); diff != strings.Join(want, ",") {
 		t.Fatalf("transaction order = %v, want %v", tx.calls, want)
 	}
-	if len(tx.execArgs) != 2 || len(tx.execArgs[1]) != 1 || tx.execArgs[1][0] != "tenant-1" {
+	if len(tx.execArgs) != 3 || len(tx.execArgs[1]) != 1 || tx.execArgs[1][0] != "tenant-1" {
 		t.Fatalf("set_config arguments = %#v, want tenant ID", tx.execArgs)
 	}
 }
@@ -91,7 +91,8 @@ func TestTenantTxRunnerRollsBackOnCallbackFailureAndCancellation(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			tx := &fakeTx{}
-			runner := NewTenantTxRunner(&fakeTxStarter{tx: tx})
+			pool := &fakeTxStarter{tx: tx}
+			runner := NewTenantTxRunner(pool, pool)
 			ctx, cancel := context.WithCancel(tenantContext("tenant-2", "institution_two"))
 			defer cancel()
 
@@ -110,7 +111,8 @@ func TestTenantTxRunnerRollsBackAndRepairsPanic(t *testing.T) {
 	t.Parallel()
 
 	tx := &fakeTx{}
-	runner := NewTenantTxRunner(&fakeTxStarter{tx: tx})
+	pool := &fakeTxStarter{tx: tx}
+	runner := NewTenantTxRunner(pool, pool)
 
 	defer func() {
 		if recovered := recover(); recovered != "boom" {

@@ -59,8 +59,8 @@ func main() {
 		logger.Info("SKIP_MIGRATIONS habilitado, omitiendo ejecución de migraciones")
 	}
 
-	pqWrite := pools.WritePool
-	pqRead := pools.ReadPool
+	pqWrite := pools.WritePool()
+	pqRead := pools.ReadPool()
 
 	var conexionRedis *redis.Client
 	if env.RedisHost != "" {

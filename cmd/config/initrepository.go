@@ -14,7 +14,7 @@ import (
 
 func InitRepositories(a *app.App) {
 	// Pools
-	pools := &bd.AppPools{ReadPool: a.PqRead, WritePool: a.PqWrite}
+	pools := bd.NewAppPools(a.PqRead, a.PqWrite)
 
 	a.Repositories.Tenants = tenants.NewStaticRepository()
 	a.Repositories.Usuario = usuario_repo.NewUsuarioRepository(pools)

@@ -32,22 +32,20 @@ func (r *ParametrosRepository) CargarParametros() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	conn, err := r.db.WritePool.Acquire(ctx)
+	var parametrosList []RowParametro
+	err := r.db.Tenant.Read(ctx, func(tx pgx.Tx) error {
+		rows, err := tx.Query(ctx, SelectParametros)
+		if err != nil {
+			return fmt.Errorf("error ejecutando consulta: %w", err)
+		}
+		parametrosList, err = pgx.CollectRows(rows, pgx.RowToStructByName[RowParametro])
+		if err != nil {
+			return fmt.Errorf("error mapping results: %w", err)
+		}
+		return nil
+	})
 	if err != nil {
-		return fmt.Errorf("error obteniendo conexión: %w", err)
-	}
-	defer conn.Release()
-
-	// SelectParametros includes all fields now
-	rows, err := conn.Query(ctx, SelectParametros)
-	if err != nil {
-		return fmt.Errorf("error ejecutando consulta: %w", err)
-	}
-	defer rows.Close()
-
-	parametrosList, err := pgx.CollectRows(rows, pgx.RowToStructByName[RowParametro])
-	if err != nil {
-		return fmt.Errorf("error mapping results: %w", err)
+		return err
 	}
 
 	for _, row := range parametrosList {
@@ -131,7 +129,9 @@ func (r *ParametrosRepository) GetJSONParam(key string) (string, error) {
 
 func (r *ParametrosRepository) GetJSONParamContext(ctx context.Context, key string) (string, error) {
 	var value string
-	err := r.db.ReadPool.QueryRow(ctx, SelectParametroValorByClave, key).Scan(&value)
+	err := r.db.Tenant.Read(ctx, func(tx pgx.Tx) error {
+		return tx.QueryRow(ctx, SelectParametroValorByClave, key).Scan(&value)
+	})
 	if err != nil {
 		return "", err
 	}

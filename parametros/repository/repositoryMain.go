@@ -13,9 +13,6 @@ import (
 )
 
 func (r *ParametrosRepository) ConsultarParametros(ctx context.Context, criterios pagination.CriteriosPagina[parametros.Parametro]) ([]parametros.Parametro, int, error) {
-	// pgxpool handles Acquire/Release internally. It is safer and more efficient.
-	db := r.db.ReadPool
-
 	// 1. Dynamic Filter Construction
 	config := shared.FilterConfig{
 		Texto:     colsTexto,
@@ -39,76 +36,79 @@ func (r *ParametrosRepository) ConsultarParametros(ctx context.Context, criterio
 	queryArgs := append(args, criterios.Size, criterios.First)
 	query := fmt.Sprintf(SelectParametrosFiltered, whereClause, orden, len(args)+1, len(args)+2)
 
-	rows, err := db.Query(ctx, query, queryArgs...)
-	if err != nil {
-		return nil, 0, fmt.Errorf("ConsultarParametros: error executing query: %w", err)
-	}
-
-	// pgx v5: CollectRows iterates, scans and closes rows automatically
-	parametrosList, err := pgx.CollectRows(rows, pgx.RowToStructByName[RowParametro])
-	if err != nil {
-		return nil, 0, fmt.Errorf("ConsultarParametros: error mapping results: %w", err)
-	}
-
-	// Optimization: If page 0 and no data, total is 0. Avoid count query.
-	if len(parametrosList) == 0 && criterios.First == 0 {
-		return nil, 0, nil
-	}
-
-	// 4. Secondary Query (Total Count for Pagination)
+	var parametrosList []RowParametro
 	var total int
-	countQuery := fmt.Sprintf(CountParametros, whereClause)
-	if err := db.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
-		return nil, 0, fmt.Errorf("ConsultarParametros: error counting records: %w", err)
+
+	err = r.db.Tenant.Read(ctx, func(tx pgx.Tx) error {
+		rows, err := tx.Query(ctx, query, queryArgs...)
+		if err != nil {
+			return fmt.Errorf("ConsultarParametros: error executing query: %w", err)
+		}
+
+		parametrosList, err = pgx.CollectRows(rows, pgx.RowToStructByName[RowParametro])
+		if err != nil {
+			return fmt.Errorf("ConsultarParametros: error mapping results: %w", err)
+		}
+
+		// Optimization: If page 0 and no data, total is 0. Avoid count query.
+		if len(parametrosList) == 0 && criterios.First == 0 {
+			return nil
+		}
+
+		// 4. Secondary Query (Total Count for Pagination)
+		countQuery := fmt.Sprintf(CountParametros, whereClause)
+		if err := tx.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
+			return fmt.Errorf("ConsultarParametros: error counting records: %w", err)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, 0, err
 	}
 
 	return ToParametros(parametrosList), total, nil
 }
 
 func (r *ParametrosRepository) ConsultarParametroPorID(ctx context.Context, id uuid.UUID) (parametros.Parametro, error) {
-	conn, err := r.db.WritePool.Acquire(ctx)
-	if err != nil {
-		return parametros.Parametro{}, fmt.Errorf("error obteniendo conexión: %w", err)
-	}
-	defer conn.Release()
+	var respuestaParametro RowParametro
+	err := r.db.Tenant.Read(ctx, func(tx pgx.Tx) error {
+		row, err := tx.Query(ctx, SelectParametroXId, id)
+		if err != nil {
+			return fmt.Errorf("error ejecutando consulta: %w", err)
+		}
 
-	row, err := conn.Query(ctx, SelectParametroXId, id)
+		respuestaParametro, err = pgx.CollectOneRow(row, pgx.RowToStructByName[RowParametro])
+		if err != nil {
+			return fmt.Errorf("error mapeando resultado: %w", err)
+		}
+		return nil
+	})
 	if err != nil {
-		return parametros.Parametro{}, fmt.Errorf("error ejecutando consulta: %w", err)
-	}
-
-	respuestaParametro, err := pgx.CollectOneRow(row, pgx.RowToStructByName[RowParametro])
-	if err != nil {
-		return parametros.Parametro{}, fmt.Errorf("error mapeando resultado: %w", err)
+		return parametros.Parametro{}, err
 	}
 
 	return respuestaParametro.ToParametro(), nil
 }
 
 func (r *ParametrosRepository) ActualizarParametro(ctx context.Context, parametros parametros.Parametro) error {
-	conn, err := r.db.WritePool.Acquire(ctx)
+	err := r.db.Tenant.Write(ctx, func(tx pgx.Tx) error {
+		_, err := tx.Exec(ctx,
+			UpdateParametro,
+			parametros.Clave,
+			parametros.Valor,
+			parametros.Descripcion,
+			parametros.TipoDato,
+			parametros.IsActive,
+			parametros.RazonM,
+			parametros.ParametroId,
+		)
+		if err != nil {
+			return fmt.Errorf("error ejecutando actualización: %w", err)
+		}
+		return nil
+	})
 	if err != nil {
-		return fmt.Errorf("error obteniendo conexión: %w", err)
-	}
-	defer conn.Release()
-
-	if err := shared.SetAuditSession(ctx, conn); err != nil {
-		return fmt.Errorf("error configurando auditoría: %w", err)
-	}
-
-	_, err = conn.Exec(ctx,
-		UpdateParametro,
-		parametros.Clave,
-		parametros.Valor,
-		parametros.Descripcion,
-		parametros.TipoDato,
-		parametros.IsActive,
-		parametros.RazonM,
-		parametros.ParametroId,
-	)
-
-	if err != nil {
-		return fmt.Errorf("error ejecutando actualización: %w", err)
+		return err
 	}
 
 	// Actualizar caché
@@ -120,19 +120,15 @@ func (r *ParametrosRepository) ActualizarParametro(ctx context.Context, parametr
 }
 
 func (r *ParametrosRepository) EliminarParametro(ctx context.Context, id uuid.UUID) error {
-	conn, err := r.db.WritePool.Acquire(ctx)
+	err := r.db.Tenant.Write(ctx, func(tx pgx.Tx) error {
+		_, err := tx.Exec(ctx, DeleteParametro, id)
+		if err != nil {
+			return fmt.Errorf("error eliminando rol: %w", err)
+		}
+		return nil
+	})
 	if err != nil {
-		return fmt.Errorf("error obteniendo conexión: %w", err)
-	}
-	defer conn.Release()
-
-	if err := shared.SetAuditSession(ctx, conn); err != nil {
-		return fmt.Errorf("error configurando auditoría: %w", err)
-	}
-
-	_, err = conn.Exec(ctx, DeleteParametro, id)
-	if err != nil {
-		return fmt.Errorf("error eliminando rol: %w", err)
+		return err
 	}
 
 	// Actualizar caché
@@ -144,27 +140,23 @@ func (r *ParametrosRepository) EliminarParametro(ctx context.Context, id uuid.UU
 }
 
 func (r *ParametrosRepository) CrearParametro(ctx context.Context, parametros parametros.Parametro) error {
-	conn, err := r.db.WritePool.Acquire(ctx)
+	err := r.db.Tenant.Write(ctx, func(tx pgx.Tx) error {
+		_, err := tx.Exec(ctx, InsertParametro,
+			parametros.ParametroId,
+			parametros.Clave,
+			parametros.Valor,
+			parametros.Descripcion,
+			parametros.TipoDato,
+			parametros.IsActive,
+			parametros.RazonI,
+		)
+		if err != nil {
+			return fmt.Errorf("error al insertar parametros: %w", err)
+		}
+		return nil
+	})
 	if err != nil {
-		return fmt.Errorf("error obteniendo conexión: %w", err)
-	}
-	defer conn.Release()
-
-	if err := shared.SetAuditSession(ctx, conn); err != nil {
-		return fmt.Errorf("error configurando auditoría: %w", err)
-	}
-
-	_, err = conn.Exec(ctx, InsertParametro,
-		parametros.ParametroId,
-		parametros.Clave,
-		parametros.Valor,
-		parametros.Descripcion,
-		parametros.TipoDato,
-		parametros.IsActive,
-		parametros.RazonI,
-	)
-	if err != nil {
-		return fmt.Errorf("error al insertar parametros: %w", err)
+		return err
 	}
 
 	// Actualizar caché

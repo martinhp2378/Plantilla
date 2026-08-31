@@ -36,13 +36,16 @@ func (r RepositorioPsql) ValidarEmailPassword(ctx context.Context,
 	email string, password string) (*login.DatosSesion, error) {
 
 	var row RowUsuario
-	err := r.ReadPool.QueryRow(ctx, `
+	
+	err := r.Tenant.Read(ctx, func(tx pgx.Tx) error {
+		return tx.QueryRow(ctx, `
 		select uuid_persona,
 			password,
 			email,
 			perfil
 		from sesion.usuario
 		where email = $1`, email).Scan(&row.UuidPersona, &row.Password, &row.Email, &row.Perfil)
+	})
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {

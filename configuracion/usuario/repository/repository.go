@@ -23,9 +23,6 @@ var (
 )
 
 func (r *UsuarioRepository) ConsultarUsuarios(ctx context.Context, criterios pagination.CriteriosPagina[usuario.Usuario]) ([]usuario.Usuario, int, error) {
-	// pgxpool maneja el Acquire/Release internamente. Es más seguro y eficiente.
-	db := r.db.ReadPool
-
 	// 1. Construcción de filtros dinámicos
 	filtros, args := buildDynamicWhere(criterios.FilteredBy)
 	whereClause := ""
@@ -48,149 +45,138 @@ func (r *UsuarioRepository) ConsultarUsuarios(ctx context.Context, criterios pag
 	queryArgs := append(args, criterios.Size, criterios.First)
 	query := fmt.Sprintf(SelectUsuariosFiltered, whereClause, orden, len(args)+1, len(args)+2)
 
-	rows, err := db.Query(ctx, query, queryArgs...)
-	if err != nil {
-		return nil, 0, fmt.Errorf("ConsultarUsuarios: error ejecutando query: %w", err)
-	}
-
-	// pgx v5: CollectRows itera, escanea y cierra rows automáticamente
-	rowsList, err := pgx.CollectRows(rows, pgx.RowToStructByName[RowUsuario])
-	if err != nil {
-		return nil, 0, fmt.Errorf("ConsultarUsuarios: error mapeando resultados: %w", err)
-	}
-
-	usuariosList := make([]usuario.Usuario, len(rowsList))
-	for i, r := range rowsList {
-		usuariosList[i] = r.ToUsuario()
-	}
-
-	// Optimización: Si es la página 0 y no hay datos, el total es 0. Evitamos un count query.
-	if len(usuariosList) == 0 && criterios.First == 0 {
-		return usuariosList, 0, nil
-	}
-
-	// 4. Query Secundario (Conteo Total para Paginación)
+	var usuariosList []usuario.Usuario
 	var total int
-	countQuery := fmt.Sprintf(CountUsuarios, whereClause)
-	if err := db.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
-		return nil, 0, fmt.Errorf("ConsultarUsuarios: error contando registros: %w", err)
+
+	err = r.db.Tenant.Read(ctx, func(tx pgx.Tx) error {
+		rows, err := tx.Query(ctx, query, queryArgs...)
+		if err != nil {
+			return fmt.Errorf("ConsultarUsuarios: error ejecutando query: %w", err)
+		}
+
+		rowsList, err := pgx.CollectRows(rows, pgx.RowToStructByName[RowUsuario])
+		if err != nil {
+			return fmt.Errorf("ConsultarUsuarios: error mapeando resultados: %w", err)
+		}
+
+		usuariosList = make([]usuario.Usuario, len(rowsList))
+		for i, r := range rowsList {
+			usuariosList[i] = r.ToUsuario()
+		}
+
+		// Optimización: Si es la página 0 y no hay datos, el total es 0. Evitamos un count query.
+		if len(usuariosList) == 0 && criterios.First == 0 {
+			total = 0
+			return nil
+		}
+
+		// 4. Query Secundario (Conteo Total para Paginación)
+		countQuery := fmt.Sprintf(CountUsuarios, whereClause)
+		if err := tx.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
+			return fmt.Errorf("ConsultarUsuarios: error contando registros: %w", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, 0, err
 	}
 
 	return usuariosList, total, nil
 }
 
 func (r *UsuarioRepository) ConsultarUsuarioPorID(ctx context.Context, id uuid.UUID) (usuario.Usuario, error) {
-	rows, err := r.db.ReadPool.Query(ctx, SelectUsuarioXId, id)
-	if err != nil {
-		return usuario.Usuario{}, fmt.Errorf("ConsultarUsuarioPorID: error de conexión: %w", err)
-	}
-
-	row, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[RowUsuario])
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			return usuario.Usuario{}, fmt.Errorf("usuario no encontrado (id: %s): %w", id, err)
+	var row RowUsuario
+	err := r.db.Tenant.Read(ctx, func(tx pgx.Tx) error {
+		rows, err := tx.Query(ctx, SelectUsuarioXId, id)
+		if err != nil {
+			return fmt.Errorf("ConsultarUsuarioPorID: error de conexión: %w", err)
 		}
-		return usuario.Usuario{}, fmt.Errorf("ConsultarUsuarioPorID: %w", err)
+
+		row, err = pgx.CollectOneRow(rows, pgx.RowToStructByName[RowUsuario])
+		if err != nil {
+			if err == pgx.ErrNoRows {
+				return fmt.Errorf("usuario no encontrado (id: %s): %w", id, err)
+			}
+			return fmt.Errorf("ConsultarUsuarioPorID: %w", err)
+		}
+		return nil
+	})
+
+	if err != nil {
+		return usuario.Usuario{}, err
 	}
 
 	return row.ToUsuario(), nil
 }
 
 func (r *UsuarioRepository) CrearUsuario(ctx context.Context, b usuario.Usuario) error {
-	conn, err := r.db.WritePool.Acquire(ctx)
-	if err != nil {
-		return fmt.Errorf("error obteniendo conexión: %w", err)
-	}
-	defer conn.Release()
+	err := r.db.Tenant.Write(ctx, func(tx pgx.Tx) error {
+		var newID uuid.UUID
+		err := tx.QueryRow(ctx, InsertUsuario,
+			b.UuidPersona,
+			b.Email,
+			b.Password,
+			b.Perfil,
+			b.Razon_i,
+		).Scan(&newID)
 
-	if err := shared.SetAuditSession(ctx, conn); err != nil {
-		return fmt.Errorf("error configurando auditoría: %w", err)
-	}
-
-	// Usamos QueryRow con RETURNING id para verificar que se insertó correctamente
-	var newID uuid.UUID
-	err = conn.QueryRow(ctx, InsertUsuario,
-		b.UuidPersona,
-		b.Email,
-		b.Password,
-		b.Perfil,
-		b.Razon_i,
-	).Scan(&newID)
-
-	if err != nil {
-		return fmt.Errorf("CrearUsuario: error al insertar: %w", err)
-	}
-	return nil
+		if err != nil {
+			return fmt.Errorf("CrearUsuario: error al insertar: %w", err)
+		}
+		return nil
+	})
+	return err
 }
 
 func (r *UsuarioRepository) ActualizarUsuario(ctx context.Context, b usuario.Usuario) error {
-	conn, err := r.db.WritePool.Acquire(ctx)
-	if err != nil {
-		return fmt.Errorf("error obteniendo conexión: %w", err)
-	}
-	defer conn.Release()
-
-	if err := shared.SetAuditSession(ctx, conn); err != nil {
-		return fmt.Errorf("error configurando auditoría: %w", err)
-	}
-
-	ct, err := conn.Exec(ctx, UpdateUsuario,
-		b.Email,
-		b.Password,
-		b.Perfil,
-		b.Razon_m,
-		b.UuidPersona,
-	)
-	if err != nil {
-		return fmt.Errorf("ActualizarUsuario: %w", err)
-	}
-	if ct.RowsAffected() == 0 {
-		return fmt.Errorf("no se encontró el usuario para actualizar (id: %s)", b.UuidPersona)
-	}
-	return nil
+	err := r.db.Tenant.Write(ctx, func(tx pgx.Tx) error {
+		ct, err := tx.Exec(ctx, UpdateUsuario,
+			b.Email,
+			b.Password,
+			b.Perfil,
+			b.Razon_m,
+			b.UuidPersona,
+		)
+		if err != nil {
+			return fmt.Errorf("ActualizarUsuario: %w", err)
+		}
+		if ct.RowsAffected() == 0 {
+			return fmt.Errorf("no se encontró el usuario para actualizar (id: %s)", b.UuidPersona)
+		}
+		return nil
+	})
+	return err
 }
 
 func (r *UsuarioRepository) ActualizarPassword(ctx context.Context, uuid_persona uuid.UUID, password string) error {
-	conn, err := r.db.WritePool.Acquire(ctx)
-	if err != nil {
-		return fmt.Errorf("error obteniendo conexión: %w", err)
-	}
-	defer conn.Release()
-
-	if err := shared.SetAuditSession(ctx, conn); err != nil {
-		return fmt.Errorf("error configurando auditoría: %w", err)
-	}
-
-	ct, err := conn.Exec(ctx, UpdatePasswordUsuario, password, uuid_persona)
-	if err != nil {
-		return fmt.Errorf("ActualizarPassword: %w", err)
-	}
-	if ct.RowsAffected() == 0 {
-		return fmt.Errorf("no se encontró el usuario para actualizar la contraseña (id: %s)", uuid_persona)
-	}
-	return nil
+	err := r.db.Tenant.Write(ctx, func(tx pgx.Tx) error {
+		ct, err := tx.Exec(ctx, UpdatePasswordUsuario, password, uuid_persona)
+		if err != nil {
+			return fmt.Errorf("ActualizarPassword: %w", err)
+		}
+		if ct.RowsAffected() == 0 {
+			return fmt.Errorf("no se encontró el usuario para actualizar la contraseña (id: %s)", uuid_persona)
+		}
+		return nil
+	})
+	return err
 }
 
 
 func (r *UsuarioRepository) EliminarUsuario(ctx context.Context, uuid_persona uuid.UUID) error {
-	conn, err := r.db.WritePool.Acquire(ctx)
-	if err != nil {
-		return fmt.Errorf("error obteniendo conexión: %w", err)
-	}
-	defer conn.Release()
-
-	if err := shared.SetAuditSession(ctx, conn); err != nil {
-		return fmt.Errorf("error configurando auditoría: %w", err)
-	}
-
-	ct, err := conn.Exec(ctx, DeleteUsuario, uuid_persona)
-	if err != nil {
-		return fmt.Errorf("EliminarUsuario: %w", err)
-	}
-	if ct.RowsAffected() == 0 {
-		return fmt.Errorf("no se encontró el usuario para eliminar (id: %s)", uuid_persona)
-	}
-	return nil
+	err := r.db.Tenant.Write(ctx, func(tx pgx.Tx) error {
+		ct, err := tx.Exec(ctx, DeleteUsuario, uuid_persona)
+		if err != nil {
+			return fmt.Errorf("EliminarUsuario: %w", err)
+		}
+		if ct.RowsAffected() == 0 {
+			return fmt.Errorf("no se encontró el usuario para eliminar (id: %s)", uuid_persona)
+		}
+		return nil
+	})
+	return err
 }
 
 // --- Helpers Privados ---

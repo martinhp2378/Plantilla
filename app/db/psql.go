@@ -25,8 +25,25 @@ import (
 var tenantSchemaRegex = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)
 
 type AppPools struct {
-	ReadPool  *pgxpool.Pool
-	WritePool *pgxpool.Pool
+	readPool  *pgxpool.Pool
+	writePool *pgxpool.Pool
+	Tenant    *TenantTxRunner
+}
+
+func NewAppPools(readPool, writePool *pgxpool.Pool) *AppPools {
+	return &AppPools{
+		readPool:  readPool,
+		writePool: writePool,
+		Tenant:    NewTenantTxRunner(readPool, writePool),
+	}
+}
+
+func (a *AppPools) ReadPool() *pgxpool.Pool {
+	return a.readPool
+}
+
+func (a *AppPools) WritePool() *pgxpool.Pool {
+	return a.writePool
 }
 
 // configureTenantPool keeps existing direct pool consumers fail-closed until they
@@ -176,8 +193,9 @@ func ConnectPostgres(ctx context.Context, env *entorno.Env, instrumentacion *log
 	}
 
 	return &AppPools{
-		ReadPool:  readPool,
-		WritePool: writePool,
+		readPool:  readPool,
+		writePool: writePool,
+		Tenant:    NewTenantTxRunner(readPool, writePool),
 	}, nil
 }
 

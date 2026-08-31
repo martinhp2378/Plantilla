@@ -24,6 +24,13 @@ type RowPersona struct {
 }
 
 func (r RowPersona) ToPersona() *institucion.Persona {
+	var fechaI, fechaM string
+	if r.Fecha_i.Valid {
+		fechaI = r.Fecha_i.Time.Format("2006-01-02 15:04:05")
+	}
+	if r.Fecha_m.Valid {
+		fechaM = r.Fecha_m.Time.Format("2006-01-02 15:04:05")
+	}
 	return &institucion.Persona{
 		UuidPersona:  uuid.FromStringOrNil(r.UuidPersona),
 		Nombre:       r.Nombre,
@@ -35,8 +42,8 @@ func (r RowPersona) ToPersona() *institucion.Persona {
 		ImagenPerfil: r.ImagenPerfil.String,
 		Razon_i:      r.Razon_i.String,
 		Razon_m:      r.Razon_m.String,
-		Fecha_i:      r.Fecha_i.Time.Format("2006-01-02 15:04:05"),
-		Fecha_m:      r.Fecha_m.Time.Format("2006-01-02 15:04:05"),
+		Fecha_i:      fechaI,
+		Fecha_m:      fechaM,
 	}
 }
 

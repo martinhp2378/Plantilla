@@ -77,6 +77,7 @@ func (h *PerfilHandler) renderErrorGeneric(w http.ResponseWriter, r *http.Reques
 	utils.RenderIgnore(ctx, &sb, compartidos.Mensaje("error", msg))
 
 	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusBadRequest)
 	_, _ = w.Write([]byte(sb.String()))
 }
 
@@ -101,6 +102,7 @@ func (h *PerfilHandler) renderErrorModalCreate(w http.ResponseWriter, r *http.Re
 	utils.RenderIgnore(r.Context(), &sb, compartidos.Mensaje("error", msg))
 	utils.RenderIgnore(r.Context(), &sb, components.FormCreatePerfilV2(b, errs))
 	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusUnprocessableEntity)
 	_, _ = w.Write([]byte(sb.String()))
 }
 
@@ -109,5 +111,6 @@ func (h *PerfilHandler) renderErrorModalUpdate(w http.ResponseWriter, r *http.Re
 	utils.RenderIgnore(r.Context(), &sb, compartidos.Mensaje("error", msg))
 	utils.RenderIgnore(r.Context(), &sb, components.FormUpdatePerfilV2(&b, errs))
 	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusUnprocessableEntity)
 	_, _ = w.Write([]byte(sb.String()))
 }

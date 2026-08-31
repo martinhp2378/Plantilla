@@ -21,18 +21,17 @@ func (h *ParametrosHandler) Mandar_error(ctx context.Context, w http.ResponseWri
 	var sb strings.Builder
 
 	criterios, err := h.service.ListarParametros(ctx)
-	if err != nil {
-		return
+	if err == nil {
+		if r.Header.Get("HX-Request") == "true" {
+			utils.RenderIgnore(ctx, &sb, components.TableV2(criterios, pagina.GlobalRutas.Parametros.Tabla, false))
+		} else {
+			utils.RenderIgnore(ctx, &sb, layouts.ViewParametros("Parámetros", pagina.Parametros, criterios, pagina.GlobalRutas.Parametros.Tabla))
+		}
 	}
-
-	if r.Header.Get("HX-Request") == "true" {
-		utils.RenderIgnore(ctx, &sb, components.TableV2(criterios, pagina.GlobalRutas.Parametros.Tabla, false))
-	} else {
-		utils.RenderIgnore(ctx, &sb, layouts.ViewParametros("Parámetros", pagina.Parametros, criterios, pagina.GlobalRutas.Parametros.Tabla))
-	}
+	
 	utils.RenderIgnore(ctx, &sb, compartidos.Mensaje("error", mensaje))
-
 	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusBadRequest)
 	_, _ = w.Write([]byte(sb.String()))
 }
 
@@ -41,6 +40,7 @@ func (h *ParametrosHandler) Mandar_errorModalCreate(ctx context.Context, w http.
 	utils.RenderIgnore(ctx, &sb, compartidos.Mensaje("error", mensaje))
 	utils.RenderIgnore(ctx, &sb, components.FormCreateParametroV2(parametro, errors))
 	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusUnprocessableEntity)
 	_, _ = w.Write([]byte(sb.String()))
 }
 
@@ -49,6 +49,7 @@ func (h *ParametrosHandler) Mandar_errorModalUpdate(ctx context.Context, w http.
 	utils.RenderIgnore(ctx, &sb, compartidos.Mensaje("error", mensaje))
 	utils.RenderIgnore(ctx, &sb, components.FormUpdateParametroV2(&parametro, errors))
 	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusUnprocessableEntity)
 	_, _ = w.Write([]byte(sb.String()))
 }
 
@@ -57,11 +58,9 @@ func (h *ParametrosHandler) Mandar_success(ctx context.Context, w http.ResponseW
 	sb.WriteString(`<div id="modal" hx-swap-oob="true"></div>`)
 
 	criterios, err := h.service.ListarParametros(ctx)
-	if err != nil {
-		return
+	if err == nil {
+		utils.RenderIgnore(ctx, &sb, components.TableV2(criterios, pagina.GlobalRutas.Parametros.Tabla, true))
 	}
-
-	utils.RenderIgnore(ctx, &sb, components.TableV2(criterios, pagina.GlobalRutas.Parametros.Tabla, true))
 	utils.RenderIgnore(ctx, &sb, compartidos.Mensaje("success", mensaje))
 
 	w.Header().Set("Content-Type", "text/html")

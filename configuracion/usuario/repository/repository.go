@@ -6,6 +6,7 @@ import (
 	shared "PlantillaInstitucional/shared/db"
 	"context"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -185,7 +186,15 @@ func buildDynamicWhere(filtros map[string]any) ([]string, []any) {
 	var args []any
 	argID := 1
 
-	for campo, valor := range filtros {
+	// Extraer y ordenar las llaves para garantizar determinismo y cacheo de queries
+	var keys []string
+	for k := range filtros {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, campo := range keys {
+		valor := filtros[campo]
 		if valor == nil {
 			continue
 		}

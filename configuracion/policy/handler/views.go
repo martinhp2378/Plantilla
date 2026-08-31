@@ -53,6 +53,7 @@ func (h *PolicyHandler) renderErrorGeneric(w http.ResponseWriter, r *http.Reques
 	}
 	utils.RenderIgnore(ctx, &sb, compartidos.Mensaje("error", msg))
 	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusBadRequest)
 	_, _ = w.Write([]byte(sb.String()))
 }
 
@@ -74,6 +75,7 @@ func (h *PolicyHandler) renderErrorModalCreate(w http.ResponseWriter, r *http.Re
 	utils.RenderIgnore(r.Context(), &sb, compartidos.Mensaje("error", msg))
 	utils.RenderIgnore(r.Context(), &sb, components.FormCreatePolicyV2(p, nil, perfiles, recursos, acciones))
 	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusUnprocessableEntity)
 	_, _ = w.Write([]byte(sb.String()))
 }
 
@@ -83,5 +85,6 @@ func (h *PolicyHandler) renderErrorModalUpdate(w http.ResponseWriter, r *http.Re
 	utils.RenderIgnore(r.Context(), &sb, compartidos.Mensaje("error", msg))
 	utils.RenderIgnore(r.Context(), &sb, components.FormUpdatePolicyV2(&p, nil, perfiles, recursos, acciones))
 	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusUnprocessableEntity)
 	_, _ = w.Write([]byte(sb.String()))
 }

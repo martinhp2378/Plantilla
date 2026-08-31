@@ -20,16 +20,16 @@ func NewRepository(db *conexionBd.AppPools) *ParametrosRepository {
 }
 
 type RowParametro struct {
-	ParametroId uuid.UUID
-	Clave       string
-	Valor       string
-	Descripcion sql.NullString
-	TipoDato    string
-	IsActive    bool
-	RazonI      sql.NullString
-	RazonM      sql.NullString
-	FechaI      sql.NullTime
-	FechaM      sql.NullTime
+	ParametroId uuid.UUID      `db:"parametro_id"`
+	Clave       string         `db:"clave"`
+	Valor       string         `db:"valor"`
+	Descripcion sql.NullString `db:"descripcion"`
+	TipoDato    string         `db:"tipo_dato"`
+	IsActive    bool           `db:"is_active"`
+	RazonI      sql.NullString `db:"razon_i"`
+	RazonM      sql.NullString `db:"razon_m"`
+	FechaI      sql.NullTime   `db:"fecha_i"`
+	FechaM      sql.NullTime   `db:"fecha_m"`
 }
 
 func (r RowParametro) ToParametro() parametros.Parametro {

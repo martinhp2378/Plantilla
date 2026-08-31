@@ -80,8 +80,20 @@ func (s *UsuarioService) ActualizarUsuario(ctx context.Context, b usuario.Usuari
 	}
 
 	bExistente, err := s.ObtenerUsuario(ctx, b.UuidPersona)
-	if err == nil && b.Password == "" {
+	if err != nil {
+		s.logger.ErrorContext(ctx, "Error obteniendo usuario existente", err, "id", b.UuidPersona, "op", "ActualizarUsuario")
+		return fmt.Errorf("no se pudo recuperar el usuario para actualizar: %w", err)
+	}
+
+	if b.Password == "" {
 		b.Password = bExistente.Password
+	} else {
+		hashed, errHash := shared.HashPassword(b.Password)
+		if errHash != nil {
+			s.logger.ErrorContext(ctx, "Error hasheando nueva contraseña", errHash, "id", b.UuidPersona, "op", "ActualizarUsuario")
+			return fmt.Errorf("error asegurando la contraseña: %w", errHash)
+		}
+		b.Password = hashed
 	}
 
 	// CORRECCIÓN IMPORTANTE: Capturamos el error explícitamente

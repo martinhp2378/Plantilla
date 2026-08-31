@@ -69,15 +69,24 @@ func (s *PerfilService) ReporteExcel(ctx context.Context) (string, error) {
 // Helper privado para reutilizar la lógica de extracción masiva
 func (s *PerfilService) fetchAllPerfiles(ctx context.Context) ([]perfil.Perfil, error) {
 	criterios := pagination.NewCriteriosPaginaDefault[perfil.Perfil]()
-	criterios.Size = 5000 // Limite duro de seguridad, ajusta según memoria disponible
+	criterios.Size = 5000
 	criterios.First = 0
 
-	// Nota: Si hay más de 5000, aquí solo traemos los primeros.
-	// Lo ideal sería iterar páginas hasta traer todo si el reporte debe ser exhaustivo.
-	perfilesList, _, err := s.repo.ConsultarPerfiles(ctx, criterios)
-	if err != nil {
-		s.logger.ErrorContext(ctx, "Error obteniendo datos para reporte", err, "op", "fetchAllPerfiles")
-		return nil, fmt.Errorf("error obteniendo datos: %w", err)
+	var perfilesValores []perfil.Perfil
+
+	for {
+		perfilesList, total, err := s.repo.ConsultarPerfiles(ctx, criterios)
+		if err != nil {
+			s.logger.ErrorContext(ctx, "Error obteniendo datos para reporte", err, "op", "fetchAllPerfiles")
+			return nil, fmt.Errorf("error obteniendo datos: %w", err)
+		}
+
+		perfilesValores = append(perfilesValores, perfilesList...)
+
+		criterios.First += criterios.Size
+		if criterios.First >= total {
+			break
+		}
 	}
-	return perfilesList, nil
+	return perfilesValores, nil
 }

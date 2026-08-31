@@ -11,6 +11,7 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"PlantillaInstitucional/configuracion/perfil"
 	"PlantillaInstitucional/shared/views/components/v2"
+	"net/url"
 )
 
 func FormCreatePerfilV2(p perfil.Perfil, errors map[string]string) templ.Component {
@@ -121,9 +122,9 @@ func FormUpdatePerfilV2(p *perfil.Perfil, errors map[string]string) templ.Compon
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 string
-			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue("/configuracion/perfiles/" + p.Nombre + "/")
+			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue("/configuracion/perfiles/" + url.PathEscape(p.Nombre) + "/")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `configuracion/perfil/view/components/form_v2.templ`, Line: 28, Col: 60}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `configuracion/perfil/view/components/form_v2.templ`, Line: 29, Col: 76}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
 			if templ_7745c5c3_Err != nil {
@@ -150,7 +151,7 @@ func FormUpdatePerfilV2(p *perfil.Perfil, errors map[string]string) templ.Compon
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.Nombre)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `configuracion/perfil/view/components/form_v2.templ`, Line: 37, Col: 64}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `configuracion/perfil/view/components/form_v2.templ`, Line: 38, Col: 64}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
 			if templ_7745c5c3_Err != nil {

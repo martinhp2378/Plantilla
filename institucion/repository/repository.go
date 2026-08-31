@@ -6,6 +6,7 @@ import (
 	shared "PlantillaInstitucional/shared/db"
 	"context"
 	"fmt"
+	"errors"
 
 	"strings"
 
@@ -96,7 +97,7 @@ func (r *PersonaRepository) ConsultarPersonaPorID(ctx context.Context, uuid_pers
 
 		pdb, err = pgx.CollectOneRow(rows, pgx.RowToStructByName[RowPersona])
 		if err != nil {
-			if err == pgx.ErrNoRows {
+			if errors.Is(err, pgx.ErrNoRows) {
 				return fmt.Errorf("persona no encontrada (id: %s): %w", uuid_persona, err)
 			}
 			return fmt.Errorf("ConsultarPersonaPorID: %w", err)
@@ -141,6 +142,7 @@ func (r *PersonaRepository) ActualizarPersona(ctx context.Context, p institucion
 			p.Rfc,
 			p.Curp,
 			p.ClaveIssemym,
+			p.Razon_m,
 			p.UuidPersona,
 		)
 		if err != nil {

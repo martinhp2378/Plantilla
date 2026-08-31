@@ -66,6 +66,7 @@ func (h *UsuarioHandler) renderErrorGeneric(w http.ResponseWriter, r *http.Reque
 	utils.RenderIgnore(ctx, &sb, compartidos.Mensaje("error", msg))
 
 	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusBadRequest)
 	_, _ = w.Write([]byte(sb.String()))
 }
 
@@ -105,6 +106,7 @@ func (h *UsuarioHandler) renderErrorModalCreate(w http.ResponseWriter, r *http.R
 
 	utils.RenderIgnore(r.Context(), &sb, components.FormCreateUsuarioV2(b, opcionesPersona, errs))
 	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusUnprocessableEntity)
 	_, _ = w.Write([]byte(sb.String()))
 }
 
@@ -125,5 +127,6 @@ func (h *UsuarioHandler) renderErrorModalUpdate(w http.ResponseWriter, r *http.R
 
 	utils.RenderIgnore(r.Context(), &sb, components.FormUpdateUsuarioV2(&b, opcionesPersona, errs))
 	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusUnprocessableEntity)
 	_, _ = w.Write([]byte(sb.String()))
 }

@@ -69,21 +69,27 @@ func (s *PersonaService) ReporteExcel(ctx context.Context) (string, error) {
 // Helper privado para reutilizar la lógica de extracción masiva
 func (s *PersonaService) fetchAllPersonas(ctx context.Context) ([]institucion.Persona, error) {
 	criterios := pagination.NewCriteriosPaginaDefault[institucion.Persona]()
-	criterios.Size = 5000 // Limite duro de seguridad, ajusta según memoria disponible
+	criterios.Size = 5000
 	criterios.First = 0
 
-	// Nota: Si hay más de 5000, aquí solo traemos los primeros.
-	// Lo ideal sería iterar páginas hasta traer todo si el reporte debe ser exhaustivo.
-	personasList, _, err := s.repo.ConsultarPersonas(ctx, criterios)
-	if err != nil {
-		s.logger.ErrorContext(ctx, "Error obteniendo datos para reporte", err, "op", "fetchAllPersonas")
-		return nil, fmt.Errorf("error obteniendo datos: %w", err)
-	}
-
 	var personasValores []institucion.Persona
-	for _, p := range personasList {
-		if p != nil {
-			personasValores = append(personasValores, *p)
+
+	for {
+		personasList, total, err := s.repo.ConsultarPersonas(ctx, criterios)
+		if err != nil {
+			s.logger.ErrorContext(ctx, "Error obteniendo datos para reporte", err, "op", "fetchAllPersonas")
+			return nil, fmt.Errorf("error obteniendo datos: %w", err)
+		}
+
+		for _, p := range personasList {
+			if p != nil {
+				personasValores = append(personasValores, *p)
+			}
+		}
+
+		criterios.First += criterios.Size
+		if criterios.First >= total {
+			break
 		}
 	}
 

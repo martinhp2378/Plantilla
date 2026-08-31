@@ -6,6 +6,7 @@ import (
 	shared "PlantillaInstitucional/shared/db"
 	"context"
 	"fmt"
+	"errors"
 	"strings"
 
 	"github.com/gofrs/uuid/v5"
@@ -79,6 +80,9 @@ func (r *ParametrosRepository) ConsultarParametroPorID(ctx context.Context, id u
 
 		respuestaParametro, err = pgx.CollectOneRow(row, pgx.RowToStructByName[RowParametro])
 		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return fmt.Errorf("parámetro no encontrado (id: %s)", id)
+			}
 			return fmt.Errorf("error mapeando resultado: %w", err)
 		}
 		return nil
@@ -92,7 +96,7 @@ func (r *ParametrosRepository) ConsultarParametroPorID(ctx context.Context, id u
 
 func (r *ParametrosRepository) ActualizarParametro(ctx context.Context, parametros parametros.Parametro) error {
 	err := r.db.Tenant.Write(ctx, func(tx pgx.Tx) error {
-		_, err := tx.Exec(ctx,
+		ct, err := tx.Exec(ctx,
 			UpdateParametro,
 			parametros.Clave,
 			parametros.Valor,
@@ -104,6 +108,9 @@ func (r *ParametrosRepository) ActualizarParametro(ctx context.Context, parametr
 		)
 		if err != nil {
 			return fmt.Errorf("error ejecutando actualización: %w", err)
+		}
+		if ct.RowsAffected() == 0 {
+			return fmt.Errorf("no se encontró el parámetro para actualizar (id: %s)", parametros.ParametroId)
 		}
 		return nil
 	})
@@ -118,9 +125,12 @@ func (r *ParametrosRepository) ActualizarParametro(ctx context.Context, parametr
 
 func (r *ParametrosRepository) EliminarParametro(ctx context.Context, id uuid.UUID) error {
 	err := r.db.Tenant.Write(ctx, func(tx pgx.Tx) error {
-		_, err := tx.Exec(ctx, DeleteParametro, id)
+		ct, err := tx.Exec(ctx, DeleteParametro, id)
 		if err != nil {
-			return fmt.Errorf("error eliminando rol: %w", err)
+			return fmt.Errorf("error eliminando parámetro: %w", err)
+		}
+		if ct.RowsAffected() == 0 {
+			return fmt.Errorf("no se encontró el parámetro para eliminar (id: %s)", id)
 		}
 		return nil
 	})

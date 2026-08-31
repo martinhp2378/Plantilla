@@ -69,15 +69,24 @@ func (s *UsuarioService) ReporteExcel(ctx context.Context) (string, error) {
 // Helper privado para reutilizar la lógica de extracción masiva
 func (s *UsuarioService) fetchAllUsuarios(ctx context.Context) ([]usuario.Usuario, error) {
 	criterios := pagination.NewCriteriosPaginaDefault[usuario.Usuario]()
-	criterios.Size = 5000 // Limite duro de seguridad, ajusta según memoria disponible
+	criterios.Size = 5000
 	criterios.First = 0
 
-	// Nota: Si hay más de 5000, aquí solo traemos los primeros.
-	// Lo ideal sería iterar páginas hasta traer todo si el reporte debe ser exhaustivo.
-	usuariosList, _, err := s.repo.ConsultarUsuarios(ctx, criterios)
-	if err != nil {
-		s.logger.ErrorContext(ctx, "Error obteniendo datos para reporte", err, "op", "fetchAllUsuarios")
-		return nil, fmt.Errorf("error obteniendo datos: %w", err)
+	var usuariosValores []usuario.Usuario
+
+	for {
+		usuariosList, total, err := s.repo.ConsultarUsuarios(ctx, criterios)
+		if err != nil {
+			s.logger.ErrorContext(ctx, "Error obteniendo datos para reporte", err, "op", "fetchAllUsuarios")
+			return nil, fmt.Errorf("error obteniendo datos: %w", err)
+		}
+
+		usuariosValores = append(usuariosValores, usuariosList...)
+
+		criterios.First += criterios.Size
+		if criterios.First >= total {
+			break
+		}
 	}
-	return usuariosList, nil
+	return usuariosValores, nil
 }

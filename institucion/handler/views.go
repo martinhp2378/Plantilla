@@ -72,6 +72,7 @@ func (h *personaHandler) renderErrorGeneric(w http.ResponseWriter, r *http.Reque
 	}
 	utils.RenderIgnore(ctx, &sb, compartidos.Mensaje("error", msg))
 	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusBadRequest)
 	_, _ = w.Write([]byte(sb.String()))
 }
 
@@ -82,8 +83,8 @@ func (h *personaHandler) renderSuccess(w http.ResponseWriter, r *http.Request, m
 	criterios := pagination.NewCriteriosPaginaDefault[institucion.Persona]()
 	data, _ := h.service.ListarPersonas(ctx, criterios)
 	utils.RenderIgnore(ctx, &sb, components.TableV2(data, pagina.GlobalRutas.Personas.Tabla, true))
-	utils.RenderIgnore(ctx, &sb, compartidos.Mensaje("success", msg))
 	w.Header().Set("Content-Type", "text/html")
+	utils.RenderIgnore(ctx, &sb, compartidos.Mensaje("success", msg))
 	_, _ = w.Write([]byte(sb.String()))
 }
 
@@ -92,6 +93,7 @@ func (h *personaHandler) renderErrorModalCreate(w http.ResponseWriter, r *http.R
 	utils.RenderIgnore(r.Context(), &sb, compartidos.Mensaje("error", msg))
 	utils.RenderIgnore(r.Context(), &sb, components.FormCreatePersonaV2(p, errs))
 	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusUnprocessableEntity)
 	_, _ = w.Write([]byte(sb.String()))
 }
 
@@ -100,5 +102,6 @@ func (h *personaHandler) renderErrorModalUpdate(w http.ResponseWriter, r *http.R
 	utils.RenderIgnore(r.Context(), &sb, compartidos.Mensaje("error", msg))
 	utils.RenderIgnore(r.Context(), &sb, components.FormUpdatePersonaV2(&p, errs))
 	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusUnprocessableEntity)
 	_, _ = w.Write([]byte(sb.String()))
 }

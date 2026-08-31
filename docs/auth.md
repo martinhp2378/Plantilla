@@ -46,11 +46,11 @@ Ubicado en `app/middleware/policy.go`.
 
 ## 🕵️ Auditoría y Contexto
 
-Para que los repositorios puedan registrar quién realiza una acción sin acoplarse al sistema de sesiones:
+Para que la base de datos (mediante triggers) pueda registrar quién realiza una acción de forma segura en entornos multi-tenant:
 
-1.  **Middleware**: `AuditContextMiddleware` extrae el UUID del usuario de la sesión.
-2.  **Contexto**: El UUID se inyecta en el `context.Context` bajo la llave `db.UserUUIDKey`.
-3.  **Repositorio**: Recupera el UUID para llenar campos como `usuario_creacion` o `razon_i`.
+1.  **Middleware**: `AuditContextMiddleware` extrae el UUID del usuario autenticado de la sesión.
+2.  **Contexto**: El UUID se inyecta en el `context.Context` utilizando `contextkey.AuditUUIDKey`.
+3.  **Inyección en DB**: Al iniciar una operación de base de datos, el `TenantTxRunner` lee este UUID del contexto y ejecuta `SET LOCAL session_variables.uuid_persona`. De esta forma, los triggers de auditoría (por ejemplo en `sistema.bitacora_cambios`) recuperan el autor exacto sin acoplar el código de los repositorios.
 
 ---
 

@@ -32,12 +32,23 @@ migrate create -ext sql -dir sql/migrations -seq nombre_de_la_migracion
 
 ## 🏗️ Repositorios y Consultas
 
-Los repositorios utilizan `Pgxpool` para una gestión eficiente de conexiones.
+Los repositorios operan bajo estricto aislamiento transaccional utilizando `TenantTxRunner`, el cual encapsula el acceso a los pools de `Read` y `Write`.
 
 ### Patrón de Repositorio:
-1.  **Queries**: Se recomienda definir las constantes SQL en un archivo `queries.go` separado.
-2.  **Transacciones**: Siempre usar el contexto (`ctx`) para permitir la propagación de timeouts y cancelaciones.
-3.  **Audit**: Los repositorios extraen automáticamente el UUID del usuario del contexto si está disponible para logs o campos de auditoría.
+1.  **Aislamiento Transaccional Obligatorio**: No se permite acceso directo a `*pgxpool.Pool`. Todas las operaciones deben ejecutarse dentro de los closures `r.db.Tenant.Read(ctx, func(tx pgx.Tx) error)` o `r.db.Tenant.Write(...)`.
+2.  **Configuración Automática**: El runner valida el `TenantContext`, inyecta la variable de sesión `app.tenant_id` y configura el `search_path` (ej. `SET LOCAL search_path TO "schema_name", pg_catalog`) de manera segura, revirtiéndolo al hacer commit o rollback.
+3.  **Auditoría y Sesión**: Las variables para triggers de auditoría (como `session_variables.uuid_persona`) se inyectan automáticamente en la misma transacción. No debe llamarse a configuradores externos o persistentes.
 
-### Multi-tenancy en BD:
-Cada repositorio es "agnóstico" al esquema del tenant gracias al middleware que ejecuta `SET search_path` antes de entregar una conexión del pool. Esto significa que puedes escribir `SELECT * FROM mi_tabla` y PostgreSQL buscará automáticamente en el esquema del tenant actual.
+### Aislamiento Multi-tenant (RLS):
+El motor PostgreSQL aplica aislamiento en defensa en profundidad:
+*   **Roles y Permisos**: La aplicación se conecta con un rol de privilegios mínimos (`app_runtime_tenant`) que posee `NOBYPASSRLS` y no tiene permisos sobre el esquema `public`.
+*   **Row Level Security (RLS)**: Cada tabla tenant-scoped (ej. `persona`, `usuario`, `sesion`) tiene habilitado `FORCE ROW LEVEL SECURITY`. Las políticas validan matemáticamente que `tenant_id::text = current_setting('app.tenant_id', true)` para operaciones `SELECT`, y exigen lo mismo con `WITH CHECK` para modificaciones.
+*   **Fall-closed**: Si un query no pasa por el runner transaccional, carece de contexto local y RLS denegará silenciosa y universalmente el acceso.
+
+## 🚀 Estrategia de Migraciones Multi-tenant (Expand & Contract)
+
+Para garantizar zero-downtime y evitar reversas destructivas con pérdida de datos, cualquier cambio en las barreras de aislamiento debe ejecutarse en fases:
+
+1. **Expand**: Se aplican cambios aditivos (roles, columnas, índices, RLS). Se requiere prueba canary, observabilidad y rollback de aplicación/configuración seguro que jamás restaure acceso a `public` ni desactive RLS.
+2. **Contract**: Solo se ejecuta (vía un script SQL final destructivo) tras acumular evidencia técnica empírica de compatibilidad total y ausencia de consumidores antiguos (legacy pooling hooks).
+3. **Rollback de DB (Forward-fix)**: La base de datos siempre avanza. Los scripts `.down.sql` de las fases expand retiran políticas y desactivan restricciones sin hacer `DROP COLUMN` que destruya datos.

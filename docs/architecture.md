@@ -40,9 +40,9 @@ La DI se realiza de forma manual en la carpeta `cmd/config/`. Esto proporciona c
 *   `initservices.go`: Instancia los servicios pasando los repositorios requeridos.
 *   `inithandlers.go`: Instancia los handlers pasando los servicios requeridos.
 
-## 🏢 Multi-tenancy
+## 🏢 Multi-tenancy y Aislamiento de Datos
 
-La plantilla implementa un modelo de **Aislamiento por Esquemas**:
-1.  **Detección**: El `TenantMiddleware` identifica el tenant basado en el subdominio (ej. `admin.localhost`).
-2.  **Contexto**: El esquema asociado se inyecta en el `context.Context`.
-3.  **Ejecución**: El pool de conexiones resuelve las tablas dinámicamente usando el orden: `tenant_schema, sesion, institucion, sistema, public`.
+La plantilla implementa un modelo de **Aislamiento en Defensa en Profundidad**:
+1.  **Detección (Edge)**: El `TenantMiddleware` identifica y valida el tenant basado en el subdominio (o header autorizado si es un proxy de confianza) e inyecta el `TenantContext` inmutable en la petición.
+2.  **Contexto Transaccional**: El acceso a base de datos se realiza exclusivamente a través de `TenantTxRunner`. Este inyecta de forma segura el esquema (vía `SET LOCAL search_path`) y la variable de sesión `app.tenant_id`. Todo se revierte al hacer commit o rollback.
+3.  **Aislamiento RLS (Row Level Security)**: Cada tabla multi-tenant posee políticas `FORCE ROW LEVEL SECURITY`. Si un query bypassa el runner o no provee la identidad exacta, el motor de base de datos deniega el acceso automáticamente (fail-closed).

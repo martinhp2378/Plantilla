@@ -27,3 +27,10 @@ Las fixtures locales son exclusivamente para `local_direct` y no sustituyen el s
 La aplicación valida el contrato recibido, pero no puede demostrar desde una solicitud la topología de Cloud Run, ALB, serverless NEG, URL `run.app`, CIDRs reales ni la configuración efectiva de NGINX. Esas pruebas son evidencia late-bound y bloquean el cutover hasta que plataforma y el owner institucional las aprueben.
 
 El rollout inicia con un canary limitado a un host `active` aprobado. Debe observar rechazos redactados, errores y latencia dentro de umbrales aprobados. Si falla autoridad, catálogo o observabilidad, el rollback retira el mapping o el host rule y conserva la denegación segura; nunca restaura `public` ni habilita una ruta de bypass.
+## Aislamiento Transaccional (Base de Datos)
+
+El cumplimiento del tenant context no se detiene en la capa HTTP. La plantilla fuerza una arquitectura **fail-closed** a nivel transaccional y de motor de base de datos (PostgreSQL).
+
+1. **Aislamiento en Memoria**: `TenantTxRunner` requiere una instancia de contexto inmutable válida para cada unidad de trabajo. Inyecta la resolución (`search_path` y `app.tenant_id`) a través de un set transaccional (`SET LOCAL`), garantizando que la configuración sea efímera y se elimine automáticamente en cada `commit` o `rollback`. No existe un fallback a la red pública (schema `public`).
+2. **Defensa en Profundidad (RLS)**: La identidad inyectada en tiempo de transacción se evalúa internamente a través de restricciones Row Level Security (RLS) habilitadas y forzadas (`FORCE ROW LEVEL SECURITY`) en cada tabla, validando y requiriendo validación en escrituras (`WITH CHECK`).
+3. **Mínimo Privilegio**: La aplicación web se conecta usando un rol `NOBYPASSRLS` (`app_runtime_tenant`). Se impide programáticamente el acceso cruzado de datos.

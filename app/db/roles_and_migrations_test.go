@@ -1,0 +1,132 @@
+package bd
+
+import (
+	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
+	"testing"
+)
+
+func TestBootstrapRolesContract(t *testing.T) {
+	rolesSQLPath := filepath.Join("..", "..", "sql", "bootstrap", "roles.sql")
+	contentBytes, err := os.ReadFile(rolesSQLPath)
+	if err != nil {
+		t.Fatalf("failed to read roles.sql: %v", err)
+	}
+	content := string(contentBytes)
+
+	t.Run("Roles specify NOBYPASSRLS", func(t *testing.T) {
+		if !strings.Contains(content, "app_runtime_tenant") {
+			t.Fatal("roles.sql must define app_runtime_tenant")
+		}
+		if !strings.Contains(content, "app_migrator") {
+			t.Fatal("roles.sql must define app_migrator")
+		}
+		// Must enforce NOBYPASSRLS
+		if !strings.Contains(content, "NOBYPASSRLS") {
+			t.Fatal("roles.sql must enforce NOBYPASSRLS on runtime and migration roles")
+		}
+		if matched, _ := regexp.MatchString(`(?i)[^\w]BYPASSRLS\b`, content); matched {
+			t.Fatal("roles.sql must never grant BYPASSRLS without NO prefix")
+		}
+	})
+
+	t.Run("Revokes public permissions fail-closed", func(t *testing.T) {
+		if !strings.Contains(content, "REVOKE ALL ON SCHEMA public FROM PUBLIC") {
+			t.Fatal("roles.sql must revoke public schema privileges from PUBLIC")
+		}
+		if !strings.Contains(content, "REVOKE ALL ON SCHEMA public FROM app_runtime_tenant") {
+			t.Fatal("roles.sql must explicitly revoke public schema access from app_runtime_tenant")
+		}
+	})
+
+	t.Run("Grants least-privilege DML to app_runtime_tenant", func(t *testing.T) {
+		schemas := []string{"institucion", "sesion", "sistema"}
+		for _, s := range schemas {
+			if !strings.Contains(content, s) {
+				t.Fatalf("roles.sql must configure schema %s", s)
+			}
+		}
+		if !strings.Contains(content, "ALTER DEFAULT PRIVILEGES") {
+			t.Fatal("roles.sql must configure default privileges for future objects")
+		}
+	})
+}
+
+func TestTenantIsolationExpandMigration(t *testing.T) {
+	upSQLPath := filepath.Join("..", "..", "sql", "migrations", "000003_tenant_isolation_expand.up.sql")
+	upBytes, err := os.ReadFile(upSQLPath)
+	if err != nil {
+		t.Fatalf("failed to read 000003 up migration: %v", err)
+	}
+	upContent := string(upBytes)
+
+	downSQLPath := filepath.Join("..", "..", "sql", "migrations", "000003_tenant_isolation_expand.down.sql")
+	downBytes, err := os.ReadFile(downSQLPath)
+	if err != nil {
+		t.Fatalf("failed to read 000003 down migration: %v", err)
+	}
+	downContent := string(downBytes)
+
+	tenantTables := []struct {
+		schema string
+		table  string
+	}{
+		{schema: "institucion", table: "persona"},
+		{schema: "sesion", table: "usuario"},
+		{schema: "sesion", table: "sesion"},
+		{schema: "sesion", table: "prelogin"},
+		{schema: "sistema", table: "bitacora_cambios"},
+		{schema: "sistema", table: "cfg_parametros"},
+	}
+
+	t.Run("Enforces FORCE ROW LEVEL SECURITY on all tenant tables", func(t *testing.T) {
+		for _, tt := range tenantTables {
+			fullTable := tt.schema + "." + tt.table
+			enableRLS := "ALTER TABLE " + fullTable + " ENABLE ROW LEVEL SECURITY;"
+			forceRLS := "ALTER TABLE " + fullTable + " FORCE ROW LEVEL SECURITY;"
+
+			if !strings.Contains(upContent, enableRLS) {
+				t.Errorf("migration missing %s", enableRLS)
+			}
+			if !strings.Contains(upContent, forceRLS) {
+				t.Errorf("migration missing %s", forceRLS)
+			}
+		}
+	})
+
+	t.Run("Enforces tenant_id comparison and WITH CHECK in policies", func(t *testing.T) {
+		settingRef := "current_setting('app.tenant_id', true)"
+		if !strings.Contains(upContent, settingRef) {
+			t.Fatalf("policies must reference %s", settingRef)
+		}
+		if !strings.Contains(upContent, "WITH CHECK") {
+			t.Fatal("policies must enforce WITH CHECK on modifications")
+		}
+	})
+
+	t.Run("Creates indexes on tenant_id", func(t *testing.T) {
+		for _, tt := range tenantTables {
+			if tt.table == "prelogin" {
+				continue
+			}
+			idxRef := "idx_" + tt.table + "_tenant_id"
+			if !strings.Contains(upContent, idxRef) {
+				t.Errorf("migration missing index %s", idxRef)
+			}
+		}
+	})
+
+	t.Run("Down migration is non-destructive", func(t *testing.T) {
+		if strings.Contains(strings.ToUpper(downContent), "DROP COLUMN") {
+			t.Fatal("down migration must follow expand-contract forward fix: do not DROP COLUMN destructively")
+		}
+		if !strings.Contains(downContent, "DROP POLICY") {
+			t.Fatal("down migration must drop policies")
+		}
+		if !strings.Contains(downContent, "DISABLE ROW LEVEL SECURITY") {
+			t.Fatal("down migration must disable RLS")
+		}
+	})
+}

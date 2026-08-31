@@ -112,9 +112,6 @@ func (r *ParametrosRepository) ActualizarParametro(ctx context.Context, parametr
 	}
 
 	// Actualizar caché
-	if err := r.CargarParametros(); err != nil {
-		fmt.Printf("Error recargando parámetros tras actualización: %v\n", err)
-	}
 
 	return nil
 }
@@ -132,9 +129,6 @@ func (r *ParametrosRepository) EliminarParametro(ctx context.Context, id uuid.UU
 	}
 
 	// Actualizar caché
-	if err := r.CargarParametros(); err != nil {
-		fmt.Printf("Error recargando parámetros tras eliminación: %v\n", err)
-	}
 
 	return nil
 }
@@ -160,9 +154,6 @@ func (r *ParametrosRepository) CrearParametro(ctx context.Context, parametros pa
 	}
 
 	// Actualizar caché
-	if err := r.CargarParametros(); err != nil {
-		fmt.Printf("Error recargando parámetros tras creación: %v\n", err)
-	}
 
 	return nil
 }

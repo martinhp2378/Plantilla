@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/url"
 	"regexp"
 	"strings"
@@ -46,24 +45,6 @@ func (a *AppPools) WritePool() *pgxpool.Pool {
 	return a.writePool
 }
 
-// configureTenantPool keeps existing direct pool consumers fail-closed until they
-// are migrated to TenantTxRunner.
-func configureTenantPool(config *pgxpool.Config) {
-	config.BeforeAcquire = func(ctx context.Context, conn *pgx.Conn) bool {
-		schema, err := getTenantSchema(ctx)
-		if err != nil {
-			log.Printf("[WARN-DB] tenant context rejected")
-			return false
-		}
-		searchPath, err := buildTenantSearchPath(schema)
-		if err != nil {
-			log.Printf("[WARN-DB] tenant schema rejected")
-			return false
-		}
-		_, err = conn.Exec(ctx, "SET search_path TO "+searchPath)
-		return err == nil
-	}
-}
 
 func BuildConnectionURL(env *entorno.Env, isWrite bool) string {
 	user := env.PqWriteUser
@@ -129,7 +110,6 @@ func ConnectPostgres(ctx context.Context, env *entorno.Env, instrumentacion *log
 		pgxuuid.Register(pgxConn.TypeMap())
 		return nil
 	}
-	configureTenantPool(readPoolConfig)
 
 	logsConfigRead := &logs.Config{
 		Servicio:           env.Servicio,
@@ -170,7 +150,6 @@ func ConnectPostgres(ctx context.Context, env *entorno.Env, instrumentacion *log
 		pgxuuid.Register(pgxConn.TypeMap())
 		return nil
 	}
-	configureTenantPool(writePoolConfig)
 
 	logsConfigWrite := &logs.Config{
 		Servicio:           env.Servicio,

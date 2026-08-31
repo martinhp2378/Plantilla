@@ -14,7 +14,7 @@ func (p Pagina) URL() string {
 		return GlobalRutas.Parametros.Base
 	case Personas:
 		return GlobalRutas.Personas.Base
-	
+
 	case Dashboard:
 		return "/dashboard"
 	default:

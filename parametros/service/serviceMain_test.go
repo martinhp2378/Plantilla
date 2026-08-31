@@ -34,10 +34,11 @@ func (s *stubParametrosRepo) EliminarParametro(context.Context, uuid.UUID) error
 func (s *stubParametrosRepo) CrearParametro(context.Context, parametros.Parametro) error {
 	return nil
 }
-func (s *stubParametrosRepo) CargarParametros() error                                 { return nil }
-func (s *stubParametrosRepo) GetJSONParam(string) (string, error)                     { return "", nil }
-func (s *stubParametrosRepo) GetJSONParamContext(context.Context, string) (string, error) { return "", nil }
-func (s *stubParametrosRepo) MonitorParametros(<-chan string)                          {}
+func (s *stubParametrosRepo) CargarParametros() error             { return nil }
+func (s *stubParametrosRepo) GetJSONParamContext(context.Context, string) (string, error) {
+	return "", nil
+}
+func (s *stubParametrosRepo) MonitorParametros(<-chan string) {}
 
 func TestActualizarParametroPropagaErrorRepo(t *testing.T) {
 	repoErr := errors.New("db caída")

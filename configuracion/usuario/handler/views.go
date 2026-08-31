@@ -7,8 +7,8 @@ import (
 	"PlantillaInstitucional/pagination"
 	"PlantillaInstitucional/shared/pagina"
 	"PlantillaInstitucional/shared/utils"
-	"PlantillaInstitucional/shared/views/components/compartidos"
 	sharedComp "PlantillaInstitucional/shared/views/components"
+	"PlantillaInstitucional/shared/views/components/compartidos"
 	"net/http"
 	"strings"
 )

@@ -47,7 +47,7 @@ func nuevaRuta(base string) Rutas {
 	if base == "" || base == "/" {
 		return Rutas{Prefix: "/", Base: "/"}
 	}
-	
+
 	return Rutas{
 		Prefix: base,
 		Base:   base + "/",

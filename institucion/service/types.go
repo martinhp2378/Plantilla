@@ -22,7 +22,6 @@ type PersonaRepositoryProvider interface {
 	ActualizarImagenPerfil(ctx context.Context, uuid_persona uuid.UUID, imagen string) error
 }
 
-
 type PersonaService struct {
 	repo     PersonaRepositoryProvider
 	validate *validator.Validate

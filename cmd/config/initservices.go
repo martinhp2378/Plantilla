@@ -23,7 +23,7 @@ func InitServices(a *app.App) {
 
 	// 2. Core Services
 	a.Services.Parametro = parametros_service.NewService(a.Logger, a.Repositories.Parametro, validate, a.ManejadorArchivos)
-	
+
 	// Inject Parameters into Email Service
 	a.ServicioEmail.SetParametersProvider(a.Services.Parametro)
 

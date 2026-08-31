@@ -64,13 +64,13 @@ type Env struct {
 	RedisPassword string `json:"redisPassword"`
 	RedisDB       int    `json:"redisDB"`
 
-	LogsConColores bool `json:"logsConColores"`
-	AgregarSource  bool `json:"agregarSource"`
-	Nivel          logs.Severidad
-	NombreSpanCorto    bool `json:"nombreSpanCorto"`
-	QuitarArgsQuery    bool `json:"quitarArgsQuery"`
-	QuitarPrefijoQuery bool `json:"quitarPrefijoQuery"`
-	QuitarStatement    bool `json:"quitarStatement"`
+	LogsConColores               bool `json:"logsConColores"`
+	AgregarSource                bool `json:"agregarSource"`
+	Nivel                        logs.Severidad
+	NombreSpanCorto              bool          `json:"nombreSpanCorto"`
+	QuitarArgsQuery              bool          `json:"quitarArgsQuery"`
+	QuitarPrefijoQuery           bool          `json:"quitarPrefijoQuery"`
+	QuitarStatement              bool          `json:"quitarStatement"`
 	TasaSampling                 float64       `json:"tasaSampling"`
 	IntervaloMetricas            time.Duration `json:"intervaloMetricas"`
 	HabilitarMetricasAutomaticas bool          `json:"habilitarMetricasAutomaticas"`

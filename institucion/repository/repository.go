@@ -201,7 +201,7 @@ func (r *PersonaRepository) ObtenerTodasCorto(ctx context.Context) ([]*instituci
 		}
 		return nil
 	})
-	
+
 	if err != nil {
 		return nil, err
 	}

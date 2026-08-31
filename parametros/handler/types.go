@@ -18,9 +18,7 @@ import (
 
 // ParametrosServiceProvider define el contrato del servicio de parámetros.
 type ParametrosServiceProvider interface {
-	LoadParameters() error
-	GetParameter(key string) string
-	StartParameterMonitoring(updateChan <-chan string)
+	GetParameter(ctx context.Context, key string) string
 	ListarParametros(ctx context.Context) (pagination.CriteriosPagina[parametros.Parametro], error)
 	ListarParametrosFiltrados(ctx context.Context, criterios pagination.CriteriosPagina[parametros.Parametro]) (pagination.CriteriosPagina[parametros.Parametro], error)
 	ObtenerParametro(ctx context.Context, id string) (parametros.Parametro, error)
@@ -66,6 +64,7 @@ func NewHandler(svc ParametrosServiceProvider, logger *logs.Logger) *ParametrosH
 }
 
 type Handler = ParametrosHandler
+
 func ParametroFromFormCreate(r *http.Request) (parametros.Parametro, error) {
 	var parametrosRespuesta = parametros.Parametro{}
 	var err error

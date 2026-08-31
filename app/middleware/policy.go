@@ -36,7 +36,7 @@ func PolicyMiddleware(a *app.App) func(http.Handler) http.Handler {
 			// 2. Obtener Sesión
 			ses := sesiones.RecuperarSesion(r.Context())
 			if !ses.EstaFirmado() {
-				// Si no está firmado, el middleware de sesiones ya debería haber manejado la redirección 
+				// Si no está firmado, el middleware de sesiones ya debería haber manejado la redirección
 				// o estamos en una ruta pública que no listamos en excluidas por error.
 				// Dejamos pasar para que el handler decida.
 				next.ServeHTTP(w, r)
@@ -45,10 +45,10 @@ func PolicyMiddleware(a *app.App) func(http.Handler) http.Handler {
 
 			// 3. Validar Política
 			perfil := string(ses.Perfil)
-			
+
 			// Si es superadmin y no queremos ser tan estrictos con cada sub-ruta, podríamos dejarlo pasar,
 			// pero lo ideal es que TODO esté en la tabla de políticas.
-			
+
 			permitido, err := a.Services.Policy.IsRouteAllowed(r.Context(), perfil, path)
 			if err != nil {
 				a.Logger.ErrorContext(r.Context(), "error al validar política de acceso", err, "path", path, "perfil", perfil)
@@ -58,16 +58,16 @@ func PolicyMiddleware(a *app.App) func(http.Handler) http.Handler {
 
 			if !permitido {
 				a.Logger.WarnContext(r.Context(), "acceso denegado por política", "path", path, "perfil", perfil)
-				
+
 				w.WriteHeader(http.StatusForbidden)
-				
+
 				if esSolicitudHTMX(r) {
 					// Si es HTMX, podemos renderizar el error en el contenedor principal o mostrar alerta
 					w.Header().Set("HX-Retarget", "body")
 					utils.RenderIgnore(r.Context(), w, layouts.Pagina403())
 					return
 				}
-				
+
 				utils.RenderIgnore(r.Context(), w, layouts.Pagina403())
 				return
 			}

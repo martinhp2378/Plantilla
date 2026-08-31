@@ -36,7 +36,7 @@ func TestMiddlewareRequiereLogin(t *testing.T) {
 			}))
 
 			req := httptest.NewRequest("GET", "/", nil)
-			
+
 			// Mock session in context
 			ses := &sesiones.Sesion{}
 			if tt.signedIn {
@@ -47,7 +47,7 @@ func TestMiddlewareRequiereLogin(t *testing.T) {
 			} else {
 				ses.Perfil = sesiones.PerfilAnonimo
 			}
-			
+
 			ctx := context.WithValue(req.Context(), sesiones.LlaveContexto, ses)
 			req = req.WithContext(ctx)
 
@@ -71,7 +71,7 @@ func TestAuditContextMiddleware(t *testing.T) {
 	}))
 
 	req := httptest.NewRequest("GET", "/", nil)
-	
+
 	// Mock session with UUID
 	u := uuid.Must(uuid.NewV4())
 	ses := &sesiones.Sesion{

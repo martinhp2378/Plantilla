@@ -18,10 +18,7 @@ type ParametrosRepositoryProvider interface {
 	ActualizarParametro(ctx context.Context, parametros parametros.Parametro) error
 	EliminarParametro(ctx context.Context, id uuid.UUID) error
 	CrearParametro(ctx context.Context, parametros parametros.Parametro) error
-	CargarParametros() error
-	GetJSONParam(key string) (string, error)
 	GetJSONParamContext(ctx context.Context, key string) (string, error)
-	MonitorParametros(updateChan <-chan string)
 }
 
 // ParametrosService es la implementación del servicio de parámetros.
@@ -34,11 +31,8 @@ type ParametrosService struct {
 
 // ParametrosServiceProvider define el contrato del servicio de parámetros para el handler.
 type ParametrosServiceProvider interface {
-        LoadParameters() error
-        GetParameter(key string) string
+	GetParameter(ctx context.Context, key string) string
 
-	GetParameterContext(ctx context.Context, key string) string
-	StartParameterMonitoring(updateChan <-chan string)
 	ListarParametros(ctx context.Context) (pagination.CriteriosPagina[parametros.Parametro], error)
 	ListarParametrosFiltrados(ctx context.Context, criterios pagination.CriteriosPagina[parametros.Parametro]) (pagination.CriteriosPagina[parametros.Parametro], error)
 	ObtenerParametro(ctx context.Context, id string) (parametros.Parametro, error)

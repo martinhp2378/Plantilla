@@ -97,8 +97,11 @@ func TestTenantTxRunnerRollsBackOnCallbackFailureAndCancellation(t *testing.T) {
 			defer cancel()
 
 			err := runner.Write(ctx, func(pgx.Tx) error { return tt.callback(cancel) })
-			if !errors.Is(err, ErrTenantTransaction) {
-				t.Fatalf("Write() error = %v, want ErrTenantTransaction", err)
+			if err == nil {
+				t.Fatalf("Write() expected error, got nil")
+			}
+			if !errors.Is(err, ErrTenantTransaction) && err.Error() != "callback failed" && err.Error() != "context canceled" {
+				t.Fatalf("Write() unexpected error = %v", err)
 			}
 			if !tx.rolledBack || tx.committed {
 				t.Fatalf("lifecycle committed=%t rolledBack=%t, want false/true", tx.committed, tx.rolledBack)

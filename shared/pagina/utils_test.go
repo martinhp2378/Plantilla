@@ -7,4 +7,3 @@ func TestPaginaPoliticasURL(t *testing.T) {
 		t.Fatalf("Politicas.URL() = %q, want %q", got, "/configuracion/politicas/")
 	}
 }
-

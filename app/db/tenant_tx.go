@@ -70,7 +70,7 @@ func (r *TenantTxRunner) run(ctx context.Context, pool txStarter, accessMode pgx
 	if _, err = tx.Exec(ctx, "SELECT set_config('app.tenant_id', $1, true)", tenant.ID); err != nil {
 		return ErrTenantTransaction
 	}
-	
+
 	// Set uuid_persona for audit logs
 	uuidVal := ctx.Value(contextkey.AuditUUIDKey)
 	var uuid string
@@ -83,8 +83,11 @@ func (r *TenantTxRunner) run(ctx context.Context, pool txStarter, accessMode pgx
 		return ErrTenantTransaction
 	}
 
-	if err = callback(tx); err != nil || ctx.Err() != nil {
-		return ErrTenantTransaction
+	if err = callback(tx); err != nil {
+		return err
+	}
+	if ctx.Err() != nil {
+		return ctx.Err()
 	}
 	if err = tx.Commit(ctx); err != nil {
 		return ErrTenantTransaction

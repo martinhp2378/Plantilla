@@ -111,9 +111,6 @@ func main() {
 	config.WireResolvers(a)
 	config.InitHandlers(a)
 
-	if err := a.Services.Parametro.LoadParameters(); err != nil {
-		logger.Error("Error cargando parámetros del sistema", err)
-	}
 
 	r := chi.NewRouter()
 

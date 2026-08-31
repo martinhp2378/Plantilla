@@ -1,6 +1,7 @@
 package email
 
 import (
+	"context"
 	"bytes"
 	"fmt"
 	"html/template"
@@ -27,7 +28,7 @@ type Config struct {
 }
 
 type ParameterProvider interface {
-	GetParameter(key string) string
+	GetParameter(ctx context.Context, key string) string
 }
 
 type TemplateBranding struct {
@@ -76,28 +77,28 @@ func (s *EmailService) SetParametersProvider(provider ParameterProvider) {
 	s.parameters = provider
 }
 
-func (s *EmailService) templateBranding() TemplateBranding {
+func (s *EmailService) templateBranding(ctx context.Context) TemplateBranding {
 	return TemplateBranding{
-		SystemName:          s.param("EMAIL_SYSTEM_NAME", "Plantilla Institucional"),
-		BrandName:           s.param("EMAIL_BRAND_NAME", "ISSEMYM"),
-		FooterOrganization:  s.param("EMAIL_FOOTER_ORGANIZATION", "ISSEMYM - Unidad de Tecnologías"),
-		FooterLocation:      s.param("EMAIL_FOOTER_LOCATION", "Toluca, Estado de México."),
-		SupportLabel:        s.param("EMAIL_SUPPORT_LABEL", "¿Necesitas ayuda?"),
-		SupportPhone:        s.param("EMAIL_SUPPORT_PHONE", "722 226 1900 ext. 1911"),
-		NoReplyLabel:        s.param("EMAIL_NO_REPLY_LABEL", "MENSAJE AUTOMÁTICO - NO RESPONDER"),
-		CredentialsEyebrow:  s.param("EMAIL_CREDENTIALS_EYEBROW", "Acceso al Sistema"),
-		CredentialsIntro:    s.param("EMAIL_CREDENTIALS_INTRO", "Tu cuenta ha sido habilitada en la Plantilla Institucional. A continuación se presentan tus credenciales de acceso:"),
-		CredentialsSecurity: s.param("EMAIL_CREDENTIALS_SECURITY", "Por tu seguridad, el sistema te solicitará cambiar esta contraseña en tu primer inicio de sesión."),
-		CredentialsURL:      s.param("EMAIL_CREDENTIALS_URL", s.param("URL_BASE", "http://localhost:8080/")),
-		CredentialsButton:   s.param("EMAIL_CREDENTIALS_BUTTON", "Acceder al Sistema"),
+		SystemName:          s.param(ctx, "EMAIL_SYSTEM_NAME", "Plantilla Institucional"),
+		BrandName:           s.param(ctx, "EMAIL_BRAND_NAME", "ISSEMYM"),
+		FooterOrganization:  s.param(ctx, "EMAIL_FOOTER_ORGANIZATION", "ISSEMYM - Unidad de Tecnologías"),
+		FooterLocation:      s.param(ctx, "EMAIL_FOOTER_LOCATION", "Toluca, Estado de México."),
+		SupportLabel:        s.param(ctx, "EMAIL_SUPPORT_LABEL", "¿Necesitas ayuda?"),
+		SupportPhone:        s.param(ctx, "EMAIL_SUPPORT_PHONE", "722 226 1900 ext. 1911"),
+		NoReplyLabel:        s.param(ctx, "EMAIL_NO_REPLY_LABEL", "MENSAJE AUTOMÁTICO - NO RESPONDER"),
+		CredentialsEyebrow:  s.param(ctx, "EMAIL_CREDENTIALS_EYEBROW", "Acceso al Sistema"),
+		CredentialsIntro:    s.param(ctx, "EMAIL_CREDENTIALS_INTRO", "Tu cuenta ha sido habilitada en la Plantilla Institucional. A continuación se presentan tus credenciales de acceso:"),
+		CredentialsSecurity: s.param(ctx, "EMAIL_CREDENTIALS_SECURITY", "Por tu seguridad, el sistema te solicitará cambiar esta contraseña en tu primer inicio de sesión."),
+		CredentialsURL:      s.param(ctx, "EMAIL_CREDENTIALS_URL", s.param(ctx, "URL_BASE", "http://localhost:8080/")),
+		CredentialsButton:   s.param(ctx, "EMAIL_CREDENTIALS_BUTTON", "Acceder al Sistema"),
 	}
 }
 
-func (s *EmailService) param(key, fallback string) string {
+func (s *EmailService) param(ctx context.Context, key, fallback string) string {
 	if s.parameters == nil {
 		return fallback
 	}
-	value := strings.TrimSpace(s.parameters.GetParameter(key))
+	value := strings.TrimSpace(s.parameters.GetParameter(ctx, key))
 	if value == "" {
 		return fallback
 	}
@@ -105,8 +106,8 @@ func (s *EmailService) param(key, fallback string) string {
 }
 
 // SendUserCredentials sends an email with the user's credentials.
-func (s *EmailService) SendUserCredentials(to, name, username, password string, credentialsURL ...string) error {
-	branding := s.templateBranding()
+func (s *EmailService) SendUserCredentials(ctx context.Context, to, name, username, password string, credentialsURL ...string) error {
+	branding := s.templateBranding(ctx)
 	if len(credentialsURL) > 0 && strings.TrimSpace(credentialsURL[0]) != "" {
 		branding.CredentialsURL = strings.TrimSpace(credentialsURL[0])
 	}

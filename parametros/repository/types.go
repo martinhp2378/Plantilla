@@ -4,7 +4,6 @@ import (
 	conexionBd "PlantillaInstitucional/app/db"
 	"PlantillaInstitucional/parametros"
 	"database/sql"
-	"sync"
 
 	"github.com/gofrs/uuid/v5"
 )
@@ -12,14 +11,11 @@ import (
 // ParametrosRepository es la implementación del repositorio de parámetros.
 type ParametrosRepository struct {
 	db     *conexionBd.AppPools
-	params map[string]parametros.Parametro
-	mu     sync.RWMutex
 }
 
 func NewRepository(db *conexionBd.AppPools) *ParametrosRepository {
 	return &ParametrosRepository{
 		db:     db,
-		params: make(map[string]parametros.Parametro),
 	}
 }
 

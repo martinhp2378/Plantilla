@@ -68,7 +68,7 @@ func GenerarReportePDF[T any](
 	// Comentamos Gotham OTF temporalmente ya que causa panic en SplitLines por falta de soporte UTF8 nativo para OTF
 	// pdf.AddUTF8Font(fuenteTabla, fuenteRegular, "Gotham-Book.otf")
 	// pdf.AddUTF8Font(fuenteTabla, fuenteBold, "Gotham-Bold.otf")
-	
+
 	// Usamos Arial (built-in) para validar la estructura del reporte
 	pdf.SetFont("Arial", fuenteRegular, 12)
 	pdf.AddPage()

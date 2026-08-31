@@ -53,7 +53,7 @@ func (m *mockPolicyService) CatalogosPolitica(ctx context.Context) ([]string, []
 
 func TestPolicyMiddleware(t *testing.T) {
 	logger := logs.NuevoLogger(&logs.Config{Nivel: "DEBUG"})
-	
+
 	tests := []struct {
 		name           string
 		path           string
@@ -106,7 +106,7 @@ func TestPolicyMiddleware(t *testing.T) {
 					Policy: mockSvc,
 				},
 			}
-			
+
 			handler := PolicyMiddleware(a)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 			}))

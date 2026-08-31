@@ -40,14 +40,14 @@ type GraficaPie struct {
 }
 
 type ScriptsDashboard struct {
-	TieneLine              bool
-	JsonLine               string
-	TieneRadar             bool
-	JsonRadar              string
-	TieneMultiBar          bool
-	JsonMultiBar           string
-	TienePie               bool
-	JsonPie                string
-	DimensionesRealData    string
+	TieneLine               bool
+	JsonLine                string
+	TieneRadar              bool
+	JsonRadar               string
+	TieneMultiBar           bool
+	JsonMultiBar            string
+	TienePie                bool
+	JsonPie                 string
+	DimensionesRealData     string
 	DimensionesObjetivoData string
 }

@@ -1,110 +1,14 @@
 package repository
 
 import (
-	"PlantillaInstitucional/parametros"
 	shared "PlantillaInstitucional/shared/db"
 	"testing"
 
 	"github.com/gofrs/uuid/v5"
 )
 
-func TestGetParametro(t *testing.T) {
-	repo := ParametrosRepository{
-		params: map[string]parametros.Parametro{
-			"MAX_ITEMS": {Clave: "MAX_ITEMS", Valor: "50"},
-		},
-	}
 
-	t.Run("existing key", func(t *testing.T) {
-		got, err := repo.GetParametro("MAX_ITEMS")
-		if err != nil {
-			t.Fatalf("GetParametro() unexpected error: %v", err)
-		}
-		if got.Valor != "50" {
-			t.Fatalf("GetParametro() value = %q, want %q", got.Valor, "50")
-		}
-	})
 
-	t.Run("missing key", func(t *testing.T) {
-		_, err := repo.GetParametro("UNKNOWN")
-		if err == nil {
-			t.Fatal("GetParametro() expected error for missing key")
-		}
-	})
-}
-
-func TestTypedGetters(t *testing.T) {
-	repo := ParametrosRepository{
-		params: map[string]parametros.Parametro{
-			"INT_OK":     {Clave: "INT_OK", Valor: "42"},
-			"INT_BAD":    {Clave: "INT_BAD", Valor: "abc"},
-			"BOOL_OK":    {Clave: "BOOL_OK", Valor: "true"},
-			"BOOL_BAD":   {Clave: "BOOL_BAD", Valor: "not-bool"},
-			"JSON_VALUE": {Clave: "JSON_VALUE", Valor: `{"enabled":true}`},
-		},
-	}
-
-	t.Run("GetIntParam ok", func(t *testing.T) {
-		got, err := repo.GetIntParam("INT_OK")
-		if err != nil {
-			t.Fatalf("GetIntParam() unexpected error: %v", err)
-		}
-		if got != 42 {
-			t.Fatalf("GetIntParam() = %d, want %d", got, 42)
-		}
-	})
-
-	t.Run("GetIntParam invalid value", func(t *testing.T) {
-		_, err := repo.GetIntParam("INT_BAD")
-		if err == nil {
-			t.Fatal("GetIntParam() expected parse error")
-		}
-	})
-
-	t.Run("GetBoolParam ok", func(t *testing.T) {
-		got, err := repo.GetBoolParam("BOOL_OK")
-		if err != nil {
-			t.Fatalf("GetBoolParam() unexpected error: %v", err)
-		}
-		if !got {
-			t.Fatal("GetBoolParam() = false, want true")
-		}
-	})
-
-	t.Run("GetBoolParam invalid value", func(t *testing.T) {
-		_, err := repo.GetBoolParam("BOOL_BAD")
-		if err == nil {
-			t.Fatal("GetBoolParam() expected parse error")
-		}
-	})
-
-	t.Run("GetJSONParam returns raw json", func(t *testing.T) {
-		got, err := repo.GetJSONParam("JSON_VALUE")
-		if err != nil {
-			t.Fatalf("GetJSONParam() unexpected error: %v", err)
-		}
-		if got != `{"enabled":true}` {
-			t.Fatalf("GetJSONParam() = %q, want %q", got, `{"enabled":true}`)
-		}
-	})
-}
-
-func TestListAllParameters(t *testing.T) {
-	repo := ParametrosRepository{
-		params: map[string]parametros.Parametro{
-			"A": {Clave: "A", Valor: "1"},
-			"B": {Clave: "B", Valor: "2"},
-		},
-	}
-
-	list, err := repo.ListAllParameters()
-	if err != nil {
-		t.Fatalf("ListAllParameters() unexpected error: %v", err)
-	}
-	if len(list) != 2 {
-		t.Fatalf("ListAllParameters() len = %d, want %d", len(list), 2)
-	}
-}
 
 func TestBuildOrderByClause(t *testing.T) {
 	t.Run("default order", func(t *testing.T) {

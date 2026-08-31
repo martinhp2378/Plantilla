@@ -36,7 +36,7 @@ func (r RepositorioPsql) ValidarEmailPassword(ctx context.Context,
 	email string, password string) (*login.DatosSesion, error) {
 
 	var row RowUsuario
-	
+
 	err := r.Tenant.Read(ctx, func(tx pgx.Tx) error {
 		return tx.QueryRow(ctx, `
 		select uuid_persona,
@@ -69,4 +69,3 @@ func (r RepositorioPsql) ValidarEmailPassword(ctx context.Context,
 		Perfil:      sesiones.Perfil(row.Perfil),
 	}, nil
 }
-

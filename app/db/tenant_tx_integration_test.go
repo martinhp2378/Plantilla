@@ -23,11 +23,11 @@ func TestTenantTxIntegration_ContextLeak(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to parse config: %v", err)
 	}
-	
+
 	// Force a single connection pool to ensure the same connection is reused
 	config.MaxConns = 1
 	config.MinConns = 1
-	
+
 	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
 		t.Fatalf("failed to create pool: %v", err)
@@ -58,7 +58,7 @@ func TestTenantTxIntegration_ContextLeak(t *testing.T) {
 		if tenantID != "tenant-1" {
 			t.Errorf("expected tenant-1, got %s", tenantID)
 		}
-		
+
 		var auditUUID string
 		err = tx.QueryRow(ctx, "SELECT current_setting('session_variables.uuid_persona', true)").Scan(&auditUUID)
 		if err != nil {
@@ -86,7 +86,7 @@ func TestTenantTxIntegration_ContextLeak(t *testing.T) {
 		if tenantID != "tenant-2" {
 			t.Errorf("expected tenant-2, got %s (context leak!)", tenantID)
 		}
-		
+
 		var auditUUID string
 		err = tx.QueryRow(ctx, "SELECT current_setting('session_variables.uuid_persona', true)").Scan(&auditUUID)
 		if err != nil {

@@ -42,7 +42,7 @@ func (h *UsuarioHandler) Create(w http.ResponseWriter, r *http.Request) {
 	// 4. Enviar email con credenciales al usuario
 	emailEvent := events.SendUserCredentialsEvent{
 		Email:          usuarioDTO.Email,
-		FullName:       "", 
+		FullName:       "",
 		Username:       usuarioDTO.Email,
 		Password:       rawPassword,
 		CredentialsURL: utils.GetBaseURL(r) + "/login",

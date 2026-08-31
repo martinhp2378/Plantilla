@@ -164,7 +164,6 @@ func (r *UsuarioRepository) ActualizarPassword(ctx context.Context, uuid_persona
 	return err
 }
 
-
 func (r *UsuarioRepository) EliminarUsuario(ctx context.Context, uuid_persona uuid.UUID) error {
 	err := r.db.Tenant.Write(ctx, func(tx pgx.Tx) error {
 		ct, err := tx.Exec(ctx, DeleteUsuario, uuid_persona)

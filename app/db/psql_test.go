@@ -8,7 +8,6 @@ import (
 
 	contextkeys "PlantillaInstitucional/shared/contextkey"
 	"PlantillaInstitucional/shared/tenantcontext"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func TestTenantSchemaRequiresImmutableTenantContext(t *testing.T) {
@@ -36,25 +35,6 @@ func TestTenantSchemaRequiresImmutableTenantContext(t *testing.T) {
 	}
 }
 
-func TestConfigureTenantPoolFailsClosedWithoutValidTenantContext(t *testing.T) {
-	config, err := pgxpool.ParseConfig("postgres://user:password@localhost:5432/test")
-	if err != nil {
-		t.Fatalf("ParseConfig() error = %v", err)
-	}
-	configureTenantPool(config)
-	if config.BeforeAcquire == nil {
-		t.Fatal("BeforeAcquire must be configured for direct pool consumers")
-	}
-
-	unsafeTenant := tenantcontext.WithTenant(context.Background(), tenantcontext.TenantContext{
-		ID: "tenant-a", Schema: "public", CanonicalHost: "tenant.example.test",
-	})
-	for _, ctx := range []context.Context{context.Background(), unsafeTenant} {
-		if config.BeforeAcquire(ctx, nil) {
-			t.Fatal("BeforeAcquire accepted a direct operation without a valid tenant selection")
-		}
-	}
-}
 
 func TestBuildTenantSearchPathRejectsPublicFallback(t *testing.T) {
 	for _, schema := range []string{"", "public"} {

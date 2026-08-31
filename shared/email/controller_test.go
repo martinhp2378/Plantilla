@@ -6,13 +6,14 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"context"
 	"testing"
 	"time"
 )
 
 type fakeParameterProvider map[string]string
 
-func (f fakeParameterProvider) GetParameter(key string) string {
+func (f fakeParameterProvider) GetParameter(ctx context.Context, key string) string {
 	return f[key]
 }
 
@@ -80,7 +81,7 @@ func TestParseTemplate(t *testing.T) {
 			name:         "renderiza user credentials con datos del usuario",
 			templateName: "user_credentials.html",
 			data: UserCredentialsTemplateData{
-				TemplateBranding: service.templateBranding(),
+				TemplateBranding: service.templateBranding(context.Background()),
 				Nombre:           "Ada Lovelace",
 				Usuario:          "adal",
 				Password:         "temporal123",
@@ -126,7 +127,7 @@ func TestTemplateBrandingUsesParameters(t *testing.T) {
 		"EMAIL_CREDENTIALS_URL": "https://sistema.issemym.gob.mx",
 	})
 
-	branding := service.templateBranding()
+	branding := service.templateBranding(context.Background())
 
 	if branding.BrandName != "Marca Editable" {
 		t.Fatalf("BrandName = %q, want %q", branding.BrandName, "Marca Editable")

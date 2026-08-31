@@ -29,6 +29,25 @@ type AppPools struct {
 	WritePool *pgxpool.Pool
 }
 
+// configureTenantPool keeps existing direct pool consumers fail-closed until they
+// are migrated to TenantTxRunner.
+func configureTenantPool(config *pgxpool.Config) {
+	config.BeforeAcquire = func(ctx context.Context, conn *pgx.Conn) bool {
+		schema, err := getTenantSchema(ctx)
+		if err != nil {
+			log.Printf("[WARN-DB] tenant context rejected")
+			return false
+		}
+		searchPath, err := buildTenantSearchPath(schema)
+		if err != nil {
+			log.Printf("[WARN-DB] tenant schema rejected")
+			return false
+		}
+		_, err = conn.Exec(ctx, "SET search_path TO "+searchPath)
+		return err == nil
+	}
+}
+
 func BuildConnectionURL(env *entorno.Env, isWrite bool) string {
 	user := env.PqWriteUser
 	pass := env.PqWritePass
@@ -93,21 +112,7 @@ func ConnectPostgres(ctx context.Context, env *entorno.Env, instrumentacion *log
 		pgxuuid.Register(pgxConn.TypeMap())
 		return nil
 	}
-
-	readPoolConfig.BeforeAcquire = func(ctx context.Context, pgxConn *pgx.Conn) bool {
-		schema, err := getTenantSchema(ctx)
-		if err != nil {
-			log.Printf("[WARN-DB-READ] tenant context rejected")
-			return false
-		}
-		searchPath, err := buildTenantSearchPath(schema)
-		if err != nil {
-			log.Printf("[WARN-DB-READ] tenant schema rejected")
-			return false
-		}
-		_, err = pgxConn.Exec(ctx, fmt.Sprintf("SET search_path TO %s", searchPath))
-		return err == nil
-	}
+	configureTenantPool(readPoolConfig)
 
 	logsConfigRead := &logs.Config{
 		Servicio:           env.Servicio,
@@ -148,22 +153,7 @@ func ConnectPostgres(ctx context.Context, env *entorno.Env, instrumentacion *log
 		pgxuuid.Register(pgxConn.TypeMap())
 		return nil
 	}
-
-	// Multi-tenant: Cambiar el esquema antes de adquirir la conexión
-	writePoolConfig.BeforeAcquire = func(ctx context.Context, pgxConn *pgx.Conn) bool {
-		schema, err := getTenantSchema(ctx)
-		if err != nil {
-			log.Printf("[WARN-DB-WRITE] tenant context rejected")
-			return false
-		}
-		searchPath, err := buildTenantSearchPath(schema)
-		if err != nil {
-			log.Printf("[WARN-DB-WRITE] tenant schema rejected")
-			return false
-		}
-		_, err = pgxConn.Exec(ctx, fmt.Sprintf("SET search_path TO %s", searchPath))
-		return err == nil
-	}
+	configureTenantPool(writePoolConfig)
 
 	logsConfigWrite := &logs.Config{
 		Servicio:           env.Servicio,
@@ -205,5 +195,5 @@ func buildTenantSearchPath(schema string) (string, error) {
 	if s == "" || s == "public" || !tenantSchemaRegex.MatchString(s) {
 		return "", fmt.Errorf("tenant schema inválido")
 	}
-	return fmt.Sprintf("%s, sesion, institucion, sistema", pgx.Identifier{s}.Sanitize()), nil
+	return fmt.Sprintf("%s, pg_catalog", pgx.Identifier{s}.Sanitize()), nil
 }

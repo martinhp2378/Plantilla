@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5"
@@ -112,7 +113,7 @@ func (r *UsuarioRepository) ConsultarUsuarioPorID(ctx context.Context, id uuid.U
 	return row.ToUsuario(), nil
 }
 
-func (r *UsuarioRepository) CrearUsuario(ctx context.Context, b usuario.Usuario) error {
+func (r *UsuarioRepository) CrearUsuario(ctx context.Context, b usuario.Usuario, tokenHash []byte, expiresAt time.Time) error {
 	err := r.db.Tenant.Write(ctx, func(tx pgx.Tx) error {
 		var newID uuid.UUID
 		err := tx.QueryRow(ctx, InsertUsuario,
@@ -125,6 +126,9 @@ func (r *UsuarioRepository) CrearUsuario(ctx context.Context, b usuario.Usuario)
 
 		if err != nil {
 			return fmt.Errorf("CrearUsuario: error al insertar: %w", err)
+		}
+		if _, err := tx.Exec(ctx, `INSERT INTO sesion.password_reset_token (uuid_persona, token_hash, expires_at, tenant_id) VALUES ($1, $2, $3, current_setting('app.tenant_id', true)::uuid)`, newID, tokenHash, expiresAt); err != nil {
+			return fmt.Errorf("CrearUsuario: error al guardar token de activación: %w", err)
 		}
 		return nil
 	})
@@ -167,6 +171,9 @@ func (r *UsuarioRepository) ActualizarPassword(ctx context.Context, uuid_persona
 
 func (r *UsuarioRepository) EliminarUsuario(ctx context.Context, uuid_persona uuid.UUID) error {
 	err := r.db.Tenant.Write(ctx, func(tx pgx.Tx) error {
+		if _, err := tx.Exec(ctx, `DELETE FROM sesion.password_reset_token WHERE uuid_persona = $1`, uuid_persona); err != nil {
+			return fmt.Errorf("EliminarUsuario: error eliminando tokens de activación: %w", err)
+		}
 		ct, err := tx.Exec(ctx, DeleteUsuario, uuid_persona)
 		if err != nil {
 			return fmt.Errorf("EliminarUsuario: %w", err)

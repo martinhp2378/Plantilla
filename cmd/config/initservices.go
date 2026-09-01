@@ -36,5 +36,5 @@ func InitServices(a *app.App) {
 	userEmailListener := usuario_listeners.NewUserEmailListener(a.ServicioEmail)
 
 	// 4. Register Listeners
-	dispatcher.Register(usuario_events.SendUserCredentialsEvent{}.Name(), userEmailListener)
+	dispatcher.Register(usuario_events.SendUserActivationEvent{}.Name(), userEmailListener)
 }

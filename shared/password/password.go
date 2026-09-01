@@ -2,6 +2,8 @@ package password
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 
 	"golang.org/x/crypto/bcrypt"
@@ -18,6 +20,23 @@ const (
 // GenerateRandomPassword genera una contraseña segura
 func GenerateRandomPassword() (string, error) {
 	return generateRandomString(passwordChars, passwordLength)
+}
+
+// GenerateOpaqueToken returns a URL-safe, high-entropy token suitable for a
+// one-time activation or password-reset link.
+func GenerateOpaqueToken() (string, error) {
+	bytes := make([]byte, 32)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", fmt.Errorf("error generando token: %w", err)
+	}
+	return base64.RawURLEncoding.EncodeToString(bytes), nil
+}
+
+// HashOpaqueToken returns the only representation of an activation token that
+// may be persisted.
+func HashOpaqueToken(token string) []byte {
+	sum := sha256.Sum256([]byte(token))
+	return sum[:]
 }
 
 // GenerateRandomUsername genera un nombre de usuario aleatorio

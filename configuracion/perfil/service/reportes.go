@@ -31,6 +31,7 @@ func (s *PerfilService) ReportePdf(ctx context.Context) (string, error) {
 		"reporte_perfiles",
 		"Reporte de Perfiles",
 		nil, // Sin funciones custom
+		false,
 	)
 
 	if err != nil {
@@ -56,6 +57,7 @@ func (s *PerfilService) ReporteExcel(ctx context.Context) (string, error) {
 		"reporte_perfiles",
 		"Reporte de Perfiles",
 		nil,
+		false,
 	)
 
 	if err != nil {

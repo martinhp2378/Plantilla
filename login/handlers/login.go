@@ -22,6 +22,9 @@ func (h *HandlerLogin) RegisterRoutes(r chi.Router) {
 		r.Post("/", h.HandlePostIngresar)
 		r.Get("/salir", h.HandleCerrarSesion)
 		r.Get("/sesion", h.HandleMostrarSesion)
+		r.Get("/activar", h.HandleActivationForm)
+		r.Post("/activar", h.HandleActivation)
+		r.Post("/recuperar", h.HandlePasswordRecovery)
 	})
 
 	// La raíz se maneja fuera del prefijo /login para permitir la redirección inicial

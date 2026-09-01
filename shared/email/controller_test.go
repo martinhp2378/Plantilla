@@ -1,12 +1,12 @@
 package email
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
-	"context"
 	"testing"
 	"time"
 )
@@ -78,23 +78,21 @@ func TestParseTemplate(t *testing.T) {
 		notContains  []string
 	}{
 		{
-			name:         "renderiza user credentials con datos del usuario",
+			name:         "renderiza activación sin contraseña reutilizable",
 			templateName: "user_credentials.html",
 			data: UserCredentialsTemplateData{
 				TemplateBranding: service.templateBranding(context.Background()),
 				Nombre:           "Ada Lovelace",
 				Usuario:          "adal",
-				Password:         "temporal123",
 				AnioActual:       time.Now().Year(),
 			},
 			contains: []string{
 				"Ada Lovelace",
 				"adal",
-				"temporal123",
 				currentYear,
 				"http://localhost:8080/",
 			},
-			notContains: []string{"{{.Nombre}}", "{{.Usuario}}", "{{.Password}}", "{{.AnioActual}}"},
+			notContains: []string{"temporal123", "{{.Nombre}}", "{{.Usuario}}", "{{.AnioActual}}"},
 		},
 	}
 

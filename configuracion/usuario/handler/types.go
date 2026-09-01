@@ -29,7 +29,7 @@ type UsuarioServiceProvider interface {
 	ConsultarUsuarioPorID(ctx context.Context, uuid_persona uuid.UUID) (usuario.Usuario, error)
 	ObtenerUsuario(ctx context.Context, uuid_persona uuid.UUID) (usuario.Usuario, error)
 	ListarUsuarios(ctx context.Context, criterios pagination.CriteriosPagina[usuario.Usuario]) (pagination.CriteriosPagina[usuario.Usuario], error)
-	CrearUsuario(ctx context.Context, u usuario.Usuario, rawPassword string) error
+	CrearUsuario(ctx context.Context, u usuario.Usuario, activationToken string) error
 	ActualizarUsuario(ctx context.Context, u usuario.Usuario) error
 	EliminarUsuario(ctx context.Context, uuid_persona uuid.UUID) error
 	ReportePdf(ctx context.Context) (string, error)

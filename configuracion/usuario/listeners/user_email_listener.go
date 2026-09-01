@@ -19,17 +19,17 @@ func NewUserEmailListener(emailService *email.EmailService) *UserEmailListener {
 }
 
 func (l *UserEmailListener) Handle(ctx context.Context, event sharedEvents.Event) error {
-	e, ok := event.(events.SendUserCredentialsEvent)
+	e, ok := event.(events.SendUserActivationEvent)
 	if !ok {
 		return nil
 	}
 
-	log.Printf("Handling SendUserCredentialsEvent for %s", e.Email)
-	err := l.emailService.SendUserCredentials(ctx, e.Email, e.FullName, e.Username, e.Password, e.CredentialsURL)
+	log.Printf("Handling SendUserActivationEvent for %s", e.Email)
+	err := l.emailService.SendUserActivation(ctx, e.Email, e.FullName, e.Username, e.ActivationURL)
 	if err != nil {
 		log.Printf("Error sending user credentials email to %s: %v", e.Email, err)
 		return err
 	}
-	log.Printf("Successfully sent user credentials email to %s", e.Email)
+	log.Printf("Successfully sent user activation email to %s", e.Email)
 	return nil
 }

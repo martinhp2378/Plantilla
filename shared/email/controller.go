@@ -1,8 +1,8 @@
 package email
 
 import (
-	"context"
 	"bytes"
+	"context"
 	"fmt"
 	"html/template"
 	"path/filepath"
@@ -50,7 +50,6 @@ type UserCredentialsTemplateData struct {
 	TemplateBranding
 	Nombre     string
 	Usuario    string
-	Password   string
 	AnioActual int
 }
 
@@ -105,18 +104,17 @@ func (s *EmailService) param(ctx context.Context, key, fallback string) string {
 	return value
 }
 
-// SendUserCredentials sends an email with the user's credentials.
-func (s *EmailService) SendUserCredentials(ctx context.Context, to, name, username, password string, credentialsURL ...string) error {
+// SendUserActivation sends an email containing a one-time activation or reset link.
+func (s *EmailService) SendUserActivation(ctx context.Context, to, name, username, activationURL string) error {
 	branding := s.templateBranding(ctx)
-	if len(credentialsURL) > 0 && strings.TrimSpace(credentialsURL[0]) != "" {
-		branding.CredentialsURL = strings.TrimSpace(credentialsURL[0])
+	if strings.TrimSpace(activationURL) != "" {
+		branding.CredentialsURL = strings.TrimSpace(activationURL)
 	}
 
 	data := UserCredentialsTemplateData{
 		TemplateBranding: branding,
 		Nombre:           name,
 		Usuario:          username,
-		Password:         password,
 		AnioActual:       time.Now().Year(),
 	}
 

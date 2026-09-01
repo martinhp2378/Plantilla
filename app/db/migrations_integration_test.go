@@ -1,14 +1,21 @@
-package bd
+package bd_test
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
+
+	bd "PlantillaInstitucional/app/db"
+	loginDB "PlantillaInstitucional/login/db"
+	"PlantillaInstitucional/shared/tenantcontext"
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func TestMigrationsIntegration_SeedRollbackAndTenantAudit(t *testing.T) {
@@ -67,6 +74,15 @@ func TestMigrationsIntegration_SeedRollbackAndTenantAudit(t *testing.T) {
 
 	applyMigrationFile(t, ctx, conn, "000002_seed.up.sql")
 	applyMigrationFile(t, ctx, conn, "000003_tenant_isolation_expand.up.sql")
+	applyMigrationFile(t, ctx, conn, "000004_account_activation.up.sql")
+
+	var activationRLS bool
+	if err := conn.QueryRow(ctx, `SELECT relrowsecurity FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'sesion' AND c.relname = 'password_reset_token'`).Scan(&activationRLS); err != nil {
+		t.Fatalf("read activation token RLS state: %v", err)
+	}
+	if !activationRLS {
+		t.Fatal("password_reset_token must enable RLS")
+	}
 
 	var rlsEnabled, forceRLS bool
 	err = conn.QueryRow(ctx, `
@@ -114,6 +130,16 @@ func TestMigrationsIntegration_SeedRollbackAndTenantAudit(t *testing.T) {
 		t.Fatalf("rollback tenant audit transaction: %v", err)
 	}
 
+	verifyActivationTokenTenantTransaction(t, ctx, conn, databaseURL, tenantID)
+
+	applyMigrationFile(t, ctx, conn, "000004_account_activation.down.sql")
+	var activationTableExists bool
+	if err := conn.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'sesion' AND table_name = 'password_reset_token')`).Scan(&activationTableExists); err != nil {
+		t.Fatalf("verify activation rollback: %v", err)
+	}
+	if activationTableExists {
+		t.Fatal("activation rollback must remove password_reset_token")
+	}
 	applyMigrationFile(t, ctx, conn, "000003_tenant_isolation_expand.down.sql")
 	var tenantIDColumnExists bool
 	if err := conn.QueryRow(ctx, `
@@ -125,6 +151,62 @@ func TestMigrationsIntegration_SeedRollbackAndTenantAudit(t *testing.T) {
 	}
 	if !tenantIDColumnExists {
 		t.Fatal("expand rollback must retain the tenant_id column")
+	}
+}
+
+func verifyActivationTokenTenantTransaction(t *testing.T, ctx context.Context, conn *pgx.Conn, databaseURL, tenantID string) {
+	t.Helper()
+	if _, err := conn.Exec(ctx, `CREATE SCHEMA tenant_test`); err != nil {
+		t.Fatalf("create tenant search-path schema: %v", err)
+	}
+
+	personID := uuid.Must(uuid.NewV4()).String()
+	setup, err := conn.Begin(ctx)
+	if err != nil {
+		t.Fatalf("begin activation setup: %v", err)
+	}
+	defer func() { _ = setup.Rollback(ctx) }()
+	if _, err := setup.Exec(ctx, "SELECT set_config('app.tenant_id', $1, true)", tenantID); err != nil {
+		t.Fatalf("set activation tenant: %v", err)
+	}
+	if _, err := setup.Exec(ctx, `
+		INSERT INTO institucion.persona (uuid_persona, tenant_id, nombre, apellido1, clave_issemym, curp, rfc, razon_i)
+		VALUES ($1::uuid, $2::uuid, 'Activation', 'Test', $3, $4, $5, 'Integration test')`,
+		personID, tenantID, "ACT-"+personID[:8], "ACT"+strings.ReplaceAll(personID[:14], "-", ""), "ACT"+strings.ReplaceAll(personID[:9], "-", "")); err != nil {
+		t.Fatalf("insert activation persona: %v", err)
+	}
+	if _, err := setup.Exec(ctx, `INSERT INTO sesion.usuario (uuid_persona, tenant_id, email, password, perfil, is_active) VALUES ($1::uuid, $2::uuid, 'activation@example.test', 'disabled', 'operador', false)`, personID, tenantID); err != nil {
+		t.Fatalf("insert inactive activation user: %v", err)
+	}
+	if err := setup.Commit(ctx); err != nil {
+		t.Fatalf("commit activation setup: %v", err)
+	}
+
+	pool, err := pgxpool.New(ctx, databaseURL)
+	if err != nil {
+		t.Fatalf("create tenant transaction pool: %v", err)
+	}
+	t.Cleanup(pool.Close)
+	repo := loginDB.NewRepositorioPsql(bd.NewAppPools(pool, pool))
+	tenantCtx := tenantcontext.WithTenant(ctx, tenantcontext.TenantContext{ID: tenantID, Schema: "tenant_test", CanonicalHost: "tenant-test.example"})
+	tokenHash := []byte("01234567890123456789012345678901")
+	if found, err := repo.IssuePasswordReset(tenantCtx, "activation@example.test", tokenHash, time.Now().Add(time.Hour)); err != nil || !found {
+		t.Fatalf("issue token through tenant transaction = found:%t err:%v", found, err)
+	}
+	if err := repo.ConsumePasswordReset(tenantCtx, tokenHash, "updated-password-hash"); err != nil {
+		t.Fatalf("consume token through tenant transaction: %v", err)
+	}
+	if err := repo.ConsumePasswordReset(tenantCtx, tokenHash, "another-password-hash"); !errors.Is(err, loginDB.ErrInvalidOrExpiredResetToken) {
+		t.Fatalf("replay token error = %v, want ErrInvalidOrExpiredResetToken", err)
+	}
+
+	var active bool
+	var passwordValue string
+	if err := conn.QueryRow(ctx, `SELECT is_active, password FROM sesion.usuario WHERE uuid_persona = $1::uuid`, personID).Scan(&active, &passwordValue); err != nil {
+		t.Fatalf("read consumed activation user: %v", err)
+	}
+	if !active || passwordValue != "updated-password-hash" {
+		t.Fatalf("consumed activation user = active:%t password:%q", active, passwordValue)
 	}
 }
 
@@ -142,7 +224,7 @@ func applyMigrationFile(t *testing.T, ctx context.Context, conn *pgx.Conn, name 
 
 func cleanupMigrationSchemas(t *testing.T, ctx context.Context, conn *pgx.Conn) {
 	t.Helper()
-	if _, err := conn.Exec(ctx, "DROP SCHEMA IF EXISTS sistema, sesion, institucion CASCADE"); err != nil {
+	if _, err := conn.Exec(ctx, "DROP SCHEMA IF EXISTS tenant_test, sistema, sesion, institucion CASCADE"); err != nil {
 		t.Fatalf("clean migration test schemas: %v", err)
 	}
 }

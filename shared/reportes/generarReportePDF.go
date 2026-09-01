@@ -58,6 +58,7 @@ func GenerarReportePDF[T any](
 	nombreArchivo string,
 	titulo string,
 	renderFuncs map[string]func(any) string,
+	privado bool,
 ) (string, error) {
 
 	if len(datos) == 0 {
@@ -146,14 +147,14 @@ func GenerarReportePDF[T any](
 	timestamp := time.Now().Local().Format("20060102-150405")
 	storagePath := fmt.Sprintf("reportes/%s_%s.pdf", nombreArchivo, timestamp)
 
-	archivoPublico := archivosMgr.ArchivoPublico(storagePath)
+	archivo := archivoReporte(archivosMgr, storagePath, privado)
 	reader := bytes.NewReader(buf.Bytes())
 
-	if err := archivoPublico.Guardar(ctx, reader); err != nil {
+	if err := archivo.Guardar(ctx, reader); err != nil {
 		return "", fmt.Errorf("error guardando PDF en storage: %v", err)
 	}
 
-	url, err := archivoPublico.GetURL(ctx)
+	url, err := archivo.GetURL(ctx)
 	if err != nil {
 		return "", fmt.Errorf("error obteniendo URL del PDF: %v", err)
 	}

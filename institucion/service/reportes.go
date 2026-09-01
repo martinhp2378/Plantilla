@@ -31,6 +31,7 @@ func (s *PersonaService) ReportePdf(ctx context.Context) (string, error) {
 		"reporte_identidades",
 		"Reporte de Personas",
 		nil,
+		true,
 	)
 
 	if err != nil {
@@ -56,6 +57,7 @@ func (s *PersonaService) ReporteExcel(ctx context.Context) (string, error) {
 		"reporte_identidades",
 		"Reporte de Personas",
 		nil,
+		true,
 	)
 
 	if err != nil {

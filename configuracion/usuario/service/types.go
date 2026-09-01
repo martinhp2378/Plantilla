@@ -5,6 +5,7 @@ import (
 	"PlantillaInstitucional/pagination"
 	sharedEvents "PlantillaInstitucional/shared/events"
 	"context"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofrs/uuid/v5"
@@ -16,7 +17,7 @@ import (
 type UsuarioRepositoryProvider interface {
 	ConsultarUsuarios(ctx context.Context, criterios pagination.CriteriosPagina[usuario.Usuario]) ([]usuario.Usuario, int, error)
 	ConsultarUsuarioPorID(ctx context.Context, uuid_persona uuid.UUID) (usuario.Usuario, error)
-	CrearUsuario(ctx context.Context, u usuario.Usuario) error
+	CrearUsuario(ctx context.Context, u usuario.Usuario, tokenHash []byte, expiresAt time.Time) error
 	ActualizarUsuario(ctx context.Context, u usuario.Usuario) error
 	EliminarUsuario(ctx context.Context, uuid_persona uuid.UUID) error
 
@@ -38,7 +39,7 @@ type UsuarioServiceProvider interface {
 	ConsultarUsuarioPorID(ctx context.Context, uuid_persona uuid.UUID) (usuario.Usuario, error)
 	ObtenerUsuario(ctx context.Context, uuid_persona uuid.UUID) (usuario.Usuario, error)
 	ListarUsuarios(ctx context.Context, criterios pagination.CriteriosPagina[usuario.Usuario]) (pagination.CriteriosPagina[usuario.Usuario], error)
-	CrearUsuario(ctx context.Context, u usuario.Usuario, rawPassword string) error
+	CrearUsuario(ctx context.Context, u usuario.Usuario, activationToken string) error
 	ActualizarUsuario(ctx context.Context, u usuario.Usuario) error
 	EliminarUsuario(ctx context.Context, uuid_persona uuid.UUID) error
 	ReportePdf(ctx context.Context) (string, error)

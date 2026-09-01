@@ -44,7 +44,7 @@ func (r RepositorioPsql) ValidarEmailPassword(ctx context.Context,
 			email,
 			perfil
 		from sesion.usuario
-		where email = $1`, email).Scan(&row.UuidPersona, &row.Password, &row.Email, &row.Perfil)
+		where email = $1 AND is_active`, email).Scan(&row.UuidPersona, &row.Password, &row.Email, &row.Perfil)
 	})
 
 	if err != nil {

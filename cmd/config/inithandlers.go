@@ -19,6 +19,6 @@ func InitHandlers(a *app.App) {
 	a.Handlers.Perfil = perfil_handler.NewPerfilHandler(a.Services.Perfil, a.Logger, validate)
 	a.Handlers.Policy = policy_handler.NewPolicyHandler(a.Services.Policy, a.Logger)
 	a.Handlers.Persona = persona_handler.NewPersonaHandler(&a.Services.Persona, a.Logger, validate, a.ManejadorArchivos)
-	a.Handlers.Login = login_handler.NuevoHandlerLogin(a.Repositories.Login, a.Logger, a.ConstructorSesion, a.ConstructorSesionJWT)
+	a.Handlers.Login = login_handler.NuevoHandlerLogin(a.Repositories.Login, a.Repositories.Login, a.ServicioEmail, a.Logger, a.ConstructorSesion, a.ConstructorSesionJWT)
 	a.Handlers.Parametro = parametros_handler.NewHandler(a.Services.Parametro, a.Logger)
 }

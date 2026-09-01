@@ -24,32 +24,38 @@ func (h *UsuarioHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 2. Generar password temporal para enviar por email
-	rawPassword, err := password.GenerateRandomPassword()
+	// 2. Generate an opaque one-time activation token. Its hash alone is persisted.
+	activationToken, err := password.GenerateOpaqueToken()
 	if err != nil {
-		h.renderErrorModalCreate(w, r, "Error al generar contraseña", nil, usuarioDTO)
+		h.renderErrorModalCreate(w, r, "Error al generar activación", nil, usuarioDTO)
 		return
 	}
 
 	// 3. Llamar al servicio (El servicio generará el UUID internamente)
-	if err := h.service.CrearUsuario(ctx, usuarioDTO, rawPassword); err != nil {
+	if err := h.service.CrearUsuario(ctx, usuarioDTO, activationToken); err != nil {
 		// Manejo específico si es error de validación
 		validationErrors := validacion.ValidationErrorsMap(err)
 		h.renderErrorModalCreate(w, r, err.Error(), validationErrors, usuarioDTO)
 		return
 	}
 
-	// 4. Enviar email con credenciales al usuario
-	emailEvent := events.SendUserCredentialsEvent{
-		Email:          usuarioDTO.Email,
-		FullName:       "",
-		Username:       usuarioDTO.Email,
-		Password:       rawPassword,
-		CredentialsURL: utils.GetBaseURL(r) + "/login",
+	// 4. The notification is part of successful provisioning. A delivery error is
+	// explicit and never rendered as success.
+	emailEvent := events.SendUserActivationEvent{
+		Email:         usuarioDTO.Email,
+		FullName:      "",
+		Username:      usuarioDTO.Email,
+		ActivationURL: utils.GetBaseURL(r) + "/login/activar?token=" + activationToken,
 	}
-	_ = h.eventDispatcher.Dispatch(ctx, emailEvent)
-
-	// No verificamos el error del dispatch - es fire-and-forget asíncrono
+	if err := h.eventDispatcher.Dispatch(ctx, emailEvent); err != nil {
+		if cleanupErr := h.service.EliminarUsuario(ctx, usuarioDTO.UuidPersona); cleanupErr != nil {
+			h.logger.ErrorContext(ctx, "Activación no entregada y limpieza fallida", cleanupErr, "email", usuarioDTO.Email)
+			h.renderErrorModalCreate(w, r, "Cuenta creada, pero no se pudo entregar la activación. Requiere atención administrativa.", nil, usuarioDTO)
+			return
+		}
+		h.renderErrorModalCreate(w, r, "No se creó el usuario porque no se pudo entregar la activación.", nil, usuarioDTO)
+		return
+	}
 
 	h.renderSuccess(w, r, errores.MensajeOperacionExitosaRegistroCreado)
 }

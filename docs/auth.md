@@ -19,6 +19,12 @@ Soportado para APIs o comunicaciones stateless.
 
 Además de la autenticación, el sistema implementa medidas proactivas contra ataques comunes de la web.
 
+### Activación y recuperación de contraseña
+
+Las cuentas nuevas permanecen inactivas hasta que su titular consume un enlace de activación de un solo uso. Los tokens se generan con entropía criptográfica, se almacenan exclusivamente como hash, expiran en 24 horas y se eliminan al consumirse. La recuperación responde de forma no enumerante y limita solicitudes por dirección IP.
+
+Los reportes de personas y parámetros se almacenan en el repositorio privado. En producción, esto entrega URLs firmadas de duración limitada. El despliegue local expone la ruta privada mediante el servidor estático de desarrollo; antes de exponer un entorno compartido, debe instalarse una capa de autorización que valide la sesión y la política antes de entregar dichos archivos.
+
 ### Protección CSRF (Cross-Site Request Forgery)
 Gestionada mediante la librería `nosurf` en `app/middleware/security.go`.
 *   **Funcionamiento**: Todas las peticiones mutables (POST, PUT, DELETE) requieren un token válido.

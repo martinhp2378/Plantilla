@@ -1,14 +1,13 @@
 package events
 
-// SendUserCredentialsEvent is the event triggered when a new user is created and needs their credentials.
-type SendUserCredentialsEvent struct {
-	Email          string
-	FullName       string
-	Username       string
-	Password       string
-	CredentialsURL string
+// SendUserActivationEvent is triggered when a newly-created user must choose a password.
+type SendUserActivationEvent struct {
+	Email         string
+	FullName      string
+	Username      string
+	ActivationURL string
 }
 
-func (e SendUserCredentialsEvent) Name() string {
-	return "SendUserCredentialsEvent"
+func (e SendUserActivationEvent) Name() string {
+	return "SendUserActivationEvent"
 }

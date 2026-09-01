@@ -6,6 +6,7 @@ import (
 	shared "PlantillaInstitucional/shared/password"
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/gofrs/uuid/v5"
 )
@@ -34,7 +35,7 @@ func (s *UsuarioService) ObtenerUsuario(ctx context.Context, uuid_persona uuid.U
 	return b, nil
 }
 
-func (s *UsuarioService) CrearUsuario(ctx context.Context, b usuario.Usuario, rawPassword string) error {
+func (s *UsuarioService) CrearUsuario(ctx context.Context, b usuario.Usuario, activationToken string) error {
 	// 1. Validación de estructura (Business Rules básicas)
 	if err := s.validate.Struct(b); err != nil {
 		s.logger.WarnContext(ctx, "Validación fallida al crear", "error", err, "op", "CrearUsuario")
@@ -46,14 +47,16 @@ func (s *UsuarioService) CrearUsuario(ctx context.Context, b usuario.Usuario, ra
 		return fmt.Errorf("debe seleccionar una persona para asignarle el usuario")
 	}
 
-	// Si no se proporciona password, generar uno
-	if rawPassword == "" {
-		var err error
-		rawPassword, err = shared.GenerateRandomPassword()
-		if err != nil {
-			s.logger.ErrorContext(ctx, "Generacion de password fallida", err, "email", b.Email, "op", "CrearUsuario")
-			return fmt.Errorf("error generando contraseña: %w", err)
-		}
+	if activationToken == "" {
+		return fmt.Errorf("token de activación requerido")
+	}
+
+	// A random unusable password preserves the existing NOT NULL column while
+	// is_active prevents authentication until the one-time token is consumed.
+	rawPassword, err := shared.GenerateRandomPassword()
+	if err != nil {
+		s.logger.ErrorContext(ctx, "Generacion de password fallida", err, "email", b.Email, "op", "CrearUsuario")
+		return fmt.Errorf("error generando contraseña: %w", err)
 	}
 
 	hashed, err := shared.HashPassword(rawPassword)
@@ -64,7 +67,7 @@ func (s *UsuarioService) CrearUsuario(ctx context.Context, b usuario.Usuario, ra
 
 	b.Password = hashed
 
-	if err := s.repo.CrearUsuario(ctx, b); err != nil {
+	if err := s.repo.CrearUsuario(ctx, b, shared.HashOpaqueToken(activationToken), time.Now().Add(24*time.Hour)); err != nil {
 		s.logger.ErrorContext(ctx, "Error persistiendo usuario", err, "email", b.Email, "op", "CrearUsuario")
 		return fmt.Errorf("no se pudo crear el usuario: %w", err)
 	}

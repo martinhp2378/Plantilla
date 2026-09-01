@@ -45,9 +45,9 @@ const CountUsuarios = `
 // Usamos RETURNING id para asegurar que la inserción fue exitosa y obtener el UUID generado (si fuera generado por DB).
 const InsertUsuario = `
 	INSERT INTO usuario (
-		uuid_persona, email, password, perfil, razon_i
+		uuid_persona, email, password, perfil, razon_i, is_active
 	) 
-	VALUES ($1, $2, $3, $4, $5) 
+	VALUES ($1, $2, $3, $4, $5, false)
 	RETURNING uuid_persona
 `
 

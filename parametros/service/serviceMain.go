@@ -120,6 +120,7 @@ func (s *ParametrosService) ReportePdf(ctx context.Context) (string, error) {
 		"Reporte de parametross ",   // Título
 		map[string]func(any) string{ // Funciones de renderizado personalizadas
 		},
+		true,
 	)
 
 	if err != nil {
@@ -151,6 +152,7 @@ func (s *ParametrosService) ReporteExcel(ctx context.Context) (string, error) {
 		"Reporte de Parametros",     // Título
 		map[string]func(any) string{ // Funciones de renderizado personalizadas
 		},
+		true,
 	)
 
 	if err != nil {

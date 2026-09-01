@@ -51,7 +51,54 @@ ALTER TABLE sistema.bitacora_cambios FORCE ROW LEVEL SECURITY;
 ALTER TABLE sistema.cfg_parametros ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sistema.cfg_parametros FORCE ROW LEVEL SECURITY;
 
--- 5. Create tenant isolation policies
+-- 5. Record the transaction-local tenant identity in audit rows. An absent or
+-- invalid setting becomes NULL, which the FORCE RLS WITH CHECK policy rejects.
+CREATE OR REPLACE FUNCTION sistema.fn_registrar_auditoria()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_uuid_persona UUID;
+    v_tenant_id UUID;
+    v_registro_pk TEXT;
+    v_razon TEXT;
+BEGIN
+    BEGIN
+        v_uuid_persona := current_setting('session_variables.uuid_persona', true)::UUID;
+    EXCEPTION WHEN OTHERS THEN
+        v_uuid_persona := NULL;
+    END;
+
+    BEGIN
+        v_tenant_id := NULLIF(current_setting('app.tenant_id', true), '')::UUID;
+    EXCEPTION WHEN OTHERS THEN
+        v_tenant_id := NULL;
+    END;
+
+    IF (TG_OP = 'INSERT') THEN
+        EXECUTE format('SELECT $1.%I::text', TG_ARGV[0]) INTO v_registro_pk USING NEW;
+        v_razon := (to_jsonb(NEW) ->> 'razon_i');
+        INSERT INTO sistema.bitacora_cambios (tenant_id, uuid_persona, accion, nombre_tabla, registro_pk, datos_nuevos, razon)
+        VALUES (v_tenant_id, v_uuid_persona, 'INSERT', TG_TABLE_NAME, v_registro_pk, to_jsonb(NEW), v_razon);
+        RETURN NEW;
+
+    ELSIF (TG_OP = 'UPDATE') THEN
+        EXECUTE format('SELECT $1.%I::text', TG_ARGV[0]) INTO v_registro_pk USING NEW;
+        v_razon := (to_jsonb(NEW) ->> 'razon_m');
+        INSERT INTO sistema.bitacora_cambios (tenant_id, uuid_persona, accion, nombre_tabla, registro_pk, datos_viejos, datos_nuevos, razon)
+        VALUES (v_tenant_id, v_uuid_persona, 'UPDATE', TG_TABLE_NAME, v_registro_pk, to_jsonb(OLD), to_jsonb(NEW), v_razon);
+        RETURN NEW;
+
+    ELSIF (TG_OP = 'DELETE') THEN
+        EXECUTE format('SELECT $1.%I::text', TG_ARGV[0]) INTO v_registro_pk USING OLD;
+        INSERT INTO sistema.bitacora_cambios (tenant_id, uuid_persona, accion, nombre_tabla, registro_pk, datos_viejos, razon)
+        VALUES (v_tenant_id, v_uuid_persona, 'DELETE', TG_TABLE_NAME, v_registro_pk, to_jsonb(OLD), 'DELETE operation');
+        RETURN OLD;
+    END IF;
+
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 6. Create tenant isolation policies
 DO $$
 BEGIN
     -- institucion.persona

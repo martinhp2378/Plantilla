@@ -52,19 +52,3 @@ ON CONFLICT DO NOTHING;
 INSERT INTO cat_tenants (subdomain, schema_name, nombre_depto, is_active) VALUES
 ('admin', 'public', 'Administración Central', true)
 ON CONFLICT DO NOTHING;
-
--- 5. PERSONA Y USUARIO ADMIN (Password: admin123)
--- Hash bcrypt para 'admin123': $2a$10$WJK.5U64OTFkWlAGeTFAUePwpsxGnB5w6Lqbox72QkjbB3RtxqSbm
-DO $$
-DECLARE
-    v_uuid_persona UUID := gen_random_uuid();
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM usuario WHERE email = 'admin@issemym.gob.mx') THEN
-        INSERT INTO persona (uuid_persona, nombre, apellido1, apellido2, clave_issemym, curp, rfc, razon_i)
-        VALUES (v_uuid_persona, 'Administrador', 'Sistema', 'Issemym', '0000000', 'ADMIN0000000000000', 'ADMIN00000000', 'Carga Inicial');
-
-        -- Password: admin123
-        INSERT INTO usuario (uuid_persona, email, password, perfil, razon_i)
-        VALUES (v_uuid_persona, 'admin@issemym.gob.mx', '$2a$10$WJK.5U64OTFkWlAGeTFAUePwpsxGnB5w6Lqbox72QkjbB3RtxqSbm', 'superadmin', 'Carga Inicial');
-    END IF;
-END $$;

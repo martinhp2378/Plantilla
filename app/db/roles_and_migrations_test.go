@@ -129,4 +129,73 @@ func TestTenantIsolationExpandMigration(t *testing.T) {
 			t.Fatal("down migration must disable RLS")
 		}
 	})
+
+	t.Run("Audit function derives and stores the transaction-local tenant", func(t *testing.T) {
+		if !strings.Contains(upContent, "CREATE OR REPLACE FUNCTION sistema.fn_registrar_auditoria()") {
+			t.Fatal("migration must replace the audit function after tenant_id is introduced")
+		}
+		if !strings.Contains(upContent, "NULLIF(current_setting('app.tenant_id', true), '')::UUID") {
+			t.Fatal("audit function must safely derive tenant_id from the transaction-local setting")
+		}
+		if strings.Count(upContent, "INSERT INTO sistema.bitacora_cambios (tenant_id,") != 3 {
+			t.Fatal("every audit operation must insert tenant_id")
+		}
+		if !strings.Contains(downContent, "INSERT INTO sistema.bitacora_cambios (uuid_persona,") {
+			t.Fatal("down migration must restore the pre-expand audit function")
+		}
+	})
+}
+
+func TestSeedMigrationContract(t *testing.T) {
+	upSQLPath := filepath.Join("..", "..", "sql", "migrations", "000002_seed.up.sql")
+	upBytes, err := os.ReadFile(upSQLPath)
+	if err != nil {
+		t.Fatalf("failed to read 000002 up migration: %v", err)
+	}
+	upContent := string(upBytes)
+
+	downSQLPath := filepath.Join("..", "..", "sql", "migrations", "000002_seed.down.sql")
+	downBytes, err := os.ReadFile(downSQLPath)
+	if err != nil {
+		t.Fatalf("failed to read 000002 down migration: %v", err)
+	}
+	downContent := string(downBytes)
+
+	t.Run("Does not ship a known superadmin credential", func(t *testing.T) {
+		for _, forbidden := range []string{"admin@issemym.gob.mx", "admin123", "WJK.5U64OTFkWlAGeTFAUePwpsxGnB5w6Lqbox72QkjbB3RtxqSbm"} {
+			if strings.Contains(upContent, forbidden) {
+				t.Fatalf("seed migration must not contain known superadmin credential material: %q", forbidden)
+			}
+		}
+	})
+
+	t.Run("Deletes seeded foreign-key dependents before catalogs", func(t *testing.T) {
+		orderedDeletes := []string{
+			"DELETE FROM sesion.politica",
+			"DELETE FROM sesion.perfil",
+			"DELETE FROM sesion.recurso",
+			"DELETE FROM sesion.cat_accion",
+		}
+		last := -1
+		for _, statement := range orderedDeletes {
+			index := strings.Index(downContent, statement)
+			if index == -1 {
+				t.Fatalf("seed down migration missing %s", statement)
+			}
+			if index <= last {
+				t.Fatalf("seed down migration must delete %s after its dependents", statement)
+			}
+			last = index
+		}
+	})
+
+	t.Run("Deletes the complete seeded catalog set", func(t *testing.T) {
+		for _, seeded := range []string{
+			"'Acceso Usuarios'", "'EMAIL_SYSTEM_NAME'", "'admin'", "'anonimo'", "'parametros'", "'aprobar'",
+		} {
+			if !strings.Contains(downContent, seeded) {
+				t.Fatalf("seed down migration must reverse seeded row %s", seeded)
+			}
+		}
+	})
 }

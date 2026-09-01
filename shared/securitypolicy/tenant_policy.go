@@ -5,6 +5,7 @@ import (
 	"net/netip"
 	"regexp"
 	"strings"
+	"time"
 )
 
 var schemaPattern = regexp.MustCompile(`^[a-z][a-z0-9_]{0,62}$`)
@@ -17,10 +18,10 @@ const (
 )
 
 type CanonicalHostRule struct {
-	Host     string
-	TenantID string
-	Schema   string
-	Active   bool
+	Host     string `json:"host"`
+	TenantID string `json:"tenant_id"`
+	Schema   string `json:"schema"`
+	Active   bool   `json:"active"`
 }
 type TenantPolicy struct {
 	EnforcementEnabled     bool
@@ -33,9 +34,18 @@ type TenantPolicy struct {
 	ForwardedAuthorityMode ForwardedAuthorityMode
 	AllowedSchemes         []string
 	GlobalAccessPolicyID   string
+	Clock                  func() time.Time `json:"-"`
 }
 
 func (p TenantPolicy) Validate() error {
+	now := time.Now().UTC()
+	if p.Clock != nil {
+		now = p.Clock().UTC()
+	}
+	return p.ValidateAt(now)
+}
+
+func (p TenantPolicy) ValidateAt(now time.Time) error {
 	if !p.EnforcementEnabled {
 		return errors.New(StartupPolicyIncomplete)
 	}
@@ -49,7 +59,7 @@ func (p TenantPolicy) Validate() error {
 	if len(p.AllowedSchemes) == 0 || p.GlobalAccessPolicyID == "" {
 		return errors.New(StartupPolicyIncomplete)
 	}
-	if err := p.Catalog.Validate(); err != nil {
+	if err := p.Catalog.ValidateAt(now); err != nil {
 		return err
 	}
 	activeCatalog := map[[3]string]struct{}{}

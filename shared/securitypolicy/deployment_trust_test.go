@@ -11,11 +11,34 @@ func validStartupPolicy() TenantPolicy {
 	now := time.Date(2026, 7, 30, 0, 0, 0, 0, time.UTC)
 	return TenantPolicy{
 		EnforcementEnabled: true, DeploymentProfile: LocalDirect, EnvironmentClass: EnvironmentLocal, AllowedSchemes: []string{"https"}, GlobalAccessPolicyID: "global-v1",
+		Clock: func() time.Time { return now },
 		Catalog: AuthoritativeCatalogSnapshot{Source: "catalog", Version: "v1", ValidFrom: now.Add(-time.Hour), ValidUntil: now.Add(time.Hour), Entries: []TenantCatalogEntry{{
 			Host: "tenant.example.test", TenantID: "tenant-a", Schema: "tenant_a", Lifecycle: TenantActive,
 			InstitutionOwner: "institution", PlatformOwner: "platform", InstitutionApproved: true, PlatformApproved: true,
 			Source: "catalog", Version: "v1", ValidFrom: now.Add(-time.Hour), ValidUntil: now.Add(time.Hour), EvidenceApproved: true,
 		}}},
+	}
+}
+
+func TestTenantPolicyValidateRejectsCatalogOutsideValidityWindow(t *testing.T) {
+	now := time.Date(2026, 7, 30, 0, 0, 0, 0, time.UTC)
+	tests := []struct {
+		name   string
+		mutate func(*AuthoritativeCatalogSnapshot)
+	}{
+		{"expired snapshot", func(c *AuthoritativeCatalogSnapshot) { c.ValidUntil = now }},
+		{"not-yet-valid snapshot", func(c *AuthoritativeCatalogSnapshot) { c.ValidFrom = now.Add(time.Minute) }},
+		{"expired entry", func(c *AuthoritativeCatalogSnapshot) { c.Entries[0].ValidUntil = now }},
+		{"not-yet-valid entry", func(c *AuthoritativeCatalogSnapshot) { c.Entries[0].ValidFrom = now.Add(time.Minute) }},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			policy := validStartupPolicy()
+			tt.mutate(&policy.Catalog)
+			if err := policy.ValidateAt(now); err == nil || err.Error() != StartupCatalogInvalid {
+				t.Fatalf("ValidateAt() = %v, want %s", err, StartupCatalogInvalid)
+			}
+		})
 	}
 }
 

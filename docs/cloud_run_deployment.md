@@ -24,6 +24,7 @@ Al desplegar en Cloud Run, debés configurar las siguientes variables de entorno
 | `AMBIENTE` | Determina las optimizaciones de ejecución | `"PRODUCCION"` o `"DESARROLLO"` |
 | `PORT` | Puerto de escucha dinámico (inyectado por Cloud Run) | `8080` (automático) |
 | `SKIP_MIGRATIONS` | Bandera para desactivar migraciones automáticas al bootear | `true` |
+| `TENANT_AUTHORITY_CONFIG` | Perfil de confianza, reglas canónicas y snapshot autoritativo vigente. Es obligatorio en `DESARROLLO` y `PRODUCCION`; el arranque falla si falta o no es válido. | JSON validado; consultar `docs/tenant-authority-contract.md` |
 | `PQ_WRITE_HOST` | Host para conexión de base de datos de escritura | `"/cloudsql/tu-proyecto:us-central1:instancia"` (Unix Socket) o IP Privada |
 | `PQ_WRITE_USER` | Usuario de PostgreSQL | `"usuplantilla"` |
 | `PQ_WRITE_PASSWORD`| Contraseña de PostgreSQL | *(Secrets Manager / Secret Env)* |

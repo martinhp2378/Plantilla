@@ -265,6 +265,7 @@ func TestGetEnvDBDefaults(t *testing.T) {
 	t.Setenv("ID_PROYECTO", "test-project")
 	t.Setenv("VERSION", "1.0.0")
 	t.Setenv("LISTEN_ADDR", ":8080")
+	t.Setenv("TENANT_AUTHORITY_CONFIG", `{"deployment_profile":"gcp_cloud_run_alb"}`)
 
 	// Set empty pool variables
 	t.Setenv("PQ_WRITE_MAX_CONNS", "")
@@ -294,6 +295,9 @@ func TestGetEnvDBDefaults(t *testing.T) {
 	}
 	if env.PqReadMinConns != 2 {
 		t.Errorf("expected PqReadMinConns to be 2, got %d", env.PqReadMinConns)
+	}
+	if env.TenantAuthorityConfig != `{"deployment_profile":"gcp_cloud_run_alb"}` {
+		t.Errorf("expected tenant authority configuration to be loaded verbatim, got %q", env.TenantAuthorityConfig)
 	}
 
 	t.Run("invalid integer PQ_WRITE_MAX_CONNS returns error", func(t *testing.T) {

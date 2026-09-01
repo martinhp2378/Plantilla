@@ -22,6 +22,50 @@ Un rechazo ocurre antes de invocar el handler downstream. Por ello no debe abrir
 
 Las fixtures locales son exclusivamente para `local_direct` y no sustituyen el snapshot DB autoritativo de producción. La referencia `plantilla-institucional.issemym.gob.mx` permanece en estado `provisioning`, no enrutable: cada sistema nuevo debe sustituirla o aprobarla explícitamente con ownership, evidencia, versión y ventana válidos.
 
+## Configuración de arranque
+
+Cuando `AMBIENTE=LOCAL` y `TENANT_AUTHORITY_CONFIG` está vacío, la aplicación instala intencionalmente la fixture `localhost` con el perfil `local_direct`. Este es el único fallback permitido. `DESARROLLO` y `PRODUCCION` requieren `TENANT_AUTHORITY_CONFIG`; si falta, contiene JSON inválido, campos desconocidos, un perfil incompatible con el ambiente o un catálogo no válido, el proceso falla antes de construir la aplicación.
+
+`TENANT_AUTHORITY_CONFIG` es un objeto JSON con este contrato:
+
+```json
+{
+  "deployment_profile": "gcp_cloud_run_alb",
+  "allowed_schemes": ["https"],
+  "global_access_policy_id": "global-readers-v1",
+  "canonical_hosts": [
+    {"host": "sistema.issemym.gob.mx", "tenant_id": "sistema", "schema": "sistema", "active": true}
+  ],
+  "catalog": {
+    "source": "tenant-catalog-db",
+    "version": "2026-08-31.1",
+    "valid_from": "2026-08-31T00:00:00Z",
+    "valid_until": "2026-09-30T00:00:00Z",
+    "entries": [
+      {
+        "host": "sistema.issemym.gob.mx",
+        "tenant_id": "sistema",
+        "schema": "sistema",
+        "institution_owner": "institution-owner-id",
+        "platform_owner": "platform-owner-id",
+        "source": "tenant-catalog-db",
+        "version": "2026-08-31.1",
+        "lifecycle": "active",
+        "institution_approved": true,
+        "platform_approved": true,
+        "evidence_approved": true,
+        "valid_from": "2026-08-31T00:00:00Z",
+        "valid_until": "2026-09-30T00:00:00Z"
+      }
+    ]
+  }
+}
+```
+
+El perfil `onprem_nginx_single_hop` requiere además `"nginx_trusted_cidrs": ["10.0.0.0/8"]`. El perfil `local_direct` nunca es válido con `AMBIENTE=PRODUCCION`.
+
+Las fechas usan RFC 3339 y la ventana es semiabierta: `valid_from <= ahora < valid_until`. Tanto el snapshot como cada entrada deben estar vigentes. Una fecha futura, una expiración alcanzada o una ventana mal formada produce `startup_catalog_invalid`. El reloj se consulta en el límite de validación para permitir pruebas deterministas y reevaluación durante la resolución de solicitudes.
+
 ## Límites de runtime y despliegue
 
 La aplicación valida el contrato recibido, pero no puede demostrar desde una solicitud la topología de Cloud Run, ALB, serverless NEG, URL `run.app`, CIDRs reales ni la configuración efectiva de NGINX. Esas pruebas son evidencia late-bound y bloquean el cutover hasta que plataforma y el owner institucional las aprueben.

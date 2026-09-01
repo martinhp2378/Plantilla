@@ -78,7 +78,8 @@ type Env struct {
 	DeshabilitarMetricas         bool          `json:"deshabilitarMetricas"`
 	UsarExportadorConsola        bool          `json:"usarExportadorConsola"`
 
-	HabilitarMultiTenant bool `json:"habilitarMultiTenant"`
+	HabilitarMultiTenant  bool   `json:"habilitarMultiTenant"`
+	TenantAuthorityConfig string `json:"tenantAuthorityConfig"`
 
 	CookieNombre               string        `json:"cookieNombre"`
 	CookiePath                 string        `json:"cookiePath"`
@@ -144,6 +145,7 @@ func GetEnv(envPaths ...string) (*Env, error) {
 			AmbienteLocal, AmbienteDesarrollo, AmbienteProduccion)
 	}
 	env.Ambiente = ambiente
+	env.TenantAuthorityConfig = os.Getenv("TENANT_AUTHORITY_CONFIG")
 
 	if Servicio := os.Getenv("SERVICIO"); Servicio != "" {
 		env.Servicio = Servicio

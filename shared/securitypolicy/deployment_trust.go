@@ -34,28 +34,47 @@ const (
 )
 
 type TenantCatalogEntry struct {
-	Host, TenantID, Schema, InstitutionOwner, PlatformOwner, Source, Version string
-	Aliases                                                                  []string
-	Lifecycle                                                                TenantLifecycle
-	InstitutionApproved, PlatformApproved, EvidenceApproved                  bool
-	ValidFrom, ValidUntil                                                    time.Time
+	Host                string          `json:"host"`
+	TenantID            string          `json:"tenant_id"`
+	Schema              string          `json:"schema"`
+	InstitutionOwner    string          `json:"institution_owner"`
+	PlatformOwner       string          `json:"platform_owner"`
+	Source              string          `json:"source"`
+	Version             string          `json:"version"`
+	Aliases             []string        `json:"aliases,omitempty"`
+	Lifecycle           TenantLifecycle `json:"lifecycle"`
+	InstitutionApproved bool            `json:"institution_approved"`
+	PlatformApproved    bool            `json:"platform_approved"`
+	EvidenceApproved    bool            `json:"evidence_approved"`
+	ValidFrom           time.Time       `json:"valid_from"`
+	ValidUntil          time.Time       `json:"valid_until"`
 }
 
 type AuthoritativeCatalogSnapshot struct {
-	Source, Version       string
-	ValidFrom, ValidUntil time.Time
-	Entries               []TenantCatalogEntry
+	Source     string               `json:"source"`
+	Version    string               `json:"version"`
+	ValidFrom  time.Time            `json:"valid_from"`
+	ValidUntil time.Time            `json:"valid_until"`
+	Entries    []TenantCatalogEntry `json:"entries"`
 }
 
 func (c AuthoritativeCatalogSnapshot) Validate() error {
+	return c.ValidateAt(time.Now().UTC())
+}
+
+func (c AuthoritativeCatalogSnapshot) ValidateAt(now time.Time) error {
 	if c.Source == "" || c.Version == "" || c.ValidFrom.IsZero() || c.ValidUntil.IsZero() || !c.ValidFrom.Before(c.ValidUntil) || len(c.Entries) == 0 {
 		return errors.New(StartupCatalogMissing)
+	}
+	if now.Before(c.ValidFrom) || !now.Before(c.ValidUntil) {
+		return errors.New(StartupCatalogInvalid)
 	}
 	seenHosts, seenSchemas, seenTenants := map[string]struct{}{}, map[string]struct{}{}, map[string]struct{}{}
 	for _, entry := range c.Entries {
 		if !validCatalogHost(entry.Host) || entry.TenantID == "" || entry.Schema == "public" || !schemaPattern.MatchString(entry.Schema) ||
 			entry.InstitutionOwner == "" || entry.PlatformOwner == "" || !entry.InstitutionApproved || !entry.PlatformApproved || !entry.EvidenceApproved ||
-			entry.Source == "" || entry.Version == "" || entry.ValidFrom.IsZero() || entry.ValidUntil.IsZero() || !entry.ValidFrom.Before(entry.ValidUntil) || !validLifecycle(entry.Lifecycle) {
+			entry.Source == "" || entry.Version == "" || entry.ValidFrom.IsZero() || entry.ValidUntil.IsZero() || !entry.ValidFrom.Before(entry.ValidUntil) ||
+			now.Before(entry.ValidFrom) || !now.Before(entry.ValidUntil) || !validLifecycle(entry.Lifecycle) {
 			return errors.New(StartupCatalogInvalid)
 		}
 		for _, host := range append([]string{entry.Host}, entry.Aliases...) {

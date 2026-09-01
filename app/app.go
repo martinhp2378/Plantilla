@@ -29,7 +29,6 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/issemym-repos/archivos"
 	"github.com/issemym-repos/logs"
@@ -104,8 +103,12 @@ func NewApp(ctx context.Context, env *entorno.Env,
 	logger *logs.Logger, instrumentacion *logs.Instrumentacion,
 	constructorSesion *sesiones.ConstructorSesion, constructorSesionJWT *sesiones.ConstructorSesionJWT,
 	manejadorArchivos *archivos.ManejadorArchivos, servicioEmail *email.EmailService) (*App, error) {
+	tenantPolicy, err := tenantPolicyFromEnvironment(env, timeNow)
+	if err != nil {
+		return nil, err
+	}
 	return NewAppWithTenantPolicy(ctx, env, pqWrite, pqRead, conexionRedis, logger, instrumentacion,
-		constructorSesion, constructorSesionJWT, manejadorArchivos, servicioEmail, defaultTenantPolicy())
+		constructorSesion, constructorSesionJWT, manejadorArchivos, servicioEmail, tenantPolicy)
 }
 
 func NewAppWithTenantPolicy(ctx context.Context, env *entorno.Env,
@@ -120,14 +123,6 @@ func NewAppWithTenantPolicy(ctx context.Context, env *entorno.Env,
 		PqWrite: pqWrite, PqRead: pqRead, ConstructorSesion: constructorSesion,
 		ConstructorSesionJWT: constructorSesionJWT, ManejadorArchivos: manejadorArchivos,
 		ServicioEmail: servicioEmail, TenantPolicy: tenantPolicy, tenants: make(map[string]string)}, nil
-}
-
-func defaultTenantPolicy() securitypolicy.TenantPolicy {
-	now := time.Now().UTC()
-	return securitypolicy.TenantPolicy{EnforcementEnabled: true, DeploymentProfile: securitypolicy.LocalDirect, EnvironmentClass: securitypolicy.EnvironmentLocal,
-		CanonicalHosts: []securitypolicy.CanonicalHostRule{{Host: "localhost", TenantID: "local", Schema: "local", Active: true}},
-		AllowedSchemes: []string{"http", "https"}, GlobalAccessPolicyID: "global-readers-v1",
-		Catalog: securitypolicy.AuthoritativeCatalogSnapshot{Source: "local-fixture", Version: "v1", ValidFrom: now.Add(-time.Hour), ValidUntil: now.Add(time.Hour), Entries: []securitypolicy.TenantCatalogEntry{{Host: "localhost", TenantID: "local", Schema: "local", Lifecycle: securitypolicy.TenantActive, InstitutionOwner: "local", PlatformOwner: "local", InstitutionApproved: true, PlatformApproved: true, EvidenceApproved: true, Source: "local-fixture", Version: "v1", ValidFrom: now.Add(-time.Hour), ValidUntil: now.Add(time.Hour)}}}}
 }
 
 func (a *App) Close() {

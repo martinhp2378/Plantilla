@@ -10,7 +10,10 @@ import (
 	"time"
 
 	bd "PlantillaInstitucional/app/db"
+	"PlantillaInstitucional/configuracion/usuario"
+	usuarioDB "PlantillaInstitucional/configuracion/usuario/repository"
 	loginDB "PlantillaInstitucional/login/db"
+	"PlantillaInstitucional/pagination"
 	"PlantillaInstitucional/shared/tenantcontext"
 
 	"github.com/gofrs/uuid/v5"
@@ -131,6 +134,7 @@ func TestMigrationsIntegration_SeedRollbackAndTenantAudit(t *testing.T) {
 	}
 
 	verifyActivationTokenTenantTransaction(t, ctx, conn, databaseURL, tenantID)
+	verifyUsuarioRepositoryTenantTransaction(t, ctx, conn, databaseURL, tenantID)
 
 	applyMigrationFile(t, ctx, conn, "000004_account_activation.down.sql")
 	var activationTableExists bool
@@ -151,6 +155,150 @@ func TestMigrationsIntegration_SeedRollbackAndTenantAudit(t *testing.T) {
 	}
 	if !tenantIDColumnExists {
 		t.Fatal("expand rollback must retain the tenant_id column")
+	}
+}
+
+func verifyUsuarioRepositoryTenantTransaction(t *testing.T, ctx context.Context, conn *pgx.Conn, databaseURL, tenantID string) {
+	t.Helper()
+
+	otherTenantID := uuid.Must(uuid.NewV4()).String()
+	personID := uuid.Must(uuid.NewV4())
+	otherPersonID := uuid.Must(uuid.NewV4())
+	roleName := "usuario_repo_test_" + strings.ReplaceAll(uuid.Must(uuid.NewV4()).String()[:8], "-", "")
+	quotedRole := pgx.Identifier{roleName}.Sanitize()
+
+	if _, err := conn.Exec(ctx, "CREATE ROLE "+quotedRole+" NOLOGIN NOBYPASSRLS"); err != nil {
+		t.Fatalf("create usuario repository runtime role: %v", err)
+	}
+	defer func() {
+		if _, err := conn.Exec(ctx, "DROP OWNED BY "+quotedRole); err != nil {
+			t.Errorf("drop usuario repository runtime privileges: %v", err)
+		}
+		if _, err := conn.Exec(ctx, "DROP ROLE IF EXISTS "+quotedRole); err != nil {
+			t.Errorf("drop usuario repository runtime role: %v", err)
+		}
+	}()
+	for _, grant := range []string{
+		"GRANT USAGE ON SCHEMA tenant_test, institucion, sesion, sistema TO " + quotedRole,
+		"GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA institucion, sesion, sistema TO " + quotedRole,
+		"GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA institucion, sesion, sistema TO " + quotedRole,
+	} {
+		if _, err := conn.Exec(ctx, grant); err != nil {
+			t.Fatalf("grant usuario repository runtime privileges: %v", err)
+		}
+	}
+
+	if _, err := conn.Exec(ctx, `
+		INSERT INTO institucion.cat_tenants (tenant_id, subdomain, schema_name, nombre_depto)
+		VALUES ($1::uuid, $2, $2, 'Other tenant')`, otherTenantID, "other-"+otherPersonID.String()[:8]); err != nil {
+		t.Fatalf("insert other tenant: %v", err)
+	}
+	for _, person := range []struct {
+		id       uuid.UUID
+		tenantID string
+		prefix   string
+	}{
+		{id: personID, tenantID: tenantID, prefix: "USR"},
+		{id: otherPersonID, tenantID: otherTenantID, prefix: "OTH"},
+	} {
+		compactID := strings.ReplaceAll(person.id.String(), "-", "")
+		if _, err := conn.Exec(ctx, `
+			INSERT INTO institucion.persona
+				(uuid_persona, tenant_id, nombre, apellido1, clave_issemym, curp, rfc, razon_i)
+			VALUES ($1, $2::uuid, $3, 'Repository', $4, $5, $6, 'Integration test')`,
+			person.id, person.tenantID, person.prefix, person.prefix+compactID[:8], person.prefix+compactID[:15], person.prefix+compactID[:10]); err != nil {
+			t.Fatalf("insert %s tenant persona: %v", person.prefix, err)
+		}
+	}
+	if _, err := conn.Exec(ctx, `
+		INSERT INTO sesion.usuario (uuid_persona, tenant_id, email, password, perfil, is_active)
+		VALUES ($1, $2::uuid, 'other-user@example.test', 'other-password', 'operador', true)`, otherPersonID, otherTenantID); err != nil {
+		t.Fatalf("insert other tenant user: %v", err)
+	}
+
+	poolConfig, err := pgxpool.ParseConfig(databaseURL)
+	if err != nil {
+		t.Fatalf("parse usuario repository pool config: %v", err)
+	}
+	poolConfig.MaxConns = 1
+	poolConfig.AfterConnect = func(ctx context.Context, connection *pgx.Conn) error {
+		_, err := connection.Exec(ctx, "SET ROLE "+quotedRole)
+		return err
+	}
+	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
+	if err != nil {
+		t.Fatalf("create usuario repository pool: %v", err)
+	}
+	defer pool.Close()
+
+	repo := usuarioDB.NewUsuarioRepository(bd.NewAppPools(pool, pool))
+	tenantCtx := tenantcontext.WithTenant(ctx, tenantcontext.TenantContext{ID: tenantID, Schema: "tenant_test", CanonicalHost: "tenant-test.example"})
+	otherTenantCtx := tenantcontext.WithTenant(ctx, tenantcontext.TenantContext{ID: otherTenantID, Schema: "tenant_test", CanonicalHost: "other-tenant-test.example"})
+	tokenHash := []byte("usuario-repository-token-hash-0001")
+	created := usuario.Usuario{
+		UuidPersona: personID,
+		Email:       "tenant-user@example.test",
+		Password:    "initial-password",
+		Perfil:      "operador",
+		Razon_i:     "Integration test",
+	}
+	if err := repo.CrearUsuario(tenantCtx, created, tokenHash, time.Now().Add(time.Hour)); err != nil {
+		t.Fatalf("create user through tenant transaction: %v", err)
+	}
+
+	criteria := pagination.CriteriosPagina[usuario.Usuario]{First: 0, Size: 10, SortedBy: "email", Direction: "ASC"}
+	users, total, err := repo.ConsultarUsuarios(tenantCtx, criteria)
+	if err != nil {
+		t.Fatalf("list users through tenant transaction: %v", err)
+	}
+	foundCreated := false
+	for _, listedUser := range users {
+		if listedUser.UuidPersona == otherPersonID {
+			t.Fatalf("tenant list exposed other tenant user %s", otherPersonID)
+		}
+		if listedUser.UuidPersona == personID {
+			foundCreated = true
+		}
+	}
+	if total != len(users) || !foundCreated {
+		t.Fatalf("tenant list = total:%d users:%v, want created user %s and matching total", total, users, personID)
+	}
+	if _, err := repo.ConsultarUsuarioPorID(tenantCtx, otherPersonID); !errors.Is(err, pgx.ErrNoRows) {
+		t.Fatalf("cross-tenant read error = %v, want pgx.ErrNoRows", err)
+	}
+
+	created.Email = "updated-tenant-user@example.test"
+	created.Password = "updated-password"
+	created.Razon_m = "Integration update"
+	if err := repo.ActualizarUsuario(tenantCtx, created); err != nil {
+		t.Fatalf("update user through tenant transaction: %v", err)
+	}
+	if err := repo.ActualizarPassword(tenantCtx, personID, "final-password"); err != nil {
+		t.Fatalf("update password through tenant transaction: %v", err)
+	}
+	if err := repo.ActualizarUsuario(tenantCtx, usuario.Usuario{UuidPersona: otherPersonID, Email: "blocked@example.test", Password: "blocked", Perfil: "operador"}); err == nil {
+		t.Fatal("cross-tenant update unexpectedly succeeded")
+	}
+
+	updated, err := repo.ConsultarUsuarioPorID(tenantCtx, personID)
+	if err != nil {
+		t.Fatalf("read updated user through tenant transaction: %v", err)
+	}
+	if updated.Email != created.Email || updated.Password != "final-password" {
+		t.Fatalf("updated user = email:%q password:%q", updated.Email, updated.Password)
+	}
+	if err := repo.EliminarUsuario(tenantCtx, personID); err != nil {
+		t.Fatalf("delete user through tenant transaction: %v", err)
+	}
+	if _, err := repo.ConsultarUsuarioPorID(tenantCtx, personID); !errors.Is(err, pgx.ErrNoRows) {
+		t.Fatalf("deleted user read error = %v, want pgx.ErrNoRows", err)
+	}
+	otherUser, err := repo.ConsultarUsuarioPorID(otherTenantCtx, otherPersonID)
+	if err != nil {
+		t.Fatalf("read other tenant user after tenant delete: %v", err)
+	}
+	if otherUser.Email != "other-user@example.test" {
+		t.Fatalf("other tenant user email = %q", otherUser.Email)
 	}
 }
 

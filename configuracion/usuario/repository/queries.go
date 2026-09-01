@@ -13,8 +13,8 @@ const SelectUsuarios = `
 		u.fecha_i,
 		u.fecha_m,
 		CONCAT_WS(' ', p.nombre, p.apellido1, p.apellido2) AS nombre_completo
-	FROM usuario AS u
-	INNER JOIN persona AS p ON u.uuid_persona = p.uuid_persona
+	FROM sesion.usuario AS u
+	INNER JOIN institucion.persona AS p ON u.uuid_persona = p.uuid_persona
 `
 
 // SelectUsuariosFiltered
@@ -36,23 +36,23 @@ const SelectUsuarioXId = SelectUsuarios + `
 // %s: WHERE clause (debe ser idéntico al del Select principal)
 const CountUsuarios = `
 	SELECT COUNT(*) 
-	FROM usuario AS u
-	INNER JOIN persona AS p ON u.uuid_persona = p.uuid_persona
+	FROM sesion.usuario AS u
+	INNER JOIN institucion.persona AS p ON u.uuid_persona = p.uuid_persona
 	%s
 `
 
 // InsertUsuario
 // Usamos RETURNING id para asegurar que la inserción fue exitosa y obtener el UUID generado (si fuera generado por DB).
 const InsertUsuario = `
-	INSERT INTO usuario (
-		uuid_persona, email, password, perfil, razon_i, is_active
+	INSERT INTO sesion.usuario (
+		uuid_persona, email, password, perfil, razon_i, is_active, tenant_id
 	) 
-	VALUES ($1, $2, $3, $4, $5, false)
+	VALUES ($1, $2, $3, $4, $5, false, current_setting('app.tenant_id')::uuid)
 	RETURNING uuid_persona
 `
 
 const UpdateUsuario = `
-	UPDATE usuario SET 
+	UPDATE sesion.usuario SET
 		email = $1, 
 		password = $2,
 		perfil = $3,
@@ -60,10 +60,10 @@ const UpdateUsuario = `
 	WHERE uuid_persona = $5
 `
 
-const DeleteUsuario = `DELETE FROM usuario WHERE uuid_persona = $1`
+const DeleteUsuario = `DELETE FROM sesion.usuario WHERE uuid_persona = $1`
 
 const UpdatePasswordUsuario = `
-	UPDATE usuario SET 
+	UPDATE sesion.usuario SET
 		password = $1
 	WHERE uuid_persona = $2
 `

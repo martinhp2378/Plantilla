@@ -312,6 +312,50 @@ func TestGetEnvDBDefaults(t *testing.T) {
 	})
 }
 
+func TestGetEnvCookieSecure(t *testing.T) {
+	t.Setenv("AMBIENTE", AmbienteLocal)
+	t.Setenv("SERVICIO", "test-service")
+	t.Setenv("ID_PROYECTO", "test-project")
+	t.Setenv("VERSION", "1.0.0")
+	t.Setenv("LISTEN_ADDR", ":8080")
+
+	tests := []struct {
+		name      string
+		value     string
+		want      bool
+		wantError bool
+	}{
+		{name: "defaults to false when absent", value: "", want: false},
+		{name: "parses true", value: "true", want: true},
+		{name: "parses false", value: "false", want: false},
+		{name: "rejects malformed value", value: "not-a-bool", wantError: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv("COOKIE_ES_SECURE", tt.value)
+
+			env, err := GetEnv()
+			if tt.wantError {
+				if err == nil {
+					t.Fatalf("expected error, got env %#v", env)
+				}
+				if !strings.Contains(err.Error(), "COOKIE_ES_SECURE") || !strings.Contains(err.Error(), "bool") {
+					t.Fatalf("expected boolean parsing error for COOKIE_ES_SECURE, got %q", err.Error())
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if env.CookieEsSecure != tt.want {
+				t.Fatalf("expected CookieEsSecure to be %t, got %t", tt.want, env.CookieEsSecure)
+			}
+		})
+	}
+}
+
 func TestGetEnvSkipMigrations(t *testing.T) {
 	t.Setenv("AMBIENTE", AmbienteLocal)
 	t.Setenv("SERVICIO", "test-service")

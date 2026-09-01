@@ -62,6 +62,7 @@ func TestPolicyMiddleware(t *testing.T) {
 		allowed        bool
 		isHTMX         bool
 		expectedStatus int
+		expectedTarget string
 	}{
 		{
 			name:           "Excluded route allowed without session",
@@ -84,6 +85,7 @@ func TestPolicyMiddleware(t *testing.T) {
 			profile:        "user",
 			allowed:        false,
 			expectedStatus: http.StatusForbidden,
+			expectedTarget: "",
 		},
 		{
 			name:           "HTMX request denied with 403",
@@ -93,6 +95,7 @@ func TestPolicyMiddleware(t *testing.T) {
 			isHTMX:         true,
 			allowed:        false,
 			expectedStatus: http.StatusForbidden,
+			expectedTarget: "body",
 		},
 	}
 
@@ -133,6 +136,9 @@ func TestPolicyMiddleware(t *testing.T) {
 
 			if rr.Code != tt.expectedStatus {
 				t.Errorf("expected status %d, got %d", tt.expectedStatus, rr.Code)
+			}
+			if got := rr.Result().Header.Get("HX-Retarget"); got != tt.expectedTarget {
+				t.Errorf("expected HX-Retarget %q, got %q", tt.expectedTarget, got)
 			}
 		})
 	}

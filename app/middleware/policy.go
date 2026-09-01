@@ -59,11 +59,14 @@ func PolicyMiddleware(a *app.App) func(http.Handler) http.Handler {
 			if !permitido {
 				a.Logger.WarnContext(r.Context(), "acceso denegado por política", "path", path, "perfil", perfil)
 
+				solicitudHTMX := esSolicitudHTMX(r)
+				if solicitudHTMX {
+					w.Header().Set("HX-Retarget", "body")
+				}
 				w.WriteHeader(http.StatusForbidden)
 
-				if esSolicitudHTMX(r) {
+				if solicitudHTMX {
 					// Si es HTMX, podemos renderizar el error en el contenedor principal o mostrar alerta
-					w.Header().Set("HX-Retarget", "body")
 					utils.RenderIgnore(r.Context(), w, layouts.Pagina403())
 					return
 				}

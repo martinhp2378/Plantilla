@@ -412,6 +412,13 @@ func GetEnv(envPaths ...string) (*Env, error) {
 	if cookiePath := os.Getenv("COOKIE_PATH"); cookiePath != "" {
 		env.CookiePath = cookiePath
 	}
+	if cookieEsSecureStr := os.Getenv("COOKIE_ES_SECURE"); cookieEsSecureStr != "" {
+		cookieEsSecure, err := strconv.ParseBool(cookieEsSecureStr)
+		if err != nil {
+			return nil, fmt.Errorf("error al parsear %s: se esperaba un bool", "COOKIE_ES_SECURE")
+		}
+		env.CookieEsSecure = cookieEsSecure
+	}
 
 	if duracionInactivaStr := os.Getenv("DURACION_INACTIVA"); duracionInactivaStr != "" {
 		duracionInactiva, err := time.ParseDuration(duracionInactivaStr)

@@ -2,6 +2,7 @@ package bd_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
@@ -79,6 +80,16 @@ func TestMigrationsIntegration_SeedRollbackAndTenantAudit(t *testing.T) {
 	applyMigrationFile(t, ctx, conn, "000003_tenant_isolation_expand.up.sql")
 	applyMigrationFile(t, ctx, conn, "000004_account_activation.up.sql")
 
+	var tenantID string
+	if err := conn.QueryRow(ctx, "SELECT tenant_id FROM institucion.cat_tenants WHERE subdomain = 'admin'").Scan(&tenantID); err != nil {
+		t.Fatalf("read seeded tenant id: %v", err)
+	}
+	historicalAudit := createAuditRedactionFixture(t, ctx, conn, tenantID, "historical")
+	assertAuditFixtureContainsSecrets(t, ctx, conn, historicalAudit)
+	applyMigrationFile(t, ctx, conn, "000005_audit_secret_redaction.up.sql")
+	assertAuditFixtureRedacted(t, ctx, conn, historicalAudit)
+	assertAuditFixtureRedacted(t, ctx, conn, createAuditRedactionFixture(t, ctx, conn, historicalAudit.tenantID, "new"))
+
 	var activationRLS bool
 	if err := conn.QueryRow(ctx, `SELECT relrowsecurity FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'sesion' AND c.relname = 'password_reset_token'`).Scan(&activationRLS); err != nil {
 		t.Fatalf("read activation token RLS state: %v", err)
@@ -98,11 +109,6 @@ func TestMigrationsIntegration_SeedRollbackAndTenantAudit(t *testing.T) {
 	}
 	if !rlsEnabled || !forceRLS {
 		t.Fatalf("bitacora_cambios must retain enabled FORCE RLS, got enabled=%t force=%t", rlsEnabled, forceRLS)
-	}
-
-	var tenantID string
-	if err := conn.QueryRow(ctx, "SELECT tenant_id FROM institucion.cat_tenants WHERE subdomain = 'admin'").Scan(&tenantID); err != nil {
-		t.Fatalf("read seeded tenant id: %v", err)
 	}
 
 	tx, err := conn.Begin(ctx)
@@ -136,6 +142,9 @@ func TestMigrationsIntegration_SeedRollbackAndTenantAudit(t *testing.T) {
 	verifyActivationTokenTenantTransaction(t, ctx, conn, databaseURL, tenantID)
 	verifyUsuarioRepositoryTenantTransaction(t, ctx, conn, databaseURL, tenantID)
 
+	applyMigrationFile(t, ctx, conn, "000005_audit_secret_redaction.down.sql")
+	assertAuditFixtureRedacted(t, ctx, conn, historicalAudit)
+	assertAuditFixtureRedacted(t, ctx, conn, createAuditRedactionFixture(t, ctx, conn, tenantID, "rollback"))
 	applyMigrationFile(t, ctx, conn, "000004_account_activation.down.sql")
 	var activationTableExists bool
 	if err := conn.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'sesion' AND table_name = 'password_reset_token')`).Scan(&activationTableExists); err != nil {
@@ -155,6 +164,137 @@ func TestMigrationsIntegration_SeedRollbackAndTenantAudit(t *testing.T) {
 	}
 	if !tenantIDColumnExists {
 		t.Fatal("expand rollback must retain the tenant_id column")
+	}
+}
+
+type auditRedactionFixture struct {
+	tenantID    string
+	userID      string
+	parameterID string
+}
+
+func createAuditRedactionFixture(t *testing.T, ctx context.Context, conn *pgx.Conn, tenantID, label string) auditRedactionFixture {
+	t.Helper()
+	userID := uuid.Must(uuid.NewV4()).String()
+	parameterID := uuid.Must(uuid.NewV4()).String()
+	compactID := strings.ReplaceAll(userID, "-", "")
+
+	tx, err := conn.Begin(ctx)
+	if err != nil {
+		t.Fatalf("begin %s audit fixture: %v", label, err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	if _, err := tx.Exec(ctx, "SELECT set_config('app.tenant_id', $1, true)", tenantID); err != nil {
+		t.Fatalf("set %s audit fixture tenant: %v", label, err)
+	}
+	if _, err := tx.Exec(ctx, `
+		INSERT INTO institucion.persona
+			(uuid_persona, tenant_id, nombre, apellido1, clave_issemym, curp, rfc, razon_i)
+		VALUES ($1::uuid, $2::uuid, $3, 'Audit', $4, $5, $6, 'Audit redaction test')`,
+		userID, tenantID, label, "AUD"+compactID[:8], "AUD"+compactID[:15], "AUD"+compactID[:10]); err != nil {
+		t.Fatalf("insert %s audit persona: %v", label, err)
+	}
+	if _, err := tx.Exec(ctx, `
+		INSERT INTO sesion.usuario (uuid_persona, tenant_id, email, password, perfil, is_active)
+		VALUES ($1::uuid, $2::uuid, $3, $4, 'operador', true)`, userID, tenantID, label+"-audit@example.test", label+"-insert-password"); err != nil {
+		t.Fatalf("insert %s audited user: %v", label, err)
+	}
+	if _, err := tx.Exec(ctx, `UPDATE sesion.usuario SET password = $2, email = $3 WHERE uuid_persona = $1::uuid`, userID, label+"-update-password", label+"-updated-audit@example.test"); err != nil {
+		t.Fatalf("update %s audited user: %v", label, err)
+	}
+	if _, err := tx.Exec(ctx, `DELETE FROM sesion.usuario WHERE uuid_persona = $1::uuid`, userID); err != nil {
+		t.Fatalf("delete %s audited user: %v", label, err)
+	}
+	if _, err := tx.Exec(ctx, `
+		INSERT INTO sistema.cfg_parametros (parametro_id, tenant_id, clave, valor, tipo_dato)
+		VALUES ($1::uuid, $2::uuid, $3, $4, 'STRING')`, parameterID, tenantID, label+"-audit-secret", label+"-insert-value"); err != nil {
+		t.Fatalf("insert %s audited parameter: %v", label, err)
+	}
+	if _, err := tx.Exec(ctx, `UPDATE sistema.cfg_parametros SET valor = $2 WHERE parametro_id = $1::uuid`, parameterID, label+"-update-value"); err != nil {
+		t.Fatalf("update %s audited parameter: %v", label, err)
+	}
+	if _, err := tx.Exec(ctx, `DELETE FROM sistema.cfg_parametros WHERE parametro_id = $1::uuid`, parameterID); err != nil {
+		t.Fatalf("delete %s audited parameter: %v", label, err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		t.Fatalf("commit %s audit fixture: %v", label, err)
+	}
+	return auditRedactionFixture{tenantID: tenantID, userID: userID, parameterID: parameterID}
+}
+
+func assertAuditFixtureContainsSecrets(t *testing.T, ctx context.Context, conn *pgx.Conn, fixture auditRedactionFixture) {
+	t.Helper()
+	for _, target := range []struct{ table, id, secret string }{
+		{table: "usuario", id: fixture.userID, secret: "password"},
+		{table: "cfg_parametros", id: fixture.parameterID, secret: "valor"},
+	} {
+		var leakedSnapshots int
+		if err := conn.QueryRow(ctx, `SELECT count(*) FROM sistema.bitacora_cambios WHERE nombre_tabla = $1 AND registro_pk = $2 AND (COALESCE(datos_viejos, '{}'::jsonb) ? $3 OR COALESCE(datos_nuevos, '{}'::jsonb) ? $3)`, target.table, target.id, target.secret).Scan(&leakedSnapshots); err != nil {
+			t.Fatalf("read historical %s audit secrets: %v", target.table, err)
+		}
+		if leakedSnapshots != 3 {
+			t.Fatalf("historical %s secret-bearing audit rows = %d, want 3", target.table, leakedSnapshots)
+		}
+	}
+}
+
+func assertAuditFixtureRedacted(t *testing.T, ctx context.Context, conn *pgx.Conn, fixture auditRedactionFixture) {
+	t.Helper()
+	for _, target := range []struct{ table, id, secret, retained string }{
+		{table: "usuario", id: fixture.userID, secret: "password", retained: "email"},
+		{table: "cfg_parametros", id: fixture.parameterID, secret: "valor", retained: "clave"},
+	} {
+		rows, err := conn.Query(ctx, `SELECT accion, tenant_id, datos_viejos, datos_nuevos FROM sistema.bitacora_cambios WHERE nombre_tabla = $1 AND registro_pk = $2 ORDER BY fecha_i, uuid_bitacora`, target.table, target.id)
+		if err != nil {
+			t.Fatalf("query redacted %s audit rows: %v", target.table, err)
+		}
+		actions := make(map[string]int)
+		for rows.Next() {
+			var action, tenantID string
+			var oldData, newData []byte
+			if err := rows.Scan(&action, &tenantID, &oldData, &newData); err != nil {
+				rows.Close()
+				t.Fatalf("scan redacted %s audit row: %v", target.table, err)
+			}
+			actions[action]++
+			if tenantID != fixture.tenantID {
+				t.Errorf("%s audit tenant_id = %q, want %q", target.table, tenantID, fixture.tenantID)
+			}
+			for _, snapshot := range [][]byte{oldData, newData} {
+				if snapshot == nil {
+					continue
+				}
+				var data map[string]any
+				if err := json.Unmarshal(snapshot, &data); err != nil {
+					t.Fatalf("decode %s audit snapshot: %v", target.table, err)
+				}
+				if _, exists := data[target.secret]; exists {
+					t.Errorf("%s %s audit snapshot contains secret key %q", target.table, action, target.secret)
+				}
+				if _, exists := data[target.retained]; !exists {
+					t.Errorf("%s %s audit snapshot lost non-secret key %q", target.table, action, target.retained)
+				}
+			}
+		}
+		rows.Close()
+		if err := rows.Err(); err != nil {
+			t.Fatalf("iterate redacted %s audit rows: %v", target.table, err)
+		}
+		if len(actions) != 3 || actions["INSERT"] != 1 || actions["UPDATE"] != 1 || actions["DELETE"] != 1 {
+			t.Errorf("%s audit actions = %v, want one each of INSERT UPDATE DELETE", target.table, actions)
+		}
+	}
+
+	var enabled, forced, policyExists bool
+	if err := conn.QueryRow(ctx, `
+		SELECT c.relrowsecurity, c.relforcerowsecurity,
+			exists (SELECT 1 FROM pg_policies p WHERE p.schemaname = 'sistema' AND p.tablename = 'bitacora_cambios' AND p.policyname = 'tenant_isolation_bitacora')
+		FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+		WHERE n.nspname = 'sistema' AND c.relname = 'bitacora_cambios'`).Scan(&enabled, &forced, &policyExists); err != nil {
+		t.Fatalf("read audit RLS state after redaction: %v", err)
+	}
+	if !enabled || !forced || !policyExists {
+		t.Fatalf("audit RLS changed after redaction: enabled=%t forced=%t policy=%t", enabled, forced, policyExists)
 	}
 }
 

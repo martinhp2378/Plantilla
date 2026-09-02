@@ -42,12 +42,13 @@ Correr migraciones concurrentemente en sistemas serverless genera fallos de cone
     # Ejemplo de paso en cloudbuild.yaml
     - name: 'gcr.io/tu-proyecto/plantilla:latest'
       entrypoint: './main'
+      args: ['migrate']
       env:
         - 'SKIP_MIGRATIONS=false'
         - 'PQ_WRITE_HOST=IP_O_SOCKET_DE_BD'
         # ... credenciales ...
-    ```
-3.  **Correr como Cloud Run Job**: Alternativamente, podés invocar un **Cloud Run Job** aislado con el comando `./main` y `SKIP_MIGRATIONS=false` que corra y se apague al finalizar la actualización de base de datos.
+     ```
+3.  **Correr como Cloud Run Job**: Alternativamente, se puede invocar un **Cloud Run Job** aislado con el comando `./main migrate` y `SKIP_MIGRATIONS=false`. Este comando ejecuta únicamente las migraciones y termina correctamente al finalizar la actualización de la base de datos.
 
 ---
 

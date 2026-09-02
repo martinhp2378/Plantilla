@@ -32,6 +32,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	if isMigrationCommand(os.Args[1:]) {
+		slog.Info("Ejecutando migraciones de base de datos...")
+		if err := bd.RunMigrations(env); err != nil {
+			slog.Error("error ejecutando migraciones", "error", err)
+			os.Exit(1)
+		}
+		slog.Info("Migraciones de base de datos finalizadas")
+		return
+	}
+
 	configInstrumentacion := configInstrumentacion(env)
 	logger := logs.NuevoLogger(configInstrumentacion)
 
@@ -162,6 +172,10 @@ func main() {
 	}
 
 	logger.Info("Server exiting")
+}
+
+func isMigrationCommand(args []string) bool {
+	return len(args) == 1 && args[0] == "migrate"
 }
 
 func configInstrumentacion(env *entorno.Env) *logs.Config {

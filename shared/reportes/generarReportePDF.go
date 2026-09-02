@@ -2,7 +2,6 @@ package shared
 
 import (
 	"PlantillaInstitucional/shared/entorno"
-	"bytes"
 	"context"
 	"fmt"
 	"image"
@@ -48,7 +47,7 @@ func GetImageDimensions(imagePath string) (width, height int, err error) {
 }
 
 // Genera un reporte PDF genérico para cualquier tipo de datos T
-// Devuelve la URL pública del archivo almacenado en la librería de archivos
+// Returns an authenticated application URL for the private stored file.
 func GenerarReportePDF[T any](
 	ctx context.Context,
 	archivosMgr *archivos.ManejadorArchivos,
@@ -58,11 +57,14 @@ func GenerarReportePDF[T any](
 	nombreArchivo string,
 	titulo string,
 	renderFuncs map[string]func(any) string,
-	privado bool,
+	_ bool,
 ) (string, error) {
 
 	if len(datos) == 0 {
 		return "", fmt.Errorf("lista vacía")
+	}
+	if err := validateReportRows(len(datos)); err != nil {
+		return "", err
 	}
 
 	pdf := gofpdf.New("L", "mm", "A4", "")
@@ -138,27 +140,15 @@ func GenerarReportePDF[T any](
 	}
 
 	// Generar el PDF en memoria
-	var buf bytes.Buffer
-	if err := pdf.Output(&buf); err != nil {
+	buf := newLimitedBuffer(MaxReportSize)
+	if err := pdf.Output(buf); err != nil {
 		return "", fmt.Errorf("error generando PDF: %v", err)
 	}
 
-	// Guardar en la librería de archivos
-	timestamp := time.Now().Local().Format("20060102-150405")
-	storagePath := fmt.Sprintf("reportes/%s_%s.pdf", nombreArchivo, timestamp)
-
-	archivo := archivoReporte(archivosMgr, storagePath, privado)
-	reader := bytes.NewReader(buf.Bytes())
-
-	if err := archivo.Guardar(ctx, reader); err != nil {
+	url, err := storePrivateReport(ctx, archivosMgr, buf.Bytes(), nombreArchivo, ".pdf")
+	if err != nil {
 		return "", fmt.Errorf("error guardando PDF en storage: %v", err)
 	}
-
-	url, err := archivo.GetURL(ctx)
-	if err != nil {
-		return "", fmt.Errorf("error obteniendo URL del PDF: %v", err)
-	}
-
 	return url, nil
 }
 

@@ -15,8 +15,7 @@ var (
 )
 
 func (s *PersonaService) ReportePdf(ctx context.Context) (string, error) {
-	// Advertencia: Obtener todos los registros (99999) consume mucha memoria.
-	// Para sistemas grandes, considera "streaming" o paginación por lotes.
+	// Fetches in pages and rejects totals above the shared report limit.
 	data, err := s.fetchAllPersonas(ctx)
 	if err != nil {
 		return "", err
@@ -81,6 +80,9 @@ func (s *PersonaService) fetchAllPersonas(ctx context.Context) ([]institucion.Pe
 		if err != nil {
 			s.logger.ErrorContext(ctx, "Error obteniendo datos para reporte", err, "op", "fetchAllPersonas")
 			return nil, fmt.Errorf("error obteniendo datos: %w", err)
+		}
+		if total > reporte.MaxReportRows || len(personasValores)+len(personasList) > reporte.MaxReportRows {
+			return nil, reporte.ErrReportRowLimit
 		}
 
 		for _, p := range personasList {

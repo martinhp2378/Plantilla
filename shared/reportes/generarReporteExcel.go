@@ -2,7 +2,6 @@ package shared
 
 import (
 	"PlantillaInstitucional/shared/entorno"
-	"bytes"
 	"context"
 	"fmt"
 	"log"
@@ -16,7 +15,7 @@ import (
 )
 
 // GenerarReporteExcel crea un archivo Excel y lo almacena en la librería de archivos
-// Devuelve la URL pública del archivo
+// Returns an authenticated application URL for the private stored file.
 func GenerarReporteExcel[T any](
 	ctx context.Context,
 	archivosMgr *archivos.ManejadorArchivos,
@@ -26,13 +25,17 @@ func GenerarReporteExcel[T any](
 	nombreArchivo string,
 	titulo string,
 	renderFuncs map[string]func(any) string,
-	privado bool,
+	_ bool,
 ) (string, error) {
 	if len(datos) == 0 {
 		return "", fmt.Errorf("lista vacía")
 	}
+	if err := validateReportRows(len(datos)); err != nil {
+		return "", err
+	}
 
 	f := excelize.NewFile()
+	defer f.Close()
 	sheet := "Hoja1"
 	_ = f.SetSheetName("Sheet1", sheet)
 
@@ -186,26 +189,14 @@ func GenerarReporteExcel[T any](
 	}
 
 	// Guardar en memoria
-	var buf bytes.Buffer
-	if err := f.Write(&buf); err != nil {
+	buf := newLimitedBuffer(MaxReportSize)
+	if err := f.Write(buf); err != nil {
 		return "", fmt.Errorf("error generando Excel en memoria: %v", err)
 	}
 
-	// Guardar en la librería de archivos
-	timestamp := time.Now().Local().Format("20060102-150405")
-	storagePath := fmt.Sprintf("reportes/%s_%s.xlsx", nombreArchivo, timestamp)
-
-	archivo := archivoReporte(archivosMgr, storagePath, privado)
-	reader := bytes.NewReader(buf.Bytes())
-
-	if err := archivo.Guardar(ctx, reader); err != nil {
+	url, err := storePrivateReport(ctx, archivosMgr, buf.Bytes(), nombreArchivo, ".xlsx")
+	if err != nil {
 		return "", fmt.Errorf("error guardando Excel en storage: %v", err)
 	}
-
-	url, err := archivo.GetURL(ctx)
-	if err != nil {
-		return "", fmt.Errorf("error obteniendo URL del Excel: %v", err)
-	}
-
 	return url, nil
 }

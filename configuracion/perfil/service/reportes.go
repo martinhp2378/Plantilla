@@ -15,8 +15,7 @@ var (
 )
 
 func (s *PerfilService) ReportePdf(ctx context.Context) (string, error) {
-	// Advertencia: Obtener todos los registros (99999) consume mucha memoria.
-	// Para sistemas grandes, considera "streaming" o paginación por lotes.
+	// Fetches in pages and rejects totals above the shared report limit.
 	data, err := s.fetchAllPerfiles(ctx)
 	if err != nil {
 		return "", err
@@ -81,6 +80,9 @@ func (s *PerfilService) fetchAllPerfiles(ctx context.Context) ([]perfil.Perfil, 
 		if err != nil {
 			s.logger.ErrorContext(ctx, "Error obteniendo datos para reporte", err, "op", "fetchAllPerfiles")
 			return nil, fmt.Errorf("error obteniendo datos: %w", err)
+		}
+		if total > reporte.MaxReportRows || len(perfilesValores)+len(perfilesList) > reporte.MaxReportRows {
+			return nil, reporte.ErrReportRowLimit
 		}
 
 		perfilesValores = append(perfilesValores, perfilesList...)

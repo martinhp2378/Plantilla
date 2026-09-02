@@ -102,12 +102,15 @@ func (s *ParametrosService) EliminarParametro(ctx context.Context, idParam strin
 func (s *ParametrosService) ReportePdf(ctx context.Context) (string, error) {
 
 	criterios := pagination.NewCriteriosPaginaDefault[parametros.Parametro]()
-	criterios.Size = 99999
+	criterios.Size = reporte.MaxReportRows + 1
 	// Ejecutar la consulta
-	usuarios, _, err := s.repo.ConsultarParametros(ctx, criterios)
+	usuarios, total, err := s.repo.ConsultarParametros(ctx, criterios)
 	if err != nil {
 		////s.logger.Error("falló al consultar usuarios para reporte PDF", "error", err, "operation", "ReportePdf")
 		return "", fmt.Errorf("error al obtener usuarios para reporte PDF: %w", err)
+	}
+	if total > reporte.MaxReportRows || len(usuarios) > reporte.MaxReportRows {
+		return "", reporte.ErrReportRowLimit
 	}
 
 	url, err := reporte.GenerarReportePDF(
@@ -135,12 +138,15 @@ func (s *ParametrosService) ReportePdf(ctx context.Context) (string, error) {
 
 func (s *ParametrosService) ReporteExcel(ctx context.Context) (string, error) {
 	criterios := pagination.NewCriteriosPaginaDefault[parametros.Parametro]()
-	criterios.Size = 99999
+	criterios.Size = reporte.MaxReportRows + 1
 	// Ejecutar la consulta
-	usuarios, _, err := s.repo.ConsultarParametros(ctx, criterios)
+	usuarios, total, err := s.repo.ConsultarParametros(ctx, criterios)
 	if err != nil {
 		////s.logger.Error("falló al consultar Parametros para reporte Excel", "error", err, "operation", "ReporteExcel")
 		return "", fmt.Errorf("error al obtener Parametros para reporte Excel: %w", err)
+	}
+	if total > reporte.MaxReportRows || len(usuarios) > reporte.MaxReportRows {
+		return "", reporte.ErrReportRowLimit
 	}
 	url, err := reporte.GenerarReporteExcel(
 		ctx,

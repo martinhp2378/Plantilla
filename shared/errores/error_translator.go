@@ -55,6 +55,10 @@ func TraducirError(err error) string {
 		return "Error al obtener los datos"
 	case strings.Contains(errMsg, "no hay resultados completados"):
 		return "No hay respuestas completadas para generar el reporte"
+	case strings.Contains(errMsg, "10000 row limit"):
+		return "El reporte excede el límite de 10,000 registros"
+	case strings.Contains(errMsg, "50 MiB file limit"):
+		return "El reporte excede el límite de archivo de 50 MiB"
 	case strings.Contains(errMsg, "parsing"):
 		return "Los datos recibidos tienen un formato inválido"
 	case strings.Contains(errMsg, "uuid"):

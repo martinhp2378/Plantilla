@@ -3,11 +3,9 @@ package shared
 import (
 	"PlantillaInstitucional/shared/entorno"
 	"PlantillaInstitucional/shared/qrcode"
-	"bytes"
 	"context"
 	"encoding/base64"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"time"
@@ -20,7 +18,7 @@ import (
 )
 
 // GenerarReportePDFMaroto genera un reporte PDF usando la librería Maroto
-// Devuelve la URL pública del archivo almacenado en la librería de archivos
+// Returns an authenticated application URL for the private stored file.
 func GenerarReportePDFMaroto[T any](
 	ctx context.Context,
 	archivosMgr *archivos.ManejadorArchivos,
@@ -35,6 +33,9 @@ func GenerarReportePDFMaroto[T any](
 
 	if len(datos) == 0 {
 		return "", fmt.Errorf("lista vacía")
+	}
+	if err := validateReportRows(len(datos)); err != nil {
+		return "", err
 	}
 
 	m := pdf.NewMaroto(consts.Landscape, consts.A4)
@@ -144,9 +145,24 @@ func GenerarReportePDFMaroto[T any](
 	})
 
 	// Generar en archivo temporal y luego leer
-	tempFile := filepath.Join(os.TempDir(), fmt.Sprintf("%s_%d.pdf", nombreArchivo, time.Now().UnixNano()))
+	temp, err := os.CreateTemp("", "institutional-report-*.pdf")
+	if err != nil {
+		return "", fmt.Errorf("error creando PDF temporal: %v", err)
+	}
+	tempFile := temp.Name()
+	defer os.Remove(tempFile)
+	if err := temp.Close(); err != nil {
+		return "", fmt.Errorf("error cerrando PDF temporal: %v", err)
+	}
 	if err := m.OutputFileAndClose(tempFile); err != nil {
 		return "", fmt.Errorf("error generando PDF Maroto: %v", err)
+	}
+	info, err := os.Stat(tempFile)
+	if err != nil {
+		return "", fmt.Errorf("error inspeccionando PDF temporal: %v", err)
+	}
+	if info.Size() > MaxReportSize {
+		return "", ErrReportSizeLimit
 	}
 
 	// Leer el archivo temporal
@@ -155,27 +171,10 @@ func GenerarReportePDFMaroto[T any](
 		return "", fmt.Errorf("error leyendo PDF temporal: %v", err)
 	}
 
-	// Eliminar archivo temporal
-	if err := os.Remove(tempFile); err != nil {
-		log.Printf("Advertencia: no se pudo eliminar archivo temporal: %v", err)
-	}
-
-	// Guardar en la librería de archivos
-	timestamp := time.Now().Local().Format("20060102-150405")
-	storagePath := fmt.Sprintf("reportes/%s_%s_maroto.pdf", nombreArchivo, timestamp)
-
-	archivoPublico := archivosMgr.ArchivoPublico(storagePath)
-	reader := bytes.NewReader(data)
-
-	if err := archivoPublico.Guardar(ctx, reader); err != nil {
+	url, err := storePrivateReport(ctx, archivosMgr, data, nombreArchivo+"-maroto", ".pdf")
+	if err != nil {
 		return "", fmt.Errorf("error guardando PDF Maroto en storage: %v", err)
 	}
-
-	url, err := archivoPublico.GetURL(ctx)
-	if err != nil {
-		return "", fmt.Errorf("error obteniendo URL del PDF Maroto: %v", err)
-	}
-
 	return url, nil
 }
 

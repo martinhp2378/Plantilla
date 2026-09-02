@@ -7,11 +7,13 @@ import (
 	"PlantillaInstitucional/cmd/config"
 	"PlantillaInstitucional/shared/email"
 	"PlantillaInstitucional/shared/entorno"
+	reportes "PlantillaInstitucional/shared/reportes"
 	"context"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -121,7 +123,6 @@ func main() {
 	config.WireResolvers(a)
 	config.InitHandlers(a)
 
-
 	r := chi.NewRouter()
 
 	app_middleware.RegistrarMiddlewaresApp(r, a)
@@ -129,9 +130,13 @@ func main() {
 	a.Handlers.Login.RegisterRoutes(r)
 
 	if env.Ambiente == entorno.AmbienteLocal {
-		staticDir := env.DirArchivosLocal
-		r.Handle("/static/*", http.StripPrefix("/static", http.FileServer(http.Dir(staticDir))))
+		publicDir := filepath.Join(env.DirArchivosLocal, "public")
+		r.Handle("/static/public/*", http.StripPrefix("/static/public", http.FileServer(http.Dir(publicDir))))
 	}
+	r.Group(func(r chi.Router) {
+		r.Use(app_middleware.MiddlewareRequiereLogin)
+		r.Get("/private-reports/*", reportes.PrivateDownloadHandler(manejadorArchivos))
+	})
 
 	r.Group(func(r chi.Router) {
 		r.Use(app_middleware.MiddlewareRequiereLogin)

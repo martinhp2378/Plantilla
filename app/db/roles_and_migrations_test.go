@@ -130,3 +130,32 @@ func TestTenantIsolationExpandMigration(t *testing.T) {
 		}
 	})
 }
+
+func TestDedicatedAdminSchemaMigration(t *testing.T) {
+	upPath := filepath.Join("..", "..", "sql", "migrations", "000004_dedicated_admin_schema.up.sql")
+	upBytes, err := os.ReadFile(upPath)
+	if err != nil {
+		t.Fatalf("failed to read admin schema up migration: %v", err)
+	}
+	upContent := string(upBytes)
+
+	downPath := filepath.Join("..", "..", "sql", "migrations", "000004_dedicated_admin_schema.down.sql")
+	downBytes, err := os.ReadFile(downPath)
+	if err != nil {
+		t.Fatalf("failed to read admin schema down migration: %v", err)
+	}
+	downContent := string(downBytes)
+
+	if !strings.Contains(upContent, "CREATE SCHEMA IF NOT EXISTS admin") {
+		t.Fatal("admin schema migration must create a dedicated admin schema")
+	}
+	if !strings.Contains(upContent, "SET schema_name = 'admin'") {
+		t.Fatal("admin schema migration must move the bootstrap tenant to admin")
+	}
+	if !strings.Contains(upContent, "GRANT USAGE ON SCHEMA admin") {
+		t.Fatal("admin schema migration must grant runtime schema usage")
+	}
+	if !strings.Contains(downContent, "SET schema_name = 'public'") || !strings.Contains(downContent, "DROP SCHEMA IF EXISTS admin") {
+		t.Fatal("admin schema down migration must reverse the schema move")
+	}
+}

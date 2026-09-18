@@ -25,7 +25,8 @@ services:
       - PQ_READ_SSL_MODE=disable
       - LOGS_CON_COLORES=${LOGS_CON_COLORES:-true}
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   db:
     image: postgres:16-alpine
@@ -33,6 +34,11 @@ services:
       - POSTGRES_USER=${PQ_WRITE_USER:-postgres}
       - POSTGRES_PASSWORD=${PQ_WRITE_PASSWORD:-postgres}
       - POSTGRES_DB=${PQ_WRITE_DB:-plantilla}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     ports:
       - "5432:5432"
     volumes:

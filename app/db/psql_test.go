@@ -35,7 +35,6 @@ func TestTenantSchemaRequiresImmutableTenantContext(t *testing.T) {
 	}
 }
 
-
 func TestBuildTenantSearchPathRejectsPublicFallback(t *testing.T) {
 	for _, schema := range []string{"", "public"} {
 		if _, err := buildTenantSearchPath(schema); err == nil {
@@ -45,6 +44,11 @@ func TestBuildTenantSearchPathRejectsPublicFallback(t *testing.T) {
 
 	searchPath, err := buildTenantSearchPath("tenant_a")
 	if err != nil || strings.Contains(searchPath, "public") {
-		t.Fatalf("buildTenantSearchPath() = %q, %v; want tenant-only path without public", searchPath, err)
+		t.Fatalf("buildTenantSearchPath() = %q, %v; want tenant-aware path without public", searchPath, err)
+	}
+	for _, schema := range []string{"institucion", "sesion", "sistema", "pg_catalog"} {
+		if !strings.Contains(searchPath, schema) {
+			t.Fatalf("buildTenantSearchPath() = %q; want schema %s for shared application tables", searchPath, schema)
+		}
 	}
 }

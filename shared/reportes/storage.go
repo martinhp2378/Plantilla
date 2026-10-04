@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"path"
 	"strings"
+	"time"
 
 	"PlantillaInstitucional/shared/tenantcontext"
 
@@ -77,7 +78,7 @@ func reportStorageKey(ctx context.Context, name, extension string) (string, erro
 	return path.Join("reportes", tenant.Schema, base+"-"+id.String()+extension), nil
 }
 
-func storePrivateReport(ctx context.Context, manager *archivos.ManejadorArchivos, data []byte, name, extension string) (string, error) {
+func StorePrivateReport(ctx context.Context, manager *archivos.ManejadorArchivos, data []byte, name, extension string) (string, error) {
 	if len(data) > MaxReportSize {
 		return "", ErrReportSizeLimit
 	}
@@ -85,8 +86,33 @@ func storePrivateReport(ctx context.Context, manager *archivos.ManejadorArchivos
 	if err != nil {
 		return "", err
 	}
-	if err := manager.ArchivoPrivado(key).Guardar(ctx, bytes.NewReader(data)); err != nil {
+	lifecycle, err := lifecycleFromContext(ctx)
+	if err != nil {
 		return "", err
+	}
+	tenant, _ := tenantcontext.TenantFromContext(ctx)
+	reportID, err := lifecycle.register(ctx, tenant.ID, key)
+	if err != nil {
+		return "", err
+	}
+	file := manager.ArchivoPrivado(key)
+	if err := file.Guardar(ctx, bytes.NewReader(data)); err != nil {
+		compensationCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+		defer cancel()
+		return "", errors.Join(
+			err,
+			lifecycle.objects.delete(compensationCtx, key),
+			lifecycle.repo.remove(compensationCtx, tenant.ID, reportID),
+		)
+	}
+	if err := lifecycle.repo.activate(ctx, tenant.ID, reportID); err != nil {
+		compensationCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+		defer cancel()
+		return "", errors.Join(
+			err,
+			lifecycle.objects.delete(compensationCtx, key),
+			lifecycle.repo.remove(compensationCtx, tenant.ID, reportID),
+		)
 	}
 	return "/private-reports/" + key, nil
 }

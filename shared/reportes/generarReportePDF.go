@@ -145,7 +145,7 @@ func GenerarReportePDF[T any](
 		return "", fmt.Errorf("error generando PDF: %v", err)
 	}
 
-	url, err := storePrivateReport(ctx, archivosMgr, buf.Bytes(), nombreArchivo, ".pdf")
+	url, err := StorePrivateReport(ctx, archivosMgr, buf.Bytes(), nombreArchivo, ".pdf")
 	if err != nil {
 		return "", fmt.Errorf("error guardando PDF en storage: %v", err)
 	}

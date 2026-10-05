@@ -70,7 +70,7 @@ func TestTenantTxRunnerReadSetsTransactionLocalContextBeforeCallback(t *testing.
 	if pool.options.AccessMode != pgx.ReadOnly {
 		t.Fatalf("read access mode = %v, want ReadOnly", pool.options.AccessMode)
 	}
-	want := []string{"begin", `SET LOCAL search_path TO "institution_one", pg_catalog`, "set_config", "set_config", "callback", "commit"}
+	want := []string{"begin", `SET LOCAL search_path TO "institution_one", institucion, sesion, sistema, pg_catalog`, "set_config", "set_config", "callback", "commit"}
 	if diff := strings.Join(tx.calls, ","); diff != strings.Join(want, ",") {
 		t.Fatalf("transaction order = %v, want %v", tx.calls, want)
 	}

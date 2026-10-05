@@ -192,5 +192,5 @@ func buildTenantSearchPath(schema string) (string, error) {
 	if s == "" || s == "public" || !tenantSchemaRegex.MatchString(s) {
 		return "", fmt.Errorf("tenant schema inválido")
 	}
-	return fmt.Sprintf("%s, pg_catalog", pgx.Identifier{s}.Sanitize()), nil
+	return fmt.Sprintf("%s, institucion, sesion, sistema, pg_catalog", pgx.Identifier{s}.Sanitize()), nil
 }

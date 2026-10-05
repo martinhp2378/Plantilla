@@ -126,6 +126,9 @@ func NewAppWithTenantPolicy(ctx context.Context, env *entorno.Env,
 }
 
 func (a *App) Close() {
+	if a.ManejadorArchivos != nil {
+		_ = a.ManejadorArchivos.Close()
+	}
 	if a.PqWrite != nil {
 		a.PqWrite.Close()
 	}

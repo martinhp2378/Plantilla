@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -15,9 +16,11 @@ import (
 	usuarioDB "PlantillaInstitucional/configuracion/usuario/repository"
 	loginDB "PlantillaInstitucional/login/db"
 	"PlantillaInstitucional/pagination"
+	reportes "PlantillaInstitucional/shared/reportes"
 	"PlantillaInstitucional/shared/tenantcontext"
 
 	"github.com/gofrs/uuid/v5"
+	"github.com/issemym-repos/archivos"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -87,6 +90,7 @@ func TestMigrationsIntegration_SeedRollbackAndTenantAudit(t *testing.T) {
 	historicalAudit := createAuditRedactionFixture(t, ctx, conn, tenantID, "historical")
 	assertAuditFixtureContainsSecrets(t, ctx, conn, historicalAudit)
 	applyMigrationFile(t, ctx, conn, "000005_audit_secret_redaction.up.sql")
+	applyMigrationFile(t, ctx, conn, "000006_report_retention.up.sql")
 	assertAuditFixtureRedacted(t, ctx, conn, historicalAudit)
 	assertAuditFixtureRedacted(t, ctx, conn, createAuditRedactionFixture(t, ctx, conn, historicalAudit.tenantID, "new"))
 
@@ -141,7 +145,16 @@ func TestMigrationsIntegration_SeedRollbackAndTenantAudit(t *testing.T) {
 
 	verifyActivationTokenTenantTransaction(t, ctx, conn, databaseURL, tenantID)
 	verifyUsuarioRepositoryTenantTransaction(t, ctx, conn, databaseURL, tenantID)
+	verifyReportRetentionLifecycle(t, ctx, conn, databaseURL, tenantID)
 
+	applyMigrationFile(t, ctx, conn, "000006_report_retention.down.sql")
+	var reportRetentionTableExists bool
+	if err := conn.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'sistema' AND table_name = 'reportes_generados')`).Scan(&reportRetentionTableExists); err != nil {
+		t.Fatalf("verify report retention rollback: %v", err)
+	}
+	if reportRetentionTableExists {
+		t.Fatal("report retention rollback must remove reportes_generados")
+	}
 	applyMigrationFile(t, ctx, conn, "000005_audit_secret_redaction.down.sql")
 	assertAuditFixtureRedacted(t, ctx, conn, historicalAudit)
 	assertAuditFixtureRedacted(t, ctx, conn, createAuditRedactionFixture(t, ctx, conn, tenantID, "rollback"))
@@ -164,6 +177,81 @@ func TestMigrationsIntegration_SeedRollbackAndTenantAudit(t *testing.T) {
 	}
 	if !tenantIDColumnExists {
 		t.Fatal("expand rollback must retain the tenant_id column")
+	}
+}
+
+func verifyReportRetentionLifecycle(t *testing.T, ctx context.Context, conn *pgx.Conn, databaseURL, tenantID string) {
+	t.Helper()
+	pool, err := pgxpool.New(ctx, databaseURL)
+	if err != nil {
+		t.Fatalf("create report retention pool: %v", err)
+	}
+	defer pool.Close()
+	manager, err := archivos.NuevoManejador(&archivos.Config{Ambiente: archivos.AmbienteLocal, DirArchivosLocal: t.TempDir()})
+	if err != nil {
+		t.Fatalf("create report retention storage: %v", err)
+	}
+	lifecycle := reportes.NewLifecycle(pool, manager, time.Hour)
+	tenantCtx := tenantcontext.WithTenant(ctx, tenantcontext.TenantContext{ID: tenantID, Schema: "tenant_test", CanonicalHost: "tenant-test.example"})
+	tenantCtx = lifecycle.Context(tenantCtx)
+
+	var paths []string
+	for _, name := range []string{"parallel-one", "parallel-two"} {
+		url, err := reportes.StorePrivateReport(tenantCtx, manager, []byte(name), name, ".pdf")
+		if err != nil {
+			t.Fatalf("store retained report %s: %v", name, err)
+		}
+		paths = append(paths, strings.TrimPrefix(url, "/private-reports/"))
+	}
+	var activeCount int
+	var retentionCorrect bool
+	if err := conn.QueryRow(ctx, `SELECT count(*), bool_and(state='active' AND expires_at-created_at=INTERVAL '24 hours') FROM sistema.reportes_generados`).Scan(&activeCount, &retentionCorrect); err != nil {
+		t.Fatalf("read report metadata: %v", err)
+	}
+	if activeCount != 2 || !retentionCorrect {
+		t.Fatalf("active metadata count=%d retention=%t", activeCount, retentionCorrect)
+	}
+	if _, err := conn.Exec(ctx, `UPDATE sistema.reportes_generados SET expires_at=NOW()-INTERVAL '1 minute'`); err != nil {
+		t.Fatalf("expire retained reports: %v", err)
+	}
+
+	workers := []*reportes.Lifecycle{reportes.NewLifecycle(pool, manager, time.Hour), reportes.NewLifecycle(pool, manager, time.Hour)}
+	var wg sync.WaitGroup
+	for _, worker := range workers {
+		wg.Add(1)
+		go func() { defer wg.Done(); _ = worker.Sweep(ctx) }()
+	}
+	wg.Wait()
+	if err := conn.QueryRow(ctx, `SELECT count(*) FROM sistema.reportes_generados`).Scan(&activeCount); err != nil || activeCount != 0 {
+		t.Fatalf("metadata after two-worker cleanup count=%d err=%v", activeCount, err)
+	}
+	for _, path := range paths {
+		if exists, _ := manager.ArchivoPrivado(path).Existe(ctx); exists {
+			t.Fatalf("expired report still exists: %s", path)
+		}
+	}
+
+	url, err := reportes.StorePrivateReport(tenantCtx, manager, []byte("missing"), "missing", ".pdf")
+	if err != nil {
+		t.Fatalf("store missing-object fixture: %v", err)
+	}
+	missingPath := strings.TrimPrefix(url, "/private-reports/")
+	if err := manager.ArchivoPrivado(missingPath).Eliminar(ctx); err != nil {
+		t.Fatalf("remove missing-object fixture: %v", err)
+	}
+	if _, err := conn.Exec(ctx, `UPDATE sistema.reportes_generados SET expires_at=NOW()-INTERVAL '1 minute'`); err != nil {
+		t.Fatalf("expire missing-object metadata: %v", err)
+	}
+	if err := lifecycle.Sweep(ctx); err != nil {
+		t.Fatalf("sweep missing object: %v", err)
+	}
+	if err := conn.QueryRow(ctx, `SELECT count(*) FROM sistema.reportes_generados`).Scan(&activeCount); err != nil || activeCount != 0 {
+		t.Fatalf("missing-object metadata count=%d err=%v", activeCount, err)
+	}
+
+	var rlsEnabled, forceRLS bool
+	if err := conn.QueryRow(ctx, `SELECT relrowsecurity, relforcerowsecurity FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='sistema' AND c.relname='reportes_generados'`).Scan(&rlsEnabled, &forceRLS); err != nil || !rlsEnabled || !forceRLS {
+		t.Fatalf("report metadata RLS enabled=%t forced=%t err=%v", rlsEnabled, forceRLS, err)
 	}
 }
 

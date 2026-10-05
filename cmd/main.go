@@ -117,6 +117,9 @@ func main() {
 	if err != nil {
 		logger.Fatal("error al crear app", err)
 	}
+	defer a.Close()
+	reportLifecycle := reportes.NewLifecycle(pqWrite, manejadorArchivos, time.Hour)
+	reportLifecycle.Start(context.Background())
 
 	config.InitRepositories(a)
 	config.InitServices(a)
@@ -126,6 +129,7 @@ func main() {
 	r := chi.NewRouter()
 
 	app_middleware.RegistrarMiddlewaresApp(r, a)
+	r.Use(reportLifecycle.Middleware)
 
 	a.Handlers.Login.RegisterRoutes(r)
 
@@ -174,6 +178,9 @@ func main() {
 
 	if err := srv.Shutdown(ctxShutDown); err != nil {
 		logger.Fatal("Server forced to shutdown", err)
+	}
+	if err := reportLifecycle.Stop(ctxShutDown); err != nil {
+		logger.Error("error deteniendo limpieza de reportes", err)
 	}
 
 	logger.Info("Server exiting")

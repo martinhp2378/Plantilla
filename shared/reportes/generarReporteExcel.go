@@ -194,7 +194,7 @@ func GenerarReporteExcel[T any](
 		return "", fmt.Errorf("error generando Excel en memoria: %v", err)
 	}
 
-	url, err := storePrivateReport(ctx, archivosMgr, buf.Bytes(), nombreArchivo, ".xlsx")
+	url, err := StorePrivateReport(ctx, archivosMgr, buf.Bytes(), nombreArchivo, ".xlsx")
 	if err != nil {
 		return "", fmt.Errorf("error guardando Excel en storage: %v", err)
 	}

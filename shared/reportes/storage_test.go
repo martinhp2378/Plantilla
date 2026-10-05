@@ -67,7 +67,8 @@ func TestStoreReportUsesPrivateStorageAndApplicationURL(t *testing.T) {
 		t.Fatalf("NuevoManejador() error = %v", err)
 	}
 	ctx := tenantcontext.WithTenant(context.Background(), tenantcontext.TenantContext{ID: "tenant-id", Schema: "tenant_one", CanonicalHost: "tenant-one.example"})
-	url, err := storePrivateReport(ctx, manager, []byte("report"), "Users", ".pdf")
+	ctx = newLifecycle(&fakeRetentionRepo{}, managedObjects{manager}, reportRetention).Context(ctx)
+	url, err := StorePrivateReport(ctx, manager, []byte("report"), "Users", ".pdf")
 	if err != nil {
 		t.Fatalf("storePrivateReport() error = %v", err)
 	}

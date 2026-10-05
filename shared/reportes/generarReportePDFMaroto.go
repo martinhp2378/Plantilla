@@ -171,7 +171,7 @@ func GenerarReportePDFMaroto[T any](
 		return "", fmt.Errorf("error leyendo PDF temporal: %v", err)
 	}
 
-	url, err := storePrivateReport(ctx, archivosMgr, data, nombreArchivo+"-maroto", ".pdf")
+	url, err := StorePrivateReport(ctx, archivosMgr, data, nombreArchivo+"-maroto", ".pdf")
 	if err != nil {
 		return "", fmt.Errorf("error guardando PDF Maroto en storage: %v", err)
 	}

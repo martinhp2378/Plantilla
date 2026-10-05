@@ -1,4 +1,4 @@
--- 000005_audit_secret_redaction.down.sql
+-- 000006_audit_secret_redaction.down.sql
 -- Security rollback is intentionally non-regressive: leaked values cannot be
 -- restored, and the redacting audit function remains active. This migration is
 -- therefore a no-op when rolled back.

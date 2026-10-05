@@ -200,6 +200,31 @@ func TestSeedMigrationContract(t *testing.T) {
 	})
 }
 
+func TestMigrationVersionsAreUnique(t *testing.T) {
+	migrationDir := filepath.Join("..", "..", "sql", "migrations")
+	entries, err := os.ReadDir(migrationDir)
+	if err != nil {
+		t.Fatalf("read migrations directory: %v", err)
+	}
+
+	migrationPattern := regexp.MustCompile(`^(\d+)_(.+)\.(up|down)\.sql$`)
+	versions := make(map[string]string)
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		matches := migrationPattern.FindStringSubmatch(entry.Name())
+		if matches == nil {
+			continue
+		}
+		version, name := matches[1], matches[2]
+		if existing, exists := versions[version]; exists && existing != name {
+			t.Fatalf("migration version %s is used by both %q and %q", version, existing, name)
+		}
+		versions[version] = name
+	}
+}
+
 func TestDedicatedAdminSchemaMigration(t *testing.T) {
 	upPath := filepath.Join("..", "..", "sql", "migrations", "000004_dedicated_admin_schema.up.sql")
 	upBytes, err := os.ReadFile(upPath)

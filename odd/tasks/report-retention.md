@@ -14,6 +14,7 @@ Complete durable 24-hour report retention with restart-safe, multi-instance clea
 - [x] Inspect and reconcile the interrupted implementation against the lifecycle contract.
 - [x] Correct implementation and tests within the authorized edit surfaces and size limit.
 - [x] Run focused, PostgreSQL integration, full-suite, diff, and line-budget verification.
+- [x] Resolve the post-merge migration-version collision with updated `origin/main`.
 
 ## Evidence
 - Baseline: `abedb80` (`fix(reports): secure and bound generated files`).
@@ -23,4 +24,5 @@ Complete durable 24-hour report retention with restart-safe, multi-instance clea
 - Candidate size: 639 diff lines excluding this ODD artifact; authorized maximum is 650.
 - PostgreSQL 16 integration: PASS using an authorized disposable container; container, volume, and network were removed afterward.
 - LSP: no compiler/type findings; three auxiliary pattern warnings are false positives against pgx loop/finalizer code.
-- Commit evidence: this work unit is committed as `feat(reports): add durable report retention`.
+- Commit evidence: `7500d47` (`feat(reports): add durable report retention`).
+- Post-merge correction: migrations renumbered sequentially through `000007`; uniqueness test, full suite, and PostgreSQL 16 integration pass.

@@ -1,4 +1,4 @@
--- 000006_report_retention.up.sql
+-- 000007_report_retention.up.sql
 -- Durable tenant-aware lifecycle metadata for private generated reports.
 
 CREATE TABLE sistema.reportes_generados (

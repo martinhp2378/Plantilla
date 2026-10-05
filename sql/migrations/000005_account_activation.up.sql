@@ -1,4 +1,4 @@
--- 000004_account_activation.up.sql
+-- 000005_account_activation.up.sql
 -- One-time account activation and password-reset tokens are stored only as hashes.
 
 ALTER TABLE sesion.usuario

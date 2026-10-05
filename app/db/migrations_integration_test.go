@@ -81,7 +81,7 @@ func TestMigrationsIntegration_SeedRollbackAndTenantAudit(t *testing.T) {
 
 	applyMigrationFile(t, ctx, conn, "000002_seed.up.sql")
 	applyMigrationFile(t, ctx, conn, "000003_tenant_isolation_expand.up.sql")
-	applyMigrationFile(t, ctx, conn, "000004_account_activation.up.sql")
+	applyMigrationFile(t, ctx, conn, "000005_account_activation.up.sql")
 
 	var tenantID string
 	if err := conn.QueryRow(ctx, "SELECT tenant_id FROM institucion.cat_tenants WHERE subdomain = 'admin'").Scan(&tenantID); err != nil {
@@ -89,8 +89,8 @@ func TestMigrationsIntegration_SeedRollbackAndTenantAudit(t *testing.T) {
 	}
 	historicalAudit := createAuditRedactionFixture(t, ctx, conn, tenantID, "historical")
 	assertAuditFixtureContainsSecrets(t, ctx, conn, historicalAudit)
-	applyMigrationFile(t, ctx, conn, "000005_audit_secret_redaction.up.sql")
-	applyMigrationFile(t, ctx, conn, "000006_report_retention.up.sql")
+	applyMigrationFile(t, ctx, conn, "000006_audit_secret_redaction.up.sql")
+	applyMigrationFile(t, ctx, conn, "000007_report_retention.up.sql")
 	assertAuditFixtureRedacted(t, ctx, conn, historicalAudit)
 	assertAuditFixtureRedacted(t, ctx, conn, createAuditRedactionFixture(t, ctx, conn, historicalAudit.tenantID, "new"))
 
@@ -147,7 +147,7 @@ func TestMigrationsIntegration_SeedRollbackAndTenantAudit(t *testing.T) {
 	verifyUsuarioRepositoryTenantTransaction(t, ctx, conn, databaseURL, tenantID)
 	verifyReportRetentionLifecycle(t, ctx, conn, databaseURL, tenantID)
 
-	applyMigrationFile(t, ctx, conn, "000006_report_retention.down.sql")
+	applyMigrationFile(t, ctx, conn, "000007_report_retention.down.sql")
 	var reportRetentionTableExists bool
 	if err := conn.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'sistema' AND table_name = 'reportes_generados')`).Scan(&reportRetentionTableExists); err != nil {
 		t.Fatalf("verify report retention rollback: %v", err)
@@ -155,10 +155,10 @@ func TestMigrationsIntegration_SeedRollbackAndTenantAudit(t *testing.T) {
 	if reportRetentionTableExists {
 		t.Fatal("report retention rollback must remove reportes_generados")
 	}
-	applyMigrationFile(t, ctx, conn, "000005_audit_secret_redaction.down.sql")
+	applyMigrationFile(t, ctx, conn, "000006_audit_secret_redaction.down.sql")
 	assertAuditFixtureRedacted(t, ctx, conn, historicalAudit)
 	assertAuditFixtureRedacted(t, ctx, conn, createAuditRedactionFixture(t, ctx, conn, tenantID, "rollback"))
-	applyMigrationFile(t, ctx, conn, "000004_account_activation.down.sql")
+	applyMigrationFile(t, ctx, conn, "000005_account_activation.down.sql")
 	var activationTableExists bool
 	if err := conn.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'sesion' AND table_name = 'password_reset_token')`).Scan(&activationTableExists); err != nil {
 		t.Fatalf("verify activation rollback: %v", err)

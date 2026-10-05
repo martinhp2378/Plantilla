@@ -1,4 +1,4 @@
--- 000005_audit_secret_redaction.up.sql
+-- 000006_audit_secret_redaction.up.sql
 -- Remove credential and configuration secrets from new and historical audit snapshots.
 
 CREATE OR REPLACE FUNCTION sistema.fn_registrar_auditoria()

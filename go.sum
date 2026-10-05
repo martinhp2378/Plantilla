@@ -147,6 +147,8 @@ github.com/issemym-repos/logs v0.1.11 h1:Tum1NlaD+F/T9yR6Wsa71kPGRxwBVznSE4W7/0Z
 github.com/issemym-repos/logs v0.1.11/go.mod h1:2rHGnQiOtSQeHqS8/hdzi9imuRWLTHs0h/yMP7fLwc8=
 github.com/issemym-repos/sesiones v0.4.3 h1:5yyMpnpg5sndAgsRS/2UWoeBAQZqeyBgu1QuOJlry6s=
 github.com/issemym-repos/sesiones v0.4.3/go.mod h1:jb9muwEkR+F8QVG+pT8envYMoBtSKniRztHEEXOacT8=
+github.com/issemym-repos/sesiones v0.4.5 h1:HHUlw6lKBDSNZkoYprpGHfzqz1f/X3CBuGLa/OeyvgE=
+github.com/issemym-repos/sesiones v0.4.5/go.mod h1:jb9muwEkR+F8QVG+pT8envYMoBtSKniRztHEEXOacT8=
 github.com/jackc/pgpassfile v1.0.0 h1:/6Hmqy13Ss2zCq62VdNG8tM1wchn8zjSGOBJ6icpsIM=
 github.com/jackc/pgpassfile v1.0.0/go.mod h1:CEx0iS5ambNFdcRtxPj5JhEz+xB6uRky5eyVu/W2HEg=
 github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 h1:iCEnooe7UlwOQYpKFhBabPMi4aNAfoODPEFNiAnClxo=

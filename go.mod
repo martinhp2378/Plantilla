@@ -11,7 +11,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/issemym-repos/archivos v0.1.7
 	github.com/issemym-repos/logs v0.1.11
-	github.com/issemym-repos/sesiones v0.4.3
+	github.com/issemym-repos/sesiones v0.4.5
 	github.com/jackc/pgx-gofrs-uuid v0.0.0-20230224015001-1d428863c2e2
 	github.com/jackc/pgx/v5 v5.9.2
 	github.com/johnfercher/maroto v1.0.0

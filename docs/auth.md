@@ -9,6 +9,7 @@ Para la interfaz web, usamos sesiones seguras gestionadas por la librería `sesi
 *   **Almacenamiento**: PostgreSQL (por defecto) o Redis.
 *   **Middleware**: `a.ConstructorSesion.Middleware` inyecta la sesión en cada petición.
 *   **Seguridad**: Cookies con flags `HttpOnly`, `Secure` y `SameSite`.
+*   **Despliegue**: La actualización de aislamiento exige rotar cookies e invalidar sesiones existentes según [`session_security.md`](session_security.md).
 
 ### JWT (JSON Web Tokens)
 Soportado para APIs o comunicaciones stateless.

@@ -7,6 +7,9 @@ import (
 	"PlantillaInstitucional/configuracion/policy"
 	policy_handler "PlantillaInstitucional/configuracion/policy/handler"
 	policy_repo "PlantillaInstitucional/configuracion/policy/repository"
+	crud_handler "PlantillaInstitucional/crud/handler"
+	crud_repo "PlantillaInstitucional/crud/repository"
+	crud_service "PlantillaInstitucional/crud/service"
 	usuario_handler "PlantillaInstitucional/configuracion/usuario/handler"
 	usuario_repo "PlantillaInstitucional/configuracion/usuario/repository"
 	usuario_service "PlantillaInstitucional/configuracion/usuario/service"
@@ -67,6 +70,7 @@ type Handlers struct {
 	Persona   persona_handler.PersonaHandler
 	Login     *login_handler.HandlerLogin
 	Parametro *parametros_handler.Handler
+	Crud      crud_handler.CrudHandler
 }
 
 type PolicyResolver interface {
@@ -86,6 +90,7 @@ type Services struct {
 	Policy    PolicyResolver
 	Persona   persona_service.PersonaService
 	Parametro parametros_service.ParametrosServiceProvider
+	Crud      crud_service.CrudService
 }
 
 type Repositories struct {
@@ -96,6 +101,7 @@ type Repositories struct {
 	Persona   *persona_repo.PersonaRepository
 	Login     *login_repo.RepositorioPsql
 	Parametro *parametros_repo.ParametrosRepository
+	Crud      *crud_repo.CrudRepository
 }
 
 func NewApp(ctx context.Context, env *entorno.Env,

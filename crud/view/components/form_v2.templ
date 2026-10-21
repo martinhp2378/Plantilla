@@ -1,0 +1,372 @@
+package components
+
+import (
+	"PlantillaInstitucional/crud"
+	"PlantillaInstitucional/shared/views/components"
+	"PlantillaInstitucional/shared/views/components/v2"
+	"fmt"
+	"strconv"
+)
+
+var opcionesSeleccion = []components.SelectOption{
+	{Value: "opcion_a", Text: "Opción A - Alfa"},
+	{Value: "opcion_b", Text: "Opción B - Beta"},
+	{Value: "opcion_c", Text: "Opción C - Gamma"},
+}
+
+templ FormCreateCrudV2(c crud.Crud, errors map[string]string) {
+	{{
+		colorVal := c.Color
+		if colorVal == "" {
+			colorVal = "#691C32"
+		}
+		enteroStr := ""
+		if c.Entero != 0 {
+			enteroStr = strconv.Itoa(c.Entero)
+		}
+		decimalStr := ""
+		if c.Decimal != 0 {
+			decimalStr = fmt.Sprintf("%.2f", c.Decimal)
+		}
+	}}
+	@v2.ModalV2("Nuevo Registro CRUD de Ejemplo") {
+		<form hx-post="/crud/" hx-target="#modal" hx-swap="innerHTML" class="space-y-8">
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+				<!-- Texto Corto (VARCHAR) -->
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:       "Texto Corto (VARCHAR)",
+					Name:        "texto_corto",
+					Placeholder: "Ej. Nombre o título breve",
+					Value:       c.TextoCorto,
+					Required:    true,
+					Errors:      errors,
+				})
+
+				<!-- Correo Electrónico (EMAIL) -->
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:       "Correo Electrónico (EMAIL)",
+					Name:        "correo",
+					Type:        "email",
+					Placeholder: "ejemplo@issemym.gob.mx",
+					Value:       c.Correo,
+					Required:    true,
+					Errors:      errors,
+				})
+
+				<!-- Número Entero (INTEGER) -->
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:       "Número Entero (INTEGER)",
+					Name:        "entero",
+					Type:        "number",
+					Placeholder: "Ej. 42",
+					Value:       enteroStr,
+					Required:    true,
+					Errors:      errors,
+				})
+
+				<!-- Número Decimal (NUMERIC / MONEDA) -->
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:       "Número Decimal (NUMERIC)",
+					Name:        "decimal",
+					Type:        "number",
+					Step:        "0.01",
+					Placeholder: "Ej. 1250.75",
+					Value:       decimalStr,
+					Required:    true,
+					Errors:      errors,
+				})
+
+				<!-- Fecha (DATE) -->
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:    "Fecha (DATE)",
+					Name:     "fecha",
+					Type:     "date",
+					Value:    c.Fecha,
+					Required: true,
+					Errors:   errors,
+				})
+
+				<!-- Hora (TIME) -->
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:    "Hora (TIME)",
+					Name:     "hora",
+					Type:     "time",
+					Value:    c.Hora,
+					Required: true,
+					Errors:   errors,
+				})
+
+				<!-- Fecha y Hora (TIMESTAMPTZ) -->
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:  "Fecha y Hora (TIMESTAMPTZ)",
+					Name:   "fecha_hora",
+					Type:   "datetime-local",
+					Value:  c.FechaHora,
+					Errors: errors,
+				})
+
+				<!-- Menú Desplegable (SELECT / ENUM) -->
+				@v2.SelectFieldV2(v2.SelectProps{
+					Label:         "Selección Desplegable (ENUM)",
+					Name:          "seleccion",
+					Options:       opcionesSeleccion,
+					SelectedValue: c.Seleccion,
+					Required:      true,
+					Errors:        errors,
+				})
+
+				<!-- Teléfono (TEL) -->
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:       "Teléfono (TEL)",
+					Name:        "telefono",
+					Type:        "tel",
+					Placeholder: "Ej. 722 123 4567",
+					Value:       c.Telefono,
+					Errors:      errors,
+				})
+
+				<!-- URL (ENLACE WEB) -->
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:       "Enlace Web (URL)",
+					Name:        "url",
+					Type:        "url",
+					Placeholder: "https://ejemplo.gob.mx",
+					Value:       c.URL,
+					Errors:      errors,
+				})
+
+				<!-- Selector de Color (COLOR) -->
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:  "Color Distintivo (COLOR)",
+					Name:   "color",
+					Type:   "color",
+					Value:  colorVal,
+					Errors: errors,
+				})
+
+				<!-- Booleano (BOOLEAN / TOGGLE) -->
+				<div class="space-y-2">
+					<div class="px-2">
+						<label class="block text-[10px] font-black text-gray-400 uppercase tracking-[0.15em]">
+							Estado Booleano (BOOLEAN)
+						</label>
+					</div>
+					<div class="flex items-center gap-3 px-6 py-4 bg-[var(--surface-arena-20)] border-b-2 border-gray-300 rounded-t-xl h-[58px]">
+						<input
+							type="checkbox"
+							id="booleano"
+							name="booleano"
+							value="true"
+							checked?={ c.Booleano }
+							class="w-5 h-5 text-[var(--color-guinda)] rounded focus:ring-[var(--color-naranja)] cursor-pointer"
+						/>
+						<label for="booleano" class="text-sm font-bold text-gray-700 cursor-pointer">
+							Habilitado / Activo
+						</label>
+					</div>
+				</div>
+
+				<!-- Texto Largo (TEXT) -->
+				<div class="md:col-span-2">
+					@v2.TextAreaFieldV2(v2.TextAreaPropsV2{
+						Label:       "Texto Largo (TEXT)",
+						Name:        "texto_largo",
+						Placeholder: "Descripción extensa, notas o detalles...",
+						Value:       c.TextoLargo,
+						Rows:        3,
+						Errors:      errors,
+					})
+				</div>
+
+				<!-- Auditoría: Razón de Inserción -->
+				<div class="md:col-span-2">
+					@v2.InputFieldV2(v2.InputPropsV2{
+						Label:       "Motivo del Registro (Auditoría)",
+						Name:        "razon_i",
+						Placeholder: "Ej. Alta de registro de prueba",
+						Value:       c.Razon_i,
+						Required:    true,
+						Errors:      errors,
+					})
+				</div>
+			</div>
+			@v2.ModalFooterV2("Guardar Registro")
+		</form>
+	}
+}
+
+templ FormUpdateCrudV2(c *crud.Crud, errors map[string]string) {
+	{{
+		colorVal := c.Color
+		if colorVal == "" {
+			colorVal = "#691C32"
+		}
+	}}
+	@v2.ModalV2("Editar Registro CRUD") {
+		<form hx-put={ fmt.Sprintf("/crud/%s", c.Id) } hx-target="#modal" hx-swap="innerHTML" class="space-y-8">
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+				<!-- Texto Corto (VARCHAR) -->
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:    "Texto Corto (VARCHAR)",
+					Name:     "texto_corto",
+					Value:    c.TextoCorto,
+					Required: true,
+					Errors:   errors,
+				})
+
+				<!-- Correo Electrónico (EMAIL) -->
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:    "Correo Electrónico (EMAIL)",
+					Name:     "correo",
+					Type:     "email",
+					Value:    c.Correo,
+					Required: true,
+					Errors:   errors,
+				})
+
+				<!-- Número Entero (INTEGER) -->
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:    "Número Entero (INTEGER)",
+					Name:     "entero",
+					Type:     "number",
+					Value:    strconv.Itoa(c.Entero),
+					Required: true,
+					Errors:   errors,
+				})
+
+				<!-- Número Decimal (NUMERIC) -->
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:    "Número Decimal (NUMERIC)",
+					Name:     "decimal",
+					Type:     "number",
+					Step:     "0.01",
+					Value:    fmt.Sprintf("%.2f", c.Decimal),
+					Required: true,
+					Errors:   errors,
+				})
+
+				<!-- Fecha (DATE) -->
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:    "Fecha (DATE)",
+					Name:     "fecha",
+					Type:     "date",
+					Value:    c.Fecha,
+					Required: true,
+					Errors:   errors,
+				})
+
+				<!-- Hora (TIME) -->
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:    "Hora (TIME)",
+					Name:     "hora",
+					Type:     "time",
+					Value:    c.Hora,
+					Required: true,
+					Errors:   errors,
+				})
+
+				<!-- Fecha y Hora (TIMESTAMPTZ) -->
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:  "Fecha y Hora (TIMESTAMPTZ)",
+					Name:   "fecha_hora",
+					Type:   "datetime-local",
+					Value:  c.FechaHora,
+					Errors: errors,
+				})
+
+				<!-- Menú Desplegable (SELECT / ENUM) -->
+				@v2.SelectFieldV2(v2.SelectProps{
+					Label:         "Selección Desplegable (ENUM)",
+					Name:          "seleccion",
+					Options:       opcionesSeleccion,
+					SelectedValue: c.Seleccion,
+					Required:      true,
+					Errors:        errors,
+				})
+
+				<!-- Teléfono (TEL) -->
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:  "Teléfono (TEL)",
+					Name:   "telefono",
+					Type:   "tel",
+					Value:  c.Telefono,
+					Errors: errors,
+				})
+
+				<!-- URL (ENLACE WEB) -->
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:  "Enlace Web (URL)",
+					Name:   "url",
+					Type:   "url",
+					Value:  c.URL,
+					Errors: errors,
+				})
+
+				<!-- Selector de Color (COLOR) -->
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:  "Color Distintivo (COLOR)",
+					Name:   "color",
+					Type:   "color",
+					Value:  colorVal,
+					Errors: errors,
+				})
+
+				<!-- Booleano (BOOLEAN / TOGGLE) -->
+				<div class="space-y-2">
+					<div class="px-2">
+						<label class="block text-[10px] font-black text-gray-400 uppercase tracking-[0.15em]">
+							Estado Booleano (BOOLEAN)
+						</label>
+					</div>
+					<div class="flex items-center gap-3 px-6 py-4 bg-[var(--surface-arena-20)] border-b-2 border-gray-300 rounded-t-xl h-[58px]">
+						<input
+							type="checkbox"
+							id="booleano_edit"
+							name="booleano"
+							value="true"
+							checked?={ c.Booleano }
+							class="w-5 h-5 text-[var(--color-guinda)] rounded focus:ring-[var(--color-naranja)] cursor-pointer"
+						/>
+						<label for="booleano_edit" class="text-sm font-bold text-gray-700 cursor-pointer">
+							Habilitado / Activo
+						</label>
+					</div>
+				</div>
+
+				<!-- Texto Largo (TEXT) -->
+				<div class="md:col-span-2">
+					@v2.TextAreaFieldV2(v2.TextAreaPropsV2{
+						Label:  "Texto Largo (TEXT)",
+						Name:   "texto_largo",
+						Value:  c.TextoLargo,
+						Rows:   3,
+						Errors: errors,
+					})
+				</div>
+
+				<!-- Auditoría: Razón de Modificación -->
+				<div class="md:col-span-2">
+					@v2.InputFieldV2(v2.InputPropsV2{
+						Label:       "Motivo de Modificación (Auditoría)",
+						Name:        "razon_m",
+						Placeholder: "Ej. Actualización de datos",
+						Value:       c.Razon_m,
+						Required:    true,
+						Errors:      errors,
+					})
+				</div>
+
+				<!-- ID Primario (Solo Lectura) -->
+				<div class="md:col-span-2">
+					@v2.InputFieldV2(v2.InputPropsV2{
+						Label:    "Identificador UUID (PK)",
+						Name:     "id_display",
+						Value:    c.Id.String(),
+						Disabled: true,
+					})
+				</div>
+			</div>
+			@v2.ModalFooterV2("Guardar Cambios")
+		</form>
+	}
+}

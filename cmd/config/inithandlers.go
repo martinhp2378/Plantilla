@@ -6,6 +6,7 @@ import (
 	policy_handler "PlantillaInstitucional/configuracion/policy/handler"
 	usuario_handler "PlantillaInstitucional/configuracion/usuario/handler"
 	persona_handler "PlantillaInstitucional/institucion/handler"
+	crud_handler "PlantillaInstitucional/crud/handler"
 	login_handler "PlantillaInstitucional/login/handlers"
 	parametros_handler "PlantillaInstitucional/parametros/handler"
 
@@ -21,4 +22,5 @@ func InitHandlers(a *app.App) {
 	a.Handlers.Persona = persona_handler.NewPersonaHandler(&a.Services.Persona, a.Logger, validate, a.ManejadorArchivos)
 	a.Handlers.Login = login_handler.NuevoHandlerLogin(a.Repositories.Login, a.Repositories.Login, a.ServicioEmail, a.Logger, a.ConstructorSesion, a.ConstructorSesionJWT)
 	a.Handlers.Parametro = parametros_handler.NewHandler(a.Services.Parametro, a.Logger)
+	a.Handlers.Crud = crud_handler.NewCrudHandler(&a.Services.Crud, a.Logger, validate, a.ManejadorArchivos)
 }

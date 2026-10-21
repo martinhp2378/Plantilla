@@ -65,6 +65,10 @@ func SidebarV2(pag pagina.Pagina) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = SidebarItem(pagina.Crud, pag, "dataset", "Ejemplo CRUD").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</ul></div></nav></div></aside><style>\n\t\t.custom-scrollbar::-webkit-scrollbar {\n\t\t\twidth: 4px;\n\t\t}\n\t\t.custom-scrollbar::-webkit-scrollbar-track {\n\t\t\tbackground: transparent;\n\t\t}\n\t\t.custom-scrollbar::-webkit-scrollbar-thumb {\n\t\t\tbackground: var(--color-arena);\n\t\t\tborder-radius: 10px;\n\t\t}\n\t\t.custom-scrollbar::-webkit-scrollbar-thumb:hover {\n\t\t\tbackground: var(--color-naranja);\n\t\t}\n\t</style>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -112,7 +116,7 @@ func SidebarItem(target, active pagina.Pagina, icon, label string) templ.Compone
 		var templ_7745c5c3_Var4 templ.SafeURL
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(target.URL()))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/v2/navigation.templ`, Line: 73, Col: 37}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/v2/navigation.templ`, Line: 74, Col: 37}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -186,7 +190,7 @@ func SidebarItem(target, active pagina.Pagina, icon, label string) templ.Compone
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(icon)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/v2/navigation.templ`, Line: 84, Col: 11}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/v2/navigation.templ`, Line: 85, Col: 11}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -223,7 +227,7 @@ func SidebarItem(target, active pagina.Pagina, icon, label string) templ.Compone
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/v2/navigation.templ`, Line: 89, Col: 53}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/v2/navigation.templ`, Line: 90, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
@@ -273,7 +277,7 @@ func TopbarV2() templ.Component {
 		var templ_7745c5c3_Var15 templ.SafeURL
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(pagina.GlobalRutas.Login.Base + "salir"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/v2/navigation.templ`, Line: 130, Col: 70}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/v2/navigation.templ`, Line: 131, Col: 70}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {

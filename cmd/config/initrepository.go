@@ -7,6 +7,7 @@ import (
 	policy_repo "PlantillaInstitucional/configuracion/policy/repository"
 	usuario_repo "PlantillaInstitucional/configuracion/usuario/repository"
 	persona_repo "PlantillaInstitucional/institucion/repository"
+	crud_repo "PlantillaInstitucional/crud/repository"
 	login_repo "PlantillaInstitucional/login/db"
 	parametros_repo "PlantillaInstitucional/parametros/repository"
 	"PlantillaInstitucional/shared/tenants"
@@ -23,6 +24,7 @@ func InitRepositories(a *app.App) {
 	a.Repositories.Persona = persona_repo.NewPersonaRepository(pools)
 	a.Repositories.Login = login_repo.NewRepositorioPsql(pools)
 	a.Repositories.Parametro = parametros_repo.NewRepository(pools)
+	a.Repositories.Crud = crud_repo.NewCrudRepository(pools)
 }
 
 func WireResolvers(a *app.App) {

@@ -1,0 +1,13 @@
+package layouts
+
+import (
+	"PlantillaInstitucional/crud/view"
+	"PlantillaInstitucional/crud/view/components"
+	"PlantillaInstitucional/shared/views/layouts"
+)
+
+templ PaginaListaCrudV2(params view.ParamCrud) {
+	@layouts.BaseConNav(params.Titulo, params.Pag) {
+		@components.TableV2(params.Criterios, params.BaseURL, false)
+	}
+}

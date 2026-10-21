@@ -11,6 +11,7 @@ type InputPropsV2 struct {
 	Type         string // text, email, password, date, number, etc.
 	Placeholder  string
 	Value        string
+	Step         string
 	Required     bool
 	Disabled     bool
 	Autocomplete string
@@ -54,6 +55,8 @@ templ InputFieldV2(props InputPropsV2) {
 				type={ inputType }
 				placeholder={ props.Placeholder }
 				value={ props.Value }
+				step?={ props.Step != "" }
+				step={ props.Step }
 				required?={ props.Required }
 				disabled?={ props.Disabled }
 				autocomplete={ props.Autocomplete }

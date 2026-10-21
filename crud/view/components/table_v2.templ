@@ -1,0 +1,76 @@
+package components
+
+import (
+	"PlantillaInstitucional/crud"
+	"PlantillaInstitucional/pagination"
+	"PlantillaInstitucional/shared/pagina"
+	"PlantillaInstitucional/shared/views/components/v2"
+	"fmt"
+	"strconv"
+)
+
+templ TableV2(criterios pagination.CriteriosPagina[crud.Crud], baseURL string, oob bool) {
+	{{
+		rutas := pagina.GlobalRutas.Crud
+		buildSortURL := func(field string) string {
+			return criterios.WithSort(field).BuildURL(rutas.Tabla, 1)
+		}
+
+		headers := []v2.TableHeader{
+			{Label: "Texto Corto", Key: "texto_corto", Sortable: true, SortURL: buildSortURL("texto_corto"), SortIcon: criterios.SortIcon("texto_corto"), FilterVal: criterios.GetFilterValue("texto_corto")},
+			{Label: "Entero", Key: "entero", Sortable: true, SortURL: buildSortURL("entero"), SortIcon: criterios.SortIcon("entero"), FilterVal: criterios.GetFilterValue("entero")},
+			{Label: "Decimal", Key: "decimal", Sortable: true, SortURL: buildSortURL("decimal"), SortIcon: criterios.SortIcon("decimal"), FilterVal: criterios.GetFilterValue("decimal")},
+			{Label: "Booleano", Key: "booleano", Sortable: true, SortURL: buildSortURL("booleano"), SortIcon: criterios.SortIcon("booleano"), FilterVal: criterios.GetFilterValue("booleano")},
+			{Label: "Fecha", Key: "fecha", Sortable: true, SortURL: buildSortURL("fecha"), SortIcon: criterios.SortIcon("fecha"), FilterVal: criterios.GetFilterValue("fecha")},
+			{Label: "Hora", Key: "hora", Sortable: true, SortURL: buildSortURL("hora"), SortIcon: criterios.SortIcon("hora"), FilterVal: criterios.GetFilterValue("hora")},
+			{Label: "Selección", Key: "seleccion", Sortable: true, SortURL: buildSortURL("seleccion"), SortIcon: criterios.SortIcon("seleccion"), FilterVal: criterios.GetFilterValue("seleccion")},
+			{Label: "Correo", Key: "correo", Sortable: true, SortURL: buildSortURL("correo"), SortIcon: criterios.SortIcon("correo"), FilterVal: criterios.GetFilterValue("correo")},
+		}
+
+		tableProps := v2.DataTableV2Props{
+			Title:          "Catálogo de Ejemplo CRUD",
+			Subtitle:       "Demostración Completa de Tipos de Datos",
+			Headers:        headers,
+			CreateURL:      rutas.Nuevo,
+			SearchURL:      rutas.Tabla,
+			Target:         "#tablacrud",
+			ModalTarget:    "#modal",
+			OOB:            oob,
+			SortedBy:       criterios.SortedBy,
+			Direction:      criterios.Direction,
+			Page:           criterios.Index,
+			Size:           criterios.Size,
+			Total:          criterios.Count,
+			PDFExportURL:   rutas.Export.PDF,
+			ExcelExportURL: rutas.Export.Excel,
+			ToastURL:       rutas.Export.Notificacion,
+		}
+	}}
+	@v2.DataTableV2(tableProps) {
+		for _, c := range criterios.Data {
+			{{
+				boolStr := "No"
+				if c.Booleano {
+					boolStr = "Sí"
+				}
+				decimalStr := fmt.Sprintf("$%.2f", c.Decimal)
+			}}
+			@v2.DataRowV2(v2.DataRowV2Props{
+				Cells: []string{
+					c.TextoCorto,
+					strconv.Itoa(c.Entero),
+					decimalStr,
+					boolStr,
+					c.Fecha,
+					c.Hora,
+					c.Seleccion,
+					c.Correo,
+				},
+				EditURL:     rutas.GetEditar(c.Id),
+				DeleteURL:   rutas.GetBorrar(c.Id),
+				Target:      "#tablacrud",
+				ModalTarget: "#modal",
+			})
+		}
+	}
+}

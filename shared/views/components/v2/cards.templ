@@ -1,0 +1,28 @@
+package v2
+
+type KPICardProps struct {
+	Label      string
+	Value      string
+	Icon       string
+	ColorClass string
+	Footer     string
+}
+
+templ KPICardV2(props KPICardProps) {
+	<div class="w-full min-w-0 max-w-full bg-white rounded-2xl border-2 border-[var(--color-arena)] p-5 sm:p-8 shadow-sm hover:shadow-xl transition-all duration-300 group">
+		<div class="flex min-w-0 flex-wrap items-center justify-between gap-4 mb-6">
+			<div class={ "p-4 rounded-xl transition-transform group-hover:scale-110 shadow-inner", props.ColorClass }>
+				<span class="material-icons text-3xl">{ props.Icon }</span>
+			</div>
+			<div class="min-w-0 max-w-full text-right">
+				<p class="break-words text-xs font-black text-gray-500 uppercase tracking-widest mb-1">{ props.Label }</p>
+				<h3 class="text-4xl font-black text-gray-800 leading-none">{ props.Value }</h3>
+			</div>
+		</div>
+		if props.Footer != "" {
+			<div class="pt-4 border-t border-[var(--color-arena)] flex items-center gap-2">
+				<span class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{ props.Footer }</span>
+			</div>
+		}
+	</div>
+}

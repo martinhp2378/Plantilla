@@ -1,0 +1,80 @@
+package graficas
+
+import (
+	"PlantillaInstitucional/shared/views/components/compartidos"
+)
+
+templ LineChart(id, titulo, icono, altura string, datosJson string) {
+	@compartidos.ContenedorBase(titulo, icono, altura) {
+		<div id={ id } class="h-full w-full"></div>
+	}
+	@LineChartScript(id, datosJson)
+}
+
+templ LineChartScript(id, jsonString string) {
+	<script>
+		(function() {
+			const containerId = "{{ id }}";
+			const rawData = '{{ jsonString }}';
+			const render = () => window.renderSharedChart(containerId, rawData, (input, colors) => {
+				const labels = Array.isArray(input)
+					? input.map(item => item.label || item.nombre || item.name || '')
+					: (input.labels || []);
+
+				let series = [];
+				if (Array.isArray(input)) {
+					series = [{
+						name: 'Registros',
+						type: 'line',
+						smooth: true,
+						showSymbol: true,
+						symbolSize: 8,
+						data: input.map(item => Number(item.value || item.total || item.promedio || 0)),
+						itemStyle: { color: '#9F2241' },
+						areaStyle: {
+							color: {
+								type: 'linear',
+								x: 0, y: 0, x2: 0, y2: 1,
+								colorStops: [
+									{ offset: 0, color: 'rgba(159, 34, 65, 0.25)' },
+									{ offset: 1, color: 'rgba(159, 34, 65, 0.0)' }
+								]
+							}
+						}
+					}];
+				} else if (input.series && Array.isArray(input.series)) {
+					const colorPalette = ['#9F2241', '#FF6600', '#2B6CB0', '#38A169', '#805AD5'];
+					series = input.series.map((s, idx) => ({
+						name: s.name || `Serie ${idx+1}`,
+						type: 'line',
+						smooth: true,
+						showSymbol: true,
+						symbolSize: 8,
+						data: (s.data || []).map(Number),
+						itemStyle: { color: colorPalette[idx % colorPalette.length] }
+					}));
+				}
+
+				return {
+					grid: { top: 30, right: 20, bottom: 30, left: 45, containLabel: true },
+					tooltip: {
+						trigger: 'axis'
+					},
+					xAxis: {
+						type: 'category',
+						data: labels,
+						axisLine: { lineStyle: { color: colors.grid } },
+						axisLabel: { color: colors.text, fontSize: 11 }
+					},
+					yAxis: {
+						type: 'value',
+						splitLine: { lineStyle: { color: colors.grid, type: 'dashed' } },
+						axisLabel: { color: colors.text, fontSize: 11 }
+					},
+					series: series
+				};
+			});
+			window.registerSharedChart(containerId, render);
+		})();
+	</script>
+}

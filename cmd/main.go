@@ -152,6 +152,7 @@ func main() {
 		a.Handlers.Persona.RegisterRoutes(r)
 		a.Handlers.Parametro.RegisterRoutes(r)
 		a.Handlers.Crud.RegisterRoutes(r)
+		a.Handlers.Dashboard.RegisterRoutes(r)
 	})
 
 	app_middleware.RegistrarHandler404(r)

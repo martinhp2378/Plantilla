@@ -1,0 +1,74 @@
+package graficas
+
+import (
+	"PlantillaInstitucional/shared/views/components/compartidos"
+)
+
+templ PieChart(id, titulo, icono, altura string, datosJson string) {
+	@compartidos.ContenedorBase(titulo, icono, altura) {
+		<div id={ id } class="h-full w-full"></div>
+	}
+	@PieChartScript(id, datosJson)
+}
+
+templ PieChartScript(id, jsonString string) {
+	<script>
+		(function() {
+			const containerId = "{{ id }}";
+			const rawData = '{{ jsonString }}';
+			const render = () => window.renderSharedChart(containerId, rawData, (input, colors) => {
+				const items = Array.isArray(input) ? input : (input.data || []);
+				const formattedData = items.map(item => ({
+					name: item.name || item.label || item.estado || 'Sin etiqueta',
+					value: Number(item.value || item.total || 0)
+				}));
+
+				const colorsPalette = ['#9F2241', '#FF6600', '#2B6CB0', '#38A169', '#805AD5', '#D69E2E'];
+
+				return {
+					tooltip: {
+						trigger: 'item',
+						formatter: '{b}: <b>{c}</b> ({d}%)'
+					},
+					legend: {
+						bottom: 10,
+						left: 'center',
+						textStyle: { color: colors.text, fontSize: 11 }
+					},
+					color: colorsPalette,
+					series: [
+						{
+							name: 'Distribución',
+							type: 'pie',
+							radius: ['42%', '68%'],
+							center: ['50%', '45%'],
+							avoidLabelOverlap: false,
+							itemStyle: {
+								borderRadius: 8,
+								borderColor: '#fff',
+								borderWidth: 2
+							},
+							label: {
+								show: false,
+								position: 'center'
+							},
+							emphasis: {
+								label: {
+									show: true,
+									fontSize: 15,
+									fontWeight: 'bold',
+									color: colors.text
+								}
+							},
+							labelLine: {
+								show: false
+							},
+							data: formattedData
+						}
+					]
+				};
+			});
+			window.registerSharedChart(containerId, render);
+		})();
+	</script>
+}

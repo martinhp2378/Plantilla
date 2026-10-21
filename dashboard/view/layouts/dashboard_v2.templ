@@ -1,0 +1,146 @@
+package layouts
+
+import (
+	"PlantillaInstitucional/dashboard"
+	"PlantillaInstitucional/shared/pagina"
+	"PlantillaInstitucional/shared/views/layouts"
+	"PlantillaInstitucional/shared/views/components/v2"
+	"PlantillaInstitucional/shared/views/components/graficas"
+)
+
+templ DashboardV2(data dashboard.DashboardData) {
+	@layouts.BaseConNav("Panel de Control - Dashboard", pagina.Dashboard) {
+		<div class="space-y-8 animate-fade-in">
+			<!-- Header del Dashboard -->
+			<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-[var(--color-arena)]">
+				<div class="space-y-1">
+					<div class="flex items-center gap-2">
+						<span class="inline-block w-2.5 h-2.5 rounded-full bg-[var(--color-guinda)]"></span>
+						<p class="text-xs font-black uppercase tracking-widest text-[var(--color-guinda)]">Panel de Control General</p>
+					</div>
+					<h1 class="text-3xl font-black text-gray-800 tracking-tight uppercase">
+						Dashboard <span class="text-[var(--color-guinda)]">Institucional</span>
+					</h1>
+					<p class="text-sm font-medium text-gray-500">
+						Monitoreo en tiempo real de indicadores clave, métricas operativas y actividad general.
+					</p>
+				</div>
+				<div class="flex items-center gap-3">
+					<div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white border border-[var(--color-arena)] text-xs font-bold text-gray-700 shadow-xs">
+						<span class="material-icons text-sm text-[var(--color-guinda)]">event</span>
+						<span>Ejercicio 2026</span>
+					</div>
+					<a
+						href="/crud"
+						class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--color-guinda)] hover:bg-[#801833] text-white text-xs font-black uppercase tracking-wider shadow-sm transition-all"
+					>
+						<span class="material-icons text-sm">add_circle</span>
+						<span>Nuevo Registro</span>
+					</a>
+				</div>
+			</div>
+
+			<!-- Grid de Tarjetas KPI -->
+			<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+				@v2.KPICardV2(v2.KPICardProps{
+					Label:      "Registros Totales",
+					Value:      data.TotalRegistros,
+					Icon:       "folder_open",
+					ColorClass: "bg-rose-50 text-[var(--color-guinda)]",
+					Footer:     "+14.2% vs mes anterior",
+				})
+				@v2.KPICardV2(v2.KPICardProps{
+					Label:      "Usuarios Activos",
+					Value:      data.UsuariosActivos,
+					Icon:       "group",
+					ColorClass: "bg-orange-50 text-[var(--color-naranja)]",
+					Footer:     "12 conexiones hoy",
+				})
+				@v2.KPICardV2(v2.KPICardProps{
+					Label:      "Eficiencia Global",
+					Value:      data.Eficiencia,
+					Icon:       "speed",
+					ColorClass: "bg-emerald-50 text-emerald-600",
+					Footer:     "Meta institucional: 90%",
+				})
+				@v2.KPICardV2(v2.KPICardProps{
+					Label:      "Trámites del Mes",
+					Value:      data.Tramites,
+					Icon:       "task_alt",
+					ColorClass: "bg-sky-50 text-sky-600",
+					Footer:     "Tiempo promedio: 1.8 hrs",
+				})
+			</div>
+
+			<!-- Grid de Gráficas ECharts -->
+			<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+				@graficas.LineChart(
+					"tendencia-actividad-chart-container",
+					"Tendencia de Actividad Mensual",
+					"show_chart",
+					"h-[400px]",
+					data.LineChartJSON,
+				)
+				@graficas.PieChart(
+					"distribucion-estado-chart-container",
+					"Distribución por Estado Operativo",
+					"pie_chart",
+					"h-[400px]",
+					data.PieChartJSON,
+				)
+			</div>
+
+			<!-- Sección de Accesos Rápidos y Estado del Sistema -->
+			<div class="bg-white rounded-2xl border-2 border-[var(--color-arena)] p-6 shadow-sm">
+				<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 pb-4 border-b border-[var(--color-arena)]">
+					<div>
+						<h3 class="text-base font-black text-gray-800 uppercase tracking-tight">Accesos Rápidos al Sistema</h3>
+						<p class="text-xs text-gray-500 font-medium">Módulos principales disponibles según el perfil institucional asignado.</p>
+					</div>
+					<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+						<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+						Servicios en línea
+					</span>
+				</div>
+				<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+					<a
+						href="/crud"
+						class="flex items-center gap-4 p-4 rounded-xl border border-[var(--color-arena)] hover:border-[var(--color-guinda)] hover:bg-[var(--surface-arena-20)] transition-all group"
+					>
+						<div class="p-3 rounded-lg bg-[var(--surface-arena-20)] text-[var(--color-guinda)] group-hover:scale-110 transition-transform">
+							<span class="material-icons">storage</span>
+						</div>
+						<div>
+							<h4 class="text-sm font-bold text-gray-800 group-hover:text-[var(--color-guinda)]">Módulo CRUD</h4>
+							<p class="text-xs text-gray-500">Gestión de registros y filtros</p>
+						</div>
+					</a>
+					<a
+						href="/configuracion/usuarios"
+						class="flex items-center gap-4 p-4 rounded-xl border border-[var(--color-arena)] hover:border-[var(--color-guinda)] hover:bg-[var(--surface-arena-20)] transition-all group"
+					>
+						<div class="p-3 rounded-lg bg-[var(--surface-arena-20)] text-[var(--color-guinda)] group-hover:scale-110 transition-transform">
+							<span class="material-icons">people</span>
+						</div>
+						<div>
+							<h4 class="text-sm font-bold text-gray-800 group-hover:text-[var(--color-guinda)]">Usuarios y Perfiles</h4>
+							<p class="text-xs text-gray-500">Control de accesos y roles</p>
+						</div>
+					</a>
+					<a
+						href="/institucion/personas"
+						class="flex items-center gap-4 p-4 rounded-xl border border-[var(--color-arena)] hover:border-[var(--color-guinda)] hover:bg-[var(--surface-arena-20)] transition-all group"
+					>
+						<div class="p-3 rounded-lg bg-[var(--surface-arena-20)] text-[var(--color-guinda)] group-hover:scale-110 transition-transform">
+							<span class="material-icons">badge</span>
+						</div>
+						<div>
+							<h4 class="text-sm font-bold text-gray-800 group-hover:text-[var(--color-guinda)]">Padrón Institucional</h4>
+							<p class="text-xs text-gray-500">Expedientes y datos generales</p>
+						</div>
+					</a>
+				</div>
+			</div>
+		</div>
+	}
+}

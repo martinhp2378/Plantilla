@@ -10,6 +10,7 @@ import (
 	crud_handler "PlantillaInstitucional/crud/handler"
 	crud_repo "PlantillaInstitucional/crud/repository"
 	crud_service "PlantillaInstitucional/crud/service"
+	dashboard_handler "PlantillaInstitucional/dashboard/handler"
 	usuario_handler "PlantillaInstitucional/configuracion/usuario/handler"
 	usuario_repo "PlantillaInstitucional/configuracion/usuario/repository"
 	usuario_service "PlantillaInstitucional/configuracion/usuario/service"
@@ -71,6 +72,7 @@ type Handlers struct {
 	Login     *login_handler.HandlerLogin
 	Parametro *parametros_handler.Handler
 	Crud      crud_handler.CrudHandler
+	Dashboard *dashboard_handler.DashboardHandler
 }
 
 type PolicyResolver interface {

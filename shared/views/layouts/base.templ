@@ -68,9 +68,75 @@ templ Base(titulo string) {
 					}
 				}
 			</style>
-			<script defer src="https://cdn.fusioncharts.com/fusioncharts/latest/fusioncharts.js"></script>
-			<script defer src="https://cdn.fusioncharts.com/fusioncharts/latest/fusioncharts.charts.js"></script>
-			<script defer src="https://cdn.fusioncharts.com/fusioncharts/latest/themes/fusioncharts.theme.fusion.js"></script>
+			<script defer src="https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.min.js"></script>
+			<script>
+				const sharedChartRenders = new Map();
+				const maxChartLibraryLoadAttempts = 50;
+				window.showSharedChartUnavailable = function(container) {
+					container.innerHTML = '<div class="flex items-center justify-center h-full text-gray-500"><p>No se pudo cargar el motor de gráficas. Recargue la página e intente de nuevo.</p></div>';
+				};
+				window.registerSharedChart = function(id, render) {
+					sharedChartRenders.set(id, render);
+					render();
+				};
+				window.renderSharedChart = function(id, rawData, buildOption, loadAttempts = 0) {
+					const container = document.getElementById(id);
+					if (!container) return;
+					if (!window.echarts) {
+						if (loadAttempts >= maxChartLibraryLoadAttempts) {
+							window.showSharedChartUnavailable(container);
+							return;
+						}
+						setTimeout(() => {
+							if (container.isConnected && document.getElementById(id) === container) window.renderSharedChart(id, rawData, buildOption, loadAttempts + 1);
+						}, 100);
+						return;
+					}
+					const previous = echarts.getInstanceByDom(container);
+					if (previous) previous.dispose();
+					try {
+						const data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+						if (!data || (Array.isArray(data) ? !data.length : !data.labels?.length)) {
+							container.innerHTML = '<div class="flex items-center justify-center h-full text-gray-400 font-bold text-xs uppercase tracking-widest"><p>No hay datos para mostrar</p></div>';
+							return;
+						}
+						container.replaceChildren();
+						const text = '#1F2937';
+						const grid = '#E5E7EB';
+						const chart = echarts.init(container);
+						chart.setOption({
+							backgroundColor: '#FFFFFF',
+							textStyle: { color: text },
+							tooltip: { backgroundColor: '#FFFFFF', borderColor: grid, textStyle: { color: text } },
+							toolbox: { feature: { saveAsImage: { title: 'Exportar como imagen', type: 'png' } } },
+							...buildOption(data, { text, grid })
+						});
+					} catch (error) {
+						console.error('Error rendering chart:', error);
+						const instance = echarts.getInstanceByDom(container);
+						if (instance) instance.dispose();
+						container.textContent = 'Error al generar la gráfica';
+					}
+				};
+				function resizeSharedCharts() {
+					if (!window.echarts) return;
+					document.querySelectorAll('[id$="chart-container"]').forEach(el => echarts.getInstanceByDom(el)?.resize());
+				}
+				window.addEventListener('resize', resizeSharedCharts);
+				document.addEventListener('transitionend', event => {
+					if (['width', 'margin-left', 'padding-left', 'grid-template-columns', 'transform'].includes(event.propertyName)) resizeSharedCharts();
+				});
+				document.addEventListener('htmx:beforeCleanupElement', event => {
+					if (!window.echarts) return;
+					const root = event.detail.elt;
+					if (!(root instanceof Element)) return;
+					for (const el of [root, ...root.querySelectorAll('[id$="chart-container"]')]) {
+						const chart = echarts.getInstanceByDom(el);
+						if (chart) chart.dispose();
+						if (el.id) sharedChartRenders.delete(el.id);
+					}
+				});
+			</script>
 			<script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.6/dist/htmx.min.js"></script>
 			<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 			<script>

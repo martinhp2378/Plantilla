@@ -1,0 +1,43 @@
+version: "2"
+run:
+  tests: true
+
+linters:
+  enable:
+    # Linters base
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    # Fugas de recursos de red y BD
+    - bodyclose
+    - sqlclosecheck
+    - rowserrcheck
+    - nilerr
+    # Limpieza
+    - unconvert
+    # Seguridad
+    - gosec
+
+  settings:
+    gosec:
+      excludes:
+        - G101 # Falsos positivos con palabras como "password" en queries y constantes
+        - G104 # Errores no verificados (cubiertos por errcheck)
+        - G112 # ReadHeaderTimeout en servidores locales
+        - G115 # Conversión de enteros de 64 a 32 bits
+        - G404 # Generador de aleatoriedad débil para selección de imágenes cosméticas en UI
+
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - .*_templ\.go$
+      - vendor
+      - tmp
+      - .codegraph

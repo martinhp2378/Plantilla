@@ -251,14 +251,14 @@ func GetEnv(envPaths ...string) (*Env, error) {
 		return nil, err
 	}
 
-	env.PqWriteMaxConns = int32(writeMaxConns)
-	env.PqWriteMinConns = int32(writeMinConns)
+	env.PqWriteMaxConns = writeMaxConns
+	env.PqWriteMinConns = writeMinConns
 	env.PqWriteMaxConnIdle = time.Duration(writeMaxConnIdle) * time.Minute
 	env.PqWriteMaxConnLife = time.Duration(writeMaxConnLife) * time.Minute
 	env.PqWriteQueryTimeout = time.Duration(writeQueryTimeout) * time.Second
 
-	env.PqReadMaxConns = int32(readMaxConns)
-	env.PqReadMinConns = int32(readMinConns)
+	env.PqReadMaxConns = readMaxConns
+	env.PqReadMinConns = readMinConns
 	env.PqReadMaxConnIdle = time.Duration(readMaxConnIdle) * time.Minute
 	env.PqReadMaxConnLife = time.Duration(readMaxConnLife) * time.Minute
 	env.PqReadQueryTimeout = time.Duration(readQueryTimeout) * time.Second

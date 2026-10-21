@@ -224,12 +224,12 @@ func ObtenerValorCampo[T any](item T, ruta string, renderFuncs map[string]func(a
 		return f(item)
 	}
 	v := reflect.ValueOf(item)
-	if v.Kind() == reflect.Ptr {
+	if v.Kind() == reflect.Pointer {
 		v = v.Elem()
 	}
 	valRef := v
 	for _, p := range strings.Split(ruta, ".") {
-		if valRef.Kind() == reflect.Ptr && valRef.IsNil() {
+		if valRef.Kind() == reflect.Pointer && valRef.IsNil() {
 			return ""
 		}
 		valRef = reflect.Indirect(valRef).FieldByName(p)

@@ -171,7 +171,7 @@ func canonicalHost(authority string) (string, error) {
 			return "", http.ErrNotSupported
 		}
 		for _, rune := range label {
-			if !(rune >= 'a' && rune <= 'z' || rune >= '0' && rune <= '9' || rune == '-') {
+			if (rune < 'a' || rune > 'z') && (rune < '0' || rune > '9') && rune != '-' {
 				return "", http.ErrNotSupported
 			}
 		}

@@ -35,7 +35,7 @@ func GenerarReporteExcel[T any](
 	}
 
 	f := excelize.NewFile()
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	sheet := "Hoja1"
 	_ = f.SetSheetName("Sheet1", sheet)
 
@@ -142,7 +142,7 @@ func GenerarReporteExcel[T any](
 	// Escribir Datos
 	for rowIdx, item := range datos {
 		v := reflect.ValueOf(item)
-		if v.Kind() == reflect.Ptr {
+		if v.Kind() == reflect.Pointer {
 			v = v.Elem()
 		}
 
@@ -163,7 +163,7 @@ func GenerarReporteExcel[T any](
 			} else {
 				valRef := v
 				for _, p := range strings.Split(ruta, ".") {
-					if valRef.Kind() == reflect.Ptr && valRef.IsNil() {
+					if valRef.Kind() == reflect.Pointer && valRef.IsNil() {
 						valRef = reflect.Zero(valRef.Type().Elem())
 						break
 					}

@@ -72,7 +72,7 @@ func (h *HandlerLogin) HandlePostIngresar(w http.ResponseWriter, r *http.Request
 		Password: password,
 	}
 
-	datosUsuario, err := h.RepositorioLogin.ValidarEmailPassword(ctx, email, password)
+	datosUsuario, err := h.ValidarEmailPassword(ctx, email, password)
 	if err != nil {
 		if !errors.Is(err, errores.ErrCredencialesInvalidas) && !errors.Is(err, errores.ErrRegistroNoEncontrado) {
 			panic(err)

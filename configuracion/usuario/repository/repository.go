@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -17,9 +16,8 @@ import (
 
 // Definición de listas blancas (Allow-lists) para seguridad
 var (
-	colsTexto     = map[string]bool{"email": true, "password": true, "perfil": true}
-	colsNumericas = map[string]bool{}
-	colsUUID      = map[string]bool{"uuid_persona": true}
+	colsTexto = map[string]bool{"email": true, "password": true, "perfil": true}
+	colsUUID  = map[string]bool{"uuid_persona": true}
 	// Columnas permitidas estrictamente para ordenamiento
 	colsOrden = map[string]bool{"uuid_persona": true, "email": true, "password": true, "perfil": true, "nombre_completo": true}
 )
@@ -239,24 +237,6 @@ func buildDynamicWhere(filtros map[string]any) ([]string, []any) {
 		}
 	}
 	return condiciones, args
-}
-
-// Conversión segura de tipos
-func toInt(v any) (int, bool) {
-	switch val := v.(type) {
-	case int:
-		return val, true
-	case float64:
-		return int(val), true
-	case string:
-		if val == "" {
-			return 0, false
-		}
-		i, err := strconv.Atoi(val)
-		return i, err == nil
-	default:
-		return 0, false
-	}
 }
 
 func toUUID(v any) (uuid.UUID, bool) {

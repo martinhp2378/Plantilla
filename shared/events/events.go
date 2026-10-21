@@ -56,9 +56,8 @@ func (d *Dispatcher) Dispatch(ctx context.Context, event Event) error {
 
 // GetEventName returns the name of the event type.
 func GetEventName(event interface{}) string {
-	if t := reflect.TypeOf(event); t.Kind() == reflect.Ptr {
+	if t := reflect.TypeOf(event); t.Kind() == reflect.Pointer {
 		return t.Elem().Name()
-	} else {
-		return t.Name()
 	}
+	return reflect.TypeOf(event).Name()
 }

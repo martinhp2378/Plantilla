@@ -233,8 +233,3 @@ func nginxPolicy(p securitypolicy.TenantPolicy) securitypolicy.TenantPolicy {
 	p.NginxTrustedCIDRs = []netip.Prefix{netip.MustParsePrefix("10.0.0.0/8")}
 	return p
 }
-
-func tenantFromRequest(r *http.Request) (tenantcontext.Source, error) {
-	tenant, err := tenantcontext.TenantFromContext(r.Context())
-	return tenant.Source, err
-}

@@ -132,7 +132,7 @@ func PrivateDownloadHandler(manager *archivos.ManejadorArchivos) http.HandlerFun
 			http.NotFound(w, r)
 			return
 		}
-		defer reader.Close()
+		defer func() { _ = reader.Close() }()
 		w.Header().Set("Cache-Control", "no-store")
 		w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename=%q`, path.Base(key)))
 		w.Header().Set("Content-Type", mime.TypeByExtension(path.Ext(key)))

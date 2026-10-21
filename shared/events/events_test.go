@@ -45,10 +45,14 @@ func TestDispatchWithoutListeners(t *testing.T) {
 	}
 }
 
+type testContextKey string
+
+const traceKey testContextKey = "trace"
+
 func TestRegisterAndDispatchCallsAllListeners(t *testing.T) {
 	d := NewDispatcher()
 	event := testEvent{}
-	ctx := context.WithValue(context.Background(), "trace", "123")
+	ctx := context.WithValue(context.Background(), traceKey, "123")
 
 	l1 := &testListener{}
 	l2 := &testListener{}

@@ -2,7 +2,6 @@ package repository
 
 import (
 	bd "PlantillaInstitucional/app/db"
-	"PlantillaInstitucional/configuracion/policy"
 )
 
 type PolicyRepository struct {
@@ -15,8 +14,4 @@ func NewPolicyRepository(db *bd.AppPools) *PolicyRepository {
 
 type catalogItem struct {
 	Nombre string `db:"nombre"`
-}
-
-type politicaRow struct {
-	policy.Politica
 }

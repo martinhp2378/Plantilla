@@ -150,7 +150,7 @@ func GenerarReportePDFMaroto[T any](
 		return "", fmt.Errorf("error creando PDF temporal: %v", err)
 	}
 	tempFile := temp.Name()
-	defer os.Remove(tempFile)
+	defer func() { _ = os.Remove(tempFile) }()
 	if err := temp.Close(); err != nil {
 		return "", fmt.Errorf("error cerrando PDF temporal: %v", err)
 	}

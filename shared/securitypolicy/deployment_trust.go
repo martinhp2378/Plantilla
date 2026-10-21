@@ -106,7 +106,7 @@ func validCatalogHost(host string) bool {
 			return false
 		}
 		for _, rune := range label {
-			if !(rune >= 'a' && rune <= 'z' || rune >= '0' && rune <= '9' || rune == '-') {
+			if (rune < 'a' || rune > 'z') && (rune < '0' || rune > '9') && rune != '-' {
 				return false
 			}
 		}

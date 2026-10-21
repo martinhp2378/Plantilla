@@ -82,7 +82,9 @@ func RunMigrations(env *entorno.Env) error {
 	if err != nil {
 		return fmt.Errorf("error al instanciar migración: %w", err)
 	}
-	defer m.Close()
+	defer func() {
+		_, _ = m.Close()
+	}()
 
 	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		return fmt.Errorf("error al ejecutar migraciones: %w", err)

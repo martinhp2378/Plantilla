@@ -14,7 +14,14 @@ type Rutas struct {
 	Editar string
 	Update string
 	Borrar string
-	Export RutasExport
+	Export      RutasExport
+	CargaMasiva RutasCargaMasiva
+}
+
+type RutasCargaMasiva struct {
+	Modal     string
+	Subir     string
+	Plantilla string
 }
 
 type RutasExport struct {
@@ -63,6 +70,11 @@ func nuevaRuta(base string) Rutas {
 			PDF:          base + "/reportes/pdf",
 			Excel:        base + "/reportes/excel",
 			Notificacion: base + "/reportes/notificacion-exito",
+		},
+		CargaMasiva: RutasCargaMasiva{
+			Modal:     base + "/modales/carga-masiva",
+			Subir:     base + "/carga-masiva",
+			Plantilla: base + "/carga-masiva/plantilla",
 		},
 	}
 }

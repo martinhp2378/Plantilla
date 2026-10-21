@@ -1,0 +1,125 @@
+package components
+
+import (
+	"PlantillaInstitucional/shared/cargamasiva"
+	"PlantillaInstitucional/shared/views/components/v2"
+	"strconv"
+)
+
+templ ModalCargaMasivaV2(errores []cargamasiva.ErrorFila, errorGeneral string) {
+	@v2.ModalV2("Carga Masiva de Registros (CSV)") {
+		<div class="space-y-6">
+			<!-- Banner de Ayuda y Descarga de Plantilla -->
+			<div class="bg-[var(--surface-arena-20)] border border-[var(--color-arena)] rounded-xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+				<div class="flex items-start gap-3">
+					<span class="material-icons text-[var(--color-guinda)] text-2xl mt-0.5">help_outline</span>
+					<div>
+						<h4 class="text-sm font-bold text-gray-800">Instrucciones de Carga</h4>
+						<p class="text-xs text-gray-600 mt-1">
+							El archivo debe ser formato <strong>CSV</strong> (separado por comas) con los nombres de columnas requeridos.
+						</p>
+					</div>
+				</div>
+				<a
+					href="/crud/carga-masiva/plantilla"
+					download="plantilla_crud_ejemplo.csv"
+					class="inline-flex items-center gap-2 px-4 py-2 bg-[var(--color-guinda)] text-white text-xs font-bold rounded-lg hover:brightness-110 shadow-sm transition-all whitespace-nowrap self-start md:self-auto"
+				>
+					<span class="material-icons text-sm">download</span>
+					Descargar Plantilla CSV
+				</a>
+			</div>
+
+			<!-- Errores Generales (ej. encabezados faltantes o archivo vacío) -->
+			if errorGeneral != "" {
+				<div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-xl">
+					<div class="flex items-center gap-2">
+						<span class="material-icons text-red-500 text-lg">error</span>
+						<p class="text-xs font-bold text-red-700">{ errorGeneral }</p>
+					</div>
+				</div>
+			}
+
+			<!-- Tabla de Errores por Fila -->
+			if len(errores) > 0 {
+				<div class="space-y-2">
+					<div class="flex items-center justify-between">
+						<h5 class="text-xs font-bold text-red-700 uppercase tracking-wider flex items-center gap-1">
+							<span class="material-icons text-sm">warning</span>
+							Se encontraron { strconv.Itoa(len(errores)) } errores en el archivo
+						</h5>
+						<span class="text-[11px] text-gray-500">Corrija las líneas indicadas y vuelva a subir el archivo</span>
+					</div>
+					<div class="max-h-56 overflow-y-auto border border-red-200 rounded-xl bg-red-50/30">
+						<table class="w-full text-left text-xs border-collapse">
+							<thead class="bg-red-100 text-red-900 font-bold sticky top-0">
+								<tr>
+									<th class="p-2.5 text-center w-16">Fila</th>
+									<th class="p-2.5 w-32">Columna</th>
+									<th class="p-2.5 w-32">Valor</th>
+									<th class="p-2.5">Detalle del Error</th>
+								</tr>
+							</thead>
+							<tbody class="divide-y divide-red-100 text-gray-700">
+								for _, errFila := range errores {
+									<tr class="hover:bg-red-50/60">
+										<td class="p-2.5 text-center font-bold text-red-600">{ strconv.Itoa(errFila.Fila) }</td>
+										<td class="p-2.5 font-semibold text-gray-800">{ errFila.Columna }</td>
+										<td class="p-2.5 font-mono text-[11px] text-gray-600 truncate max-w-[120px]" title={ errFila.Valor }>
+											if errFila.Valor != "" {
+												{ errFila.Valor }
+											} else {
+												<span class="italic text-gray-400">&lt;vacío&gt;</span>
+											}
+										</td>
+										<td class="p-2.5 text-red-600">{ errFila.Mensaje }</td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			}
+
+			<!-- Formulario de Subida -->
+			<form
+				hx-post="/crud/carga-masiva"
+				hx-target="#modal"
+				hx-swap="innerHTML"
+				hx-encoding="multipart/form-data"
+				enctype="multipart/form-data"
+				class="space-y-6"
+			>
+				<div>
+					<label class="block text-xs font-bold text-[var(--color-guinda)] uppercase tracking-wider mb-2">
+						Seleccionar archivo CSV *
+					</label>
+					<input
+						type="file"
+						name="archivo"
+						accept=".csv,text/csv"
+						required
+						class="w-full p-3 border-2 border-dashed border-[var(--color-arena)] rounded-xl text-xs text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-[var(--color-naranja)] file:text-white hover:file:brightness-110 cursor-pointer bg-[var(--surface-arena-20)]"
+					/>
+				</div>
+
+				<div class="pt-4 flex justify-end gap-4 border-t border-[var(--color-arena)]">
+					<button
+						type="button"
+						@click="active = false; setTimeout(() => { document.getElementById('modal').innerHTML = '' }, 150)"
+						class="px-6 py-2.5 text-xs font-bold text-gray-500 hover:text-[var(--color-guinda)] uppercase tracking-widest transition-colors"
+					>
+						Cancelar
+					</button>
+					<button
+						type="submit"
+						class="bg-[var(--color-naranja)] px-8 py-2.5 text-xs font-black text-white uppercase tracking-widest hover:brightness-110 transition-all shadow-lg rounded-lg flex items-center gap-2"
+					>
+						<span class="material-icons text-base">cloud_upload</span>
+						Subir y Procesar
+					</button>
+				</div>
+			</form>
+		</div>
+	}
+}

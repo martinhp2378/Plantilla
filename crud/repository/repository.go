@@ -176,6 +176,59 @@ func (r *CrudRepository) CrearCrud(ctx context.Context, c crud.Crud) error {
 	})
 }
 
+func (r *CrudRepository) CrearCrudMasivo(ctx context.Context, items []crud.Crud) error {
+	if len(items) == 0 {
+		return nil
+	}
+
+	return r.db.Tenant.Write(ctx, func(tx pgx.Tx) error {
+		for _, c := range items {
+			id := c.Id
+			if id == uuid.Nil {
+				newID, err := uuid.NewV7()
+				if err != nil {
+					return fmt.Errorf("CrearCrudMasivo: error generando UUID: %w", err)
+				}
+				id = newID
+			}
+
+			fechaHoraVal := c.FechaHora
+			if fechaHoraVal == "" {
+				fechaHoraVal = c.Fecha + "T" + c.Hora + ":00"
+			}
+
+			razonI := c.Razon_i
+			if razonI == "" {
+				razonI = "Carga Masiva CSV"
+			}
+
+			var returnedID uuid.UUID
+			err := tx.QueryRow(ctx, InsertCrud,
+				id,
+				c.TextoCorto,
+				c.TextoLargo,
+				c.Entero,
+				c.Decimal,
+				c.Booleano,
+				c.Fecha,
+				c.Hora,
+				fechaHoraVal,
+				c.Seleccion,
+				c.Correo,
+				c.Telefono,
+				c.URL,
+				c.Color,
+				razonI,
+			).Scan(&returnedID)
+
+			if err != nil {
+				return fmt.Errorf("CrearCrudMasivo: error al insertar fila (id: %s): %w", id, err)
+			}
+		}
+		return nil
+	})
+}
+
 func (r *CrudRepository) ActualizarCrud(ctx context.Context, c crud.Crud) error {
 	fechaHoraVal := c.FechaHora
 	if fechaHoraVal == "" {

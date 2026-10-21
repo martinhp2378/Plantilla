@@ -3,10 +3,12 @@ package handler
 import (
 	"PlantillaInstitucional/crud"
 	"PlantillaInstitucional/pagination"
+	"PlantillaInstitucional/shared/cargamasiva"
 	errores "PlantillaInstitucional/shared/errores"
 	"PlantillaInstitucional/shared/pagina"
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -23,6 +25,9 @@ type CrudHandler interface {
 	SearchTable(w http.ResponseWriter, r *http.Request)
 	ModalCreate(w http.ResponseWriter, r *http.Request)
 	ModalUpdate(w http.ResponseWriter, r *http.Request)
+	ModalCargaMasiva(w http.ResponseWriter, r *http.Request)
+	DescargarPlantillaCSV(w http.ResponseWriter, r *http.Request)
+	CargaMasiva(w http.ResponseWriter, r *http.Request)
 	CloseModal(w http.ResponseWriter, r *http.Request)
 	Create(w http.ResponseWriter, r *http.Request)
 	Update(w http.ResponseWriter, r *http.Request)
@@ -41,6 +46,8 @@ type CrudServiceProvider interface {
 	ObtenerTodos(ctx context.Context) ([]crud.Crud, error)
 	ReportePdf(ctx context.Context) (string, error)
 	ReporteExcel(ctx context.Context) (string, error)
+	GenerarPlantillaCSV() ([]byte, error)
+	CargarMasivo(ctx context.Context, r io.Reader) (*cargamasiva.ResultadoCarga[crud.Crud], error)
 }
 
 type crudHandler struct {
@@ -71,6 +78,9 @@ func (h *crudHandler) RegisterRoutes(r chi.Router) {
 		r.Get("/modales/editar/{id}", h.ModalUpdate)
 		r.Put("/{id}", h.Update)
 		r.Delete("/{id}", h.Delete)
+		r.Get("/modales/carga-masiva", h.ModalCargaMasiva)
+		r.Get("/carga-masiva/plantilla", h.DescargarPlantillaCSV)
+		r.Post("/carga-masiva", h.CargaMasiva)
 
 		r.Route("/reportes", func(r chi.Router) {
 			r.Get("/pdf", h.DownloadPDF)

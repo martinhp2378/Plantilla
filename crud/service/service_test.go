@@ -5,6 +5,7 @@ import (
 	"PlantillaInstitucional/crud/service"
 	"PlantillaInstitucional/pagination"
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/go-playground/validator/v10"
@@ -38,6 +39,13 @@ func (m *mockCrudRepo) ConsultarCrudPorID(ctx context.Context, id uuid.UUID) (*c
 
 func (m *mockCrudRepo) CrearCrud(ctx context.Context, c crud.Crud) error {
 	m.items[c.Id] = c
+	return nil
+}
+
+func (m *mockCrudRepo) CrearCrudMasivo(ctx context.Context, items []crud.Crud) error {
+	for _, c := range items {
+		m.items[c.Id] = c
+	}
 	return nil
 }
 
@@ -127,6 +135,49 @@ func TestCrudServiceCrear(t *testing.T) {
 			if saved.TextoCorto != "Registro Válido" {
 				t.Errorf("expected TextoCorto 'Registro Válido', got '%s'", saved.TextoCorto)
 			}
+		}
+	})
+
+	t.Run("GenerarPlantillaCSV produces valid header and sample row", func(t *testing.T) {
+		bytesCSV, err := svc.GenerarPlantillaCSV()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(bytesCSV) == 0 {
+			t.Fatal("expected non-empty template CSV")
+		}
+	})
+
+	t.Run("CargarMasivo with valid CSV persists records", func(t *testing.T) {
+		csvContent := "texto_corto,texto_largo,entero,decimal,booleano,fecha,hora,seleccion,correo,telefono,url,color\n" +
+			"Masivo 1,Detalle 1,15,199.99,Sí,2026-10-21,12:00,opcion_a,masivo1@issemym.gob.mx,7221111111,https://issemym.gob.mx,#691C32\n" +
+			"Masivo 2,Detalle 2,30,450.50,No,2026-10-22,14:30,opcion_b,masivo2@issemym.gob.mx,7222222222,https://issemym.gob.mx,#10312B\n"
+
+		res, err := svc.CargarMasivo(ctx, strings.NewReader(csvContent))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if !res.EsExitoso() {
+			t.Fatalf("expected successful bulk upload, got errors: %+v", res.Errores)
+		}
+		if res.TotalValidos != 2 {
+			t.Errorf("expected 2 valid items, got %d", res.TotalValidos)
+		}
+	})
+
+	t.Run("CargarMasivo with validation errors returns error list without persisting", func(t *testing.T) {
+		csvContent := "texto_corto,texto_largo,entero,decimal,booleano,fecha,hora,seleccion,correo,telefono,url,color\n" +
+			",Detalle,abc,invalido,no_bool,fecha_mal,hora_mal,opcion_x,email_mal,7221111111,url_mal,color_mal\n"
+
+		res, err := svc.CargarMasivo(ctx, strings.NewReader(csvContent))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if res.EsExitoso() {
+			t.Fatal("expected validation errors, got success")
+		}
+		if len(res.Errores) == 0 {
+			t.Fatal("expected detailed row errors, got 0")
 		}
 	})
 }

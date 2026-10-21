@@ -32,10 +32,11 @@ type DataTableV2Props struct {
 	Size        int
 	Total       int
 
-	// URLs de exportacion
+	// URLs de exportacion y carga masiva
 	PDFExportURL   string
 	ExcelExportURL string
-	ToastURL       string 
+	ToastURL       string
+	UploadURL      string
 }
 
 templ DataTableV2(props DataTableV2Props) {
@@ -77,6 +78,17 @@ templ DataTableV2(props DataTableV2Props) {
 						data-toast-url={ props.ToastURL }
 					>
 						<span class="material-icons text-xl">grid_on</span>
+					</button>
+				}
+				if props.UploadURL != "" {
+					<button 
+						hx-get={ props.UploadURL }
+						hx-target={ props.ModalTarget }
+						hx-swap="innerHTML"
+						title="Carga Masiva (CSV)" 
+						class="w-10 h-10 flex items-center justify-center bg-[#2980B9] text-white rounded-lg shadow-md hover:brightness-110 transition-all active:scale-95"
+					>
+						<span class="material-icons text-xl">upload_file</span>
 					</button>
 				}
 				if props.CreateURL != "" {

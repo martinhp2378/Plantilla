@@ -44,6 +44,7 @@ templ TableV2(criterios pagination.CriteriosPagina[crud.Crud], baseURL string, o
 			PDFExportURL:   rutas.Export.PDF,
 			ExcelExportURL: rutas.Export.Excel,
 			ToastURL:       rutas.Export.Notificacion,
+			UploadURL:      rutas.CargaMasiva.Modal,
 		}
 	}}
 	@v2.DataTableV2(tableProps) {

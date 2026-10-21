@@ -29,7 +29,7 @@ func ModalV2(title string) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"modal-container\" class=\"fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm\" x-data=\"{ active: true }\" x-show=\"active\" @keydown.escape.window=\"active = false; setTimeout(() => { document.getElementById('modal').innerHTML = '' }, 150)\"><div class=\"bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden border border-[var(--color-arena)]\"><!-- Header Naranja Vibrante --><div class=\"bg-[var(--color-naranja)] px-8 py-5 flex items-center justify-between shadow-lg\"><div class=\"flex items-center gap-3 text-white\"><span class=\"material-icons text-2xl\">edit_note</span><h3 class=\"text-xl font-black uppercase tracking-tight\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"modal-container\" class=\"fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-black/60 backdrop-blur-sm overflow-y-auto\" x-data=\"{ active: true }\" x-show=\"active\" @keydown.escape.window=\"active = false; setTimeout(() => { document.getElementById('modal').innerHTML = '' }, 150)\"><div class=\"bg-white rounded-2xl shadow-2xl w-full max-w-4xl my-auto flex flex-col max-h-[92vh] overflow-hidden border border-[var(--color-arena)]\"><!-- Header Naranja Vibrante Fijo --><div class=\"bg-[var(--color-naranja)] px-8 py-5 flex items-center justify-between shadow-lg shrink-0\"><div class=\"flex items-center gap-3 text-white\"><span class=\"material-icons text-2xl\">edit_note</span><h3 class=\"text-xl font-black uppercase tracking-tight\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -42,7 +42,7 @@ func ModalV2(title string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</h3></div><button @click=\"active = false; setTimeout(() => { document.getElementById('modal').innerHTML = '' }, 150)\" class=\"w-10 h-10 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors\"><span class=\"material-icons\">close</span></button></div><!-- Body del Modal (Fragmento Flexible) --><div class=\"p-10\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</h3></div><button @click=\"active = false; setTimeout(() => { document.getElementById('modal').innerHTML = '' }, 150)\" class=\"w-10 h-10 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors\"><span class=\"material-icons\">close</span></button></div><!-- Body del Modal (Scroll Interno Responsivo) --><div class=\"p-6 md:p-10 overflow-y-auto flex-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

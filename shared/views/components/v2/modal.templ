@@ -3,14 +3,14 @@ package v2
 templ ModalV2(title string) {
 	<div
 		id="modal-container"
-		class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+		class="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-black/60 backdrop-blur-sm overflow-y-auto"
 		x-data="{ active: true }"
 		x-show="active"
 		@keydown.escape.window="active = false; setTimeout(() => { document.getElementById('modal').innerHTML = '' }, 150)"
 	>
-		<div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden border border-[var(--color-arena)]">
-			<!-- Header Naranja Vibrante -->
-			<div class="bg-[var(--color-naranja)] px-8 py-5 flex items-center justify-between shadow-lg">
+		<div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl my-auto flex flex-col max-h-[92vh] overflow-hidden border border-[var(--color-arena)]">
+			<!-- Header Naranja Vibrante Fijo -->
+			<div class="bg-[var(--color-naranja)] px-8 py-5 flex items-center justify-between shadow-lg shrink-0">
 				<div class="flex items-center gap-3 text-white">
 					<span class="material-icons text-2xl">edit_note</span>
 					<h3 class="text-xl font-black uppercase tracking-tight">{ title }</h3>
@@ -23,8 +23,8 @@ templ ModalV2(title string) {
 				</button>
 			</div>
 
-			<!-- Body del Modal (Fragmento Flexible) -->
-			<div class="p-10">
+			<!-- Body del Modal (Scroll Interno Responsivo) -->
+			<div class="p-6 md:p-10 overflow-y-auto flex-1">
 				{ children... }
 			</div>
 		</div>

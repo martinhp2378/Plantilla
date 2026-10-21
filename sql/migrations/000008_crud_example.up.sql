@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS institucion.crud (
     telefono    VARCHAR(20),
     url         VARCHAR(255),
     color       VARCHAR(7) DEFAULT '#691C32',
-    tenant_id   UUID DEFAULT NULLIF(current_setting('app.tenant_id', true), '')::UUID,
+    tenant_id   UUID,
     razon_i     VARCHAR(40),
     razon_m     VARCHAR(40),
     fecha_i     TIMESTAMPTZ DEFAULT NOW(),

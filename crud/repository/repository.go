@@ -34,6 +34,10 @@ var (
 	colsFecha = map[string]bool{
 		"fecha": true,
 	}
+	colsTextoCast = map[string]bool{
+		"decimal": true,
+		"hora":    true,
+	}
 	colsOrden = map[string]bool{
 		"id":          true,
 		"texto_corto": true,
@@ -56,6 +60,7 @@ func (r *CrudRepository) ConsultarCrud(ctx context.Context, criterios pagination
 		UUID:      colsUUID,
 		Fecha:     colsFecha,
 		Boolean:   colsBoolean,
+		TextoCast: colsTextoCast,
 	}
 	filtros, args := shared.BuildDynamicWhere(criterios.FilteredBy, filterCfg, "c")
 	whereClause := ""

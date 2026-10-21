@@ -22,6 +22,7 @@ type FilterConfig struct {
 	UUID      map[string]bool
 	Fecha     map[string]bool
 	Boolean   map[string]bool
+	TextoCast map[string]bool // Columnas no-texto (decimal, hora, etc.) filtradas con ILIKE mediante cast a ::text
 }
 
 // BuildDynamicWhere construye las cláusulas WHERE y argumentos para queries dinámicos.
@@ -92,13 +93,15 @@ func BuildDynamicWhere(filtros map[string]any, config FilterConfig, tableAlias s
 					args = append(args, dateRange.End)
 					argID++
 				}
-			} else {
-				// Fallback para igualdad exacta
-				if t, ok := valor.(time.Time); ok && !t.IsZero() {
-					condiciones = append(condiciones, fmt.Sprintf("%s%s = $%d", aliasPrefix, campo, argID))
-					args = append(args, t)
-					argID++
-				}
+			} else if t, ok := valor.(time.Time); ok && !t.IsZero() {
+				condiciones = append(condiciones, fmt.Sprintf("%s%s = $%d", aliasPrefix, campo, argID))
+				args = append(args, t)
+				argID++
+			} else if s, ok := valor.(string); ok && strings.TrimSpace(s) != "" {
+				s = strings.TrimSpace(s)
+				condiciones = append(condiciones, fmt.Sprintf("%s%s::text ILIKE $%d", aliasPrefix, campo, argID))
+				args = append(args, "%"+s+"%")
+				argID++
 			}
 			continue
 		}
@@ -108,6 +111,17 @@ func BuildDynamicWhere(filtros map[string]any, config FilterConfig, tableAlias s
 			if boolVal, ok := ToBool(valor); ok {
 				condiciones = append(condiciones, fmt.Sprintf("%s%s = $%d", aliasPrefix, campo, argID))
 				args = append(args, boolVal)
+				argID++
+			}
+			continue
+		}
+
+		// ILIKE con cast para columnas que no son tipo texto nativo (decimal, hora, etc.)
+		if config.TextoCast[campo] {
+			strVal := strings.TrimSpace(fmt.Sprint(valor))
+			if strVal != "" {
+				condiciones = append(condiciones, fmt.Sprintf("%s%s::text ILIKE $%d", aliasPrefix, campo, argID))
+				args = append(args, "%"+strVal+"%")
 				argID++
 			}
 			continue
@@ -154,7 +168,14 @@ func ToBool(v any) (bool, bool) {
 	case bool:
 		return val, true
 	case string:
-		b, err := strconv.ParseBool(val)
+		s := strings.TrimSpace(strings.ToLower(val))
+		if s == "si" || s == "sí" || s == "true" || s == "1" || s == "t" || s == "verdadero" {
+			return true, true
+		}
+		if s == "no" || s == "false" || s == "0" || s == "f" || s == "falso" {
+			return false, true
+		}
+		b, err := strconv.ParseBool(s)
 		return b, err == nil
 	case int:
 		if val == 1 {

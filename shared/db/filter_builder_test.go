@@ -238,3 +238,27 @@ func TestToBool(t *testing.T) {
 		})
 	}
 }
+
+func TestBuildDynamicWhere_TextoCastAndDateString(t *testing.T) {
+	config := FilterConfig{
+		TextoCast: map[string]bool{"decimal": true, "hora": true},
+		Fecha:     map[string]bool{"fecha": true},
+		Boolean:   map[string]bool{"activo": true},
+	}
+
+	filters := map[string]any{
+		"decimal": "1250",
+		"hora":    "14:30",
+		"fecha":   "2026-10-21",
+		"activo":  "si",
+	}
+
+	conditions, args := BuildDynamicWhere(filters, config, "c")
+
+	if len(conditions) != 4 {
+		t.Fatalf("expected 4 conditions, got %d: %#v", len(conditions), conditions)
+	}
+	if len(args) != 4 {
+		t.Fatalf("expected 4 args, got %d: %#v", len(args), args)
+	}
+}

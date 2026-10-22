@@ -156,10 +156,12 @@ func generateModuleFiles(cfg Config) error {
 		filepath.Join(cfg.Name, "repository", "repository.go"):                tmplRepoMain,
 		filepath.Join(cfg.Name, "service", "types.go"):                        tmplServiceTypes,
 		filepath.Join(cfg.Name, "service", "service.go"):                      tmplServiceMain,
+		filepath.Join(cfg.Name, "service", "reportes.go"):                     tmplServiceReports,
 		filepath.Join(cfg.Name, "handler", "types.go"):                        tmplHandlerTypes,
 		filepath.Join(cfg.Name, "handler", "register.go"):                     tmplHandlerRegister,
 		filepath.Join(cfg.Name, "handler", "crud.go"):                         tmplHandlerCRUD,
 		filepath.Join(cfg.Name, "handler", "views.go"):                        tmplHandlerViews,
+		filepath.Join(cfg.Name, "handler", "files.go"):                        tmplHandlerFiles,
 		filepath.Join(cfg.Name, "view", "components", "table_v2.templ"):       tmplViewTable,
 		filepath.Join(cfg.Name, "view", "components", "form_v2.templ"):        tmplViewForm,
 		filepath.Join(cfg.Name, "view", "layouts", cfg.Name+"_v2.templ"):      tmplViewLayout,
@@ -348,6 +350,12 @@ const (
 		WHERE id = $1
 	` + "`" + `
 
+	SelectAll<<.NameUpper>> = ` + "`" + `
+		SELECT id, nombre, codigo, COALESCE(descripcion, '') as descripcion, is_active, fecha_i, COALESCE(fecha_m, fecha_i) as fecha_m
+		FROM <<.Table>>
+		ORDER BY fecha_i DESC
+	` + "`" + `
+
 	Insert<<.NameUpper>> = ` + "`" + `
 		INSERT INTO <<.Table>> (nombre, codigo, descripcion, is_active, tenant_id, razon_i)
 		VALUES ($1, $2, $3, $4, current_setting('app.tenant_id', true)::uuid, 'Creacion')
@@ -449,6 +457,31 @@ func (r *<<.NameUpper>>Repository) ObtenerPorID(ctx context.Context, id uuid.UUI
 	return row.ToEntity(), nil
 }
 
+func (r *<<.NameUpper>>Repository) ObtenerTodos(ctx context.Context) ([]<<.Name>>.<<.NameUpper>>, error) {
+	var items []<<.Name>>.<<.NameUpper>>
+	err := r.db.Tenant.Read(ctx, func(tx pgx.Tx) error {
+		rows, err := tx.Query(ctx, SelectAll<<.NameUpper>>)
+		if err != nil {
+			return fmt.Errorf("error ejecutando consulta: %w", err)
+		}
+
+		rowsList, err := pgx.CollectRows(rows, pgx.RowToStructByName[Row<<.NameUpper>>])
+		if err != nil {
+			return fmt.Errorf("error mapeando resultados: %w", err)
+		}
+
+		items = make([]<<.Name>>.<<.NameUpper>>, len(rowsList))
+		for i, row := range rowsList {
+			items[i] = row.ToEntity()
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 func (r *<<.NameUpper>>Repository) Crear(ctx context.Context, item <<.Name>>.<<.NameUpper>>) error {
 	return r.db.Tenant.Write(ctx, func(tx pgx.Tx) error {
 		var id uuid.UUID
@@ -492,12 +525,14 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofrs/uuid/v5"
+	"github.com/issemym-repos/archivos"
 	"github.com/issemym-repos/logs"
 )
 
 type <<.NameUpper>>RepositoryProvider interface {
 	Consultar(ctx context.Context, criterios pagination.CriteriosPagina[<<.Name>>.<<.NameUpper>>]) ([]<<.Name>>.<<.NameUpper>>, int, error)
 	ObtenerPorID(ctx context.Context, id uuid.UUID) (<<.Name>>.<<.NameUpper>>, error)
+	ObtenerTodos(ctx context.Context) ([]<<.Name>>.<<.NameUpper>>, error)
 	Crear(ctx context.Context, item <<.Name>>.<<.NameUpper>>) error
 	Actualizar(ctx context.Context, item <<.Name>>.<<.NameUpper>>) error
 	Eliminar(ctx context.Context, id uuid.UUID) error
@@ -509,19 +544,23 @@ type <<.NameUpper>>ServiceProvider interface {
 	Crear(ctx context.Context, item <<.Name>>.<<.NameUpper>>) error
 	Actualizar(ctx context.Context, item <<.Name>>.<<.NameUpper>>) error
 	Eliminar(ctx context.Context, id uuid.UUID) error
+	ReportePdf(ctx context.Context) (string, error)
+	ReporteExcel(ctx context.Context) (string, error)
 }
 
 type <<.NameUpper>>Service struct {
 	repo     <<.NameUpper>>RepositoryProvider
 	validate *validator.Validate
 	logger   *logs.Logger
+	archivos *archivos.ManejadorArchivos
 }
 
-func New<<.NameUpper>>Service(repo <<.NameUpper>>RepositoryProvider, validate *validator.Validate, logger *logs.Logger) *<<.NameUpper>>Service {
+func New<<.NameUpper>>Service(repo <<.NameUpper>>RepositoryProvider, validate *validator.Validate, logger *logs.Logger, archivos *archivos.ManejadorArchivos) *<<.NameUpper>>Service {
 	return &<<.NameUpper>>Service{
 		repo:     repo,
 		validate: validate,
 		logger:   logger,
+		archivos: archivos,
 	}
 }
 `
@@ -572,6 +611,103 @@ func (s *<<.NameUpper>>Service) Eliminar(ctx context.Context, id uuid.UUID) erro
 }
 `
 
+const tmplServiceReports = `package service
+
+import (
+	"PlantillaInstitucional/<<.Name>>"
+	reporte "PlantillaInstitucional/shared/reportes"
+	"context"
+	"fmt"
+)
+
+var (
+	<<.Name>>ReportHeaders = []string{"Nombre", "Código", "Descripción", "Estatus"}
+	<<.Name>>ReportFields  = []string{"Nombre", "Codigo", "Descripcion", "IsActive"}
+)
+
+func (s *<<.NameUpper>>Service) ReportePdf(ctx context.Context) (string, error) {
+	data, err := s.repo.ObtenerTodos(ctx)
+	if err != nil {
+		s.logger.ErrorContext(ctx, "Fallo obteniendo registros para PDF <<.Name>>", err, "op", "ReportePdf")
+		return "", fmt.Errorf("error obteniendo registros: %w", err)
+	}
+	if len(data) == 0 {
+		return "", fmt.Errorf("no hay registros disponibles para exportar")
+	}
+
+	renderFuncs := map[string]func(any) string{
+		"IsActive": func(v any) string {
+			if item, ok := v.(<<.Name>>.<<.NameUpper>>); ok && item.IsActive {
+				return "Activo"
+			}
+			if item, ok := v.(*<<.Name>>.<<.NameUpper>>); ok && item != nil && item.IsActive {
+				return "Activo"
+			}
+			return "Inactivo"
+		},
+	}
+
+	url, err := reporte.GenerarReportePDF(
+		ctx,
+		s.archivos,
+		data,
+		<<.Name>>ReportHeaders,
+		<<.Name>>ReportFields,
+		"reporte_<<.Name>>",
+		"Reporte de <<.PluralUpper>>",
+		renderFuncs,
+		true,
+	)
+	if err != nil {
+		s.logger.ErrorContext(ctx, "Fallo generación PDF <<.Name>>", err, "op", "ReportePdf")
+		return "", fmt.Errorf("error generando PDF: %w", err)
+	}
+
+	return url, nil
+}
+
+func (s *<<.NameUpper>>Service) ReporteExcel(ctx context.Context) (string, error) {
+	data, err := s.repo.ObtenerTodos(ctx)
+	if err != nil {
+		s.logger.ErrorContext(ctx, "Fallo obteniendo registros para Excel <<.Name>>", err, "op", "ReporteExcel")
+		return "", fmt.Errorf("error obteniendo registros: %w", err)
+	}
+	if len(data) == 0 {
+		return "", fmt.Errorf("no hay registros disponibles para exportar")
+	}
+
+	renderFuncs := map[string]func(any) string{
+		"IsActive": func(v any) string {
+			if item, ok := v.(<<.Name>>.<<.NameUpper>>); ok && item.IsActive {
+				return "Activo"
+			}
+			if item, ok := v.(*<<.Name>>.<<.NameUpper>>); ok && item != nil && item.IsActive {
+				return "Activo"
+			}
+			return "Inactivo"
+		},
+	}
+
+	url, err := reporte.GenerarReporteExcel(
+		ctx,
+		s.archivos,
+		data,
+		<<.Name>>ReportHeaders,
+		<<.Name>>ReportFields,
+		"reporte_<<.Name>>",
+		"Reporte de <<.PluralUpper>>",
+		renderFuncs,
+		true,
+	)
+	if err != nil {
+		s.logger.ErrorContext(ctx, "Fallo generación Excel <<.Name>>", err, "op", "ReporteExcel")
+		return "", fmt.Errorf("error generando Excel: %w", err)
+	}
+
+	return url, nil
+}
+`
+
 const tmplHandlerTypes = `package handler
 
 import (
@@ -613,6 +749,11 @@ func (h *<<.NameUpper>>Handler) RegisterRoutes(r chi.Router) {
 		r.Get("/modales/editar/{id}", h.ModalUpdate)
 		r.Put("/{id}", h.Update)
 		r.Delete("/{id}", h.Delete)
+		r.Route("/reportes", func(r chi.Router) {
+			r.Get("/pdf", h.DownloadPDF)
+			r.Get("/excel", h.DownloadExcel)
+			r.Get("/notificacion-exito", h.SuccessFileMessage)
+		})
 	})
 }
 
@@ -647,7 +788,7 @@ import (
 func Register(a *app.App, r chi.Router) {
 	validate := validator.New()
 	repo := repository.New<<.NameUpper>>Repository(a.Pools)
-	svc := service.New<<.NameUpper>>Service(repo, validate, a.Logger)
+	svc := service.New<<.NameUpper>>Service(repo, validate, a.Logger, a.ManejadorArchivos)
 	h := New<<.NameUpper>>Handler(svc, a.Logger, validate)
 	h.RegisterRoutes(r)
 
@@ -808,6 +949,46 @@ func (h *<<.NameUpper>>Handler) MandarErrorModal(ctx context.Context, w http.Res
 }
 `
 
+const tmplHandlerFiles = `package handler
+
+import (
+	shared "PlantillaInstitucional/shared/errores"
+	"PlantillaInstitucional/shared/utils"
+	"PlantillaInstitucional/shared/views/components/compartidos"
+	"net/http"
+)
+
+func (h *<<.NameUpper>>Handler) DownloadPDF(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	url, err := h.svc.ReportePdf(ctx)
+	if err != nil {
+		h.logger.ErrorContext(ctx, "Error al generar PDF de <<.Name>>", err)
+		http.Error(w, shared.TraducirError(err), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, url, http.StatusSeeOther)
+}
+
+func (h *<<.NameUpper>>Handler) DownloadExcel(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	url, err := h.svc.ReporteExcel(ctx)
+	if err != nil {
+		h.logger.ErrorContext(ctx, "Error al generar Excel de <<.Name>>", err)
+		http.Error(w, shared.TraducirError(err), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, url, http.StatusSeeOther)
+}
+
+func (h *<<.NameUpper>>Handler) SuccessFileMessage(w http.ResponseWriter, r *http.Request) {
+	utils.RenderIgnore(r.Context(), w, compartidos.Mensaje("success", shared.MensajeOperacionExitosaArchivoGenerado))
+}
+`
+
 const tmplViewTable = `package components
 
 import (
@@ -841,10 +1022,13 @@ templ TableV2(criterios pagination.CriteriosPagina[<<.Name>>.<<.NameUpper>>], ba
 			ModalTarget: "#modal",
 			OOB:         oob,
 			SortedBy:    criterios.SortedBy,
-			Direction:   criterios.Direction,
-			Page:        criterios.Index,
-			Size:        criterios.Size,
-			Total:       criterios.Count,
+			Direction:      criterios.Direction,
+			Page:           criterios.Index,
+			Size:           criterios.Size,
+			Total:          criterios.Count,
+			PDFExportURL:   rutas.Export.PDF,
+			ExcelExportURL: rutas.Export.Excel,
+			ToastURL:       rutas.Export.Notificacion,
 		}
 	}}
 	@v2.DataTableV2(tableProps) {

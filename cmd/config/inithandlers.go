@@ -7,7 +7,6 @@ import (
 	usuario_handler "PlantillaInstitucional/configuracion/usuario/handler"
 	persona_handler "PlantillaInstitucional/institucion/handler"
 	login_handler "PlantillaInstitucional/login/handlers"
-	miperfil_handler "PlantillaInstitucional/miperfil/handler"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -20,5 +19,4 @@ func InitHandlers(a *app.App) {
 	a.Handlers.Policy = policy_handler.NewPolicyHandler(a.Services.Policy, a.Logger)
 	a.Handlers.Persona = persona_handler.NewPersonaHandler(&a.Services.Persona, a.Logger, validate, a.ManejadorArchivos)
 	a.Handlers.Login = login_handler.NuevoHandlerLogin(a.Repositories.Login, a.Repositories.Login, a.ServicioEmail, a.Logger, a.ConstructorSesion, a.ConstructorSesionJWT)
-	a.Handlers.MiPerfil = miperfil_handler.NewMiPerfilHandler(a.Services.MiPerfil, a.Logger, a.ConstructorSesion)
 }

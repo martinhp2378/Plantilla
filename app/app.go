@@ -16,9 +16,6 @@ import (
 	persona_service "PlantillaInstitucional/institucion/service"
 	login_repo "PlantillaInstitucional/login/db"
 	login_handler "PlantillaInstitucional/login/handlers"
-	miperfil_handler "PlantillaInstitucional/miperfil/handler"
-	miperfil_repo "PlantillaInstitucional/miperfil/repository"
-	miperfil_service "PlantillaInstitucional/miperfil/service"
 	"PlantillaInstitucional/pagination"
 	"PlantillaInstitucional/shared/email"
 	"PlantillaInstitucional/shared/entorno"
@@ -68,7 +65,6 @@ type Handlers struct {
 	Policy    *policy_handler.PolicyHandler
 	Persona   persona_handler.PersonaHandler
 	Login     *login_handler.HandlerLogin
-	MiPerfil  *miperfil_handler.MiPerfilHandler
 }
 
 type PolicyResolver interface {
@@ -87,7 +83,6 @@ type Services struct {
 	Perfil    perfil_service.PerfilServiceProvider
 	Policy    PolicyResolver
 	Persona   persona_service.PersonaService
-	MiPerfil  miperfil_service.ServiceProvider
 }
 
 type Repositories struct {
@@ -97,7 +92,6 @@ type Repositories struct {
 	Policy    *policy_repo.PolicyRepository
 	Persona   *persona_repo.PersonaRepository
 	Login     *login_repo.RepositorioPsql
-	MiPerfil  *miperfil_repo.MiPerfilRepository
 }
 
 func NewApp(ctx context.Context, env *entorno.Env,

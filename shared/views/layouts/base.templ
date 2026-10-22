@@ -146,6 +146,12 @@ templ Base(titulo string) {
 						event.detail.headers['X-CSRF-Token'] = csrfToken;
 					}
 				});
+				document.addEventListener('htmx:beforeOnLoad', (event) => {
+					if (event.detail.xhr.status === 422 || event.detail.xhr.status === 400) {
+						event.detail.shouldSwap = true;
+						event.detail.isError = false;
+					}
+				});
 			</script>
 		</head>
 		<body class="h-full bg-[var(--surface-arena-20)] text-gray-900">

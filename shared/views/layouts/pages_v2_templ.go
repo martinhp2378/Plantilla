@@ -8,9 +8,7 @@ package layouts
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import (
-	"PlantillaInstitucional/shared/entorno"
-)
+import "PlantillaInstitucional/shared/entorno"
 
 func Pagina404() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -100,7 +98,7 @@ func Pagina500() templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(reqId)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/layouts/pages_v2.templ`, Line: 69, Col: 13}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/layouts/pages_v2.templ`, Line: 62, Col: 13}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {

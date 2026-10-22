@@ -133,7 +133,6 @@ templ DownloadButton(capital, plazo float64, ruta, nombtn string) {
 		<a
 			href={ templ.SafeURL(fmt.Sprintf("%s?capital=%.2f&plazo=%.2f", ruta, capital, plazo)) }
 			class="flex gap-2 items-center text-white px-6 py-2 rounded transition-all bg-gradient-to-r from-indigo-500 to-indigo-400 hover:from-indigo-400 hover:to-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#691C32]"
-
 			download="reporte_amortizacion.xlsx"
 		>
 			<span class="material-icons">download</span>

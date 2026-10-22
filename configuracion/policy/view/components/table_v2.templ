@@ -40,7 +40,7 @@ templ TableV2(criterios pagination.CriteriosPagina[policy.Politica], oob bool) {
 	@v2.DataTableV2(props) {
 		for _, p := range criterios.Data {
 			@v2.DataRowV2(v2.DataRowV2Props{
-				Cells: []string{p.Nombre, p.Perfil, p.Recurso, p.Accion, p.PathPrefix, p.Reglas},
+				Cells:       []string{p.Nombre, p.Perfil, p.Recurso, p.Accion, p.PathPrefix, p.Reglas},
 				EditURL:     rutas.GetEditar(p.Nombre),
 				DeleteURL:   rutas.GetBorrar(p.Nombre),
 				Target:      "#tablapoliticas",

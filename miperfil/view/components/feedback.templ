@@ -21,18 +21,17 @@ templ FeedbackMessage(fb miperfil.MensajeFeedback) {
 templ AvatarContainer(imagenURL string, feedback miperfil.MensajeFeedback) {
 	<div id="avatar-container" class="flex flex-col items-center text-center p-6 bg-white rounded-2xl border-2 border-[var(--color-arena)] shadow-sm">
 		<div class="relative group mb-4">
-			<img 
+			<img
 				id="preview-avatar"
-				src={ imagenURL } 
-				alt="Foto de perfil" 
+				src={ imagenURL }
+				alt="Foto de perfil"
 				class="w-32 h-32 rounded-2xl object-cover border-4 border-[var(--surface-arena-20)] shadow-md group-hover:opacity-90 transition-all"
 			/>
 			<div class="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
 				<span class="material-icons text-white text-3xl">photo_camera</span>
 			</div>
 		</div>
-
-		<form 
+		<form
 			id="form-avatar"
 			hx-post="/perfil/imagen"
 			hx-target="#avatar-container"
@@ -40,16 +39,16 @@ templ AvatarContainer(imagenURL string, feedback miperfil.MensajeFeedback) {
 			hx-encoding="multipart/form-data"
 			class="w-full flex flex-col items-center gap-3"
 		>
-			<input 
-				type="file" 
-				id="input-avatar" 
-				name="imagen" 
-				accept="image/png,image/jpeg,image/webp" 
-				class="hidden" 
+			<input
+				type="file"
+				id="input-avatar"
+				name="imagen"
+				accept="image/png,image/jpeg,image/webp"
+				class="hidden"
 				onchange="if(this.files.length > 0) { htmx.trigger('#form-avatar', 'submit'); }"
 			/>
-			<button 
-				type="button" 
+			<button
+				type="button"
 				onclick="document.getElementById('input-avatar').click()"
 				class="px-5 py-2.5 rounded-xl bg-[var(--surface-arena-20)] hover:bg-[var(--color-guinda)] hover:text-white text-[var(--color-guinda)] text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer shadow-xs"
 			>
@@ -60,7 +59,6 @@ templ AvatarContainer(imagenURL string, feedback miperfil.MensajeFeedback) {
 				PNG, JPG o WEBP (Máx. 5MB)
 			</p>
 		</form>
-
 		if feedback.Mensaje != "" {
 			<div class="mt-4 w-full">
 				@FeedbackMessage(feedback)

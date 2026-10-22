@@ -1,8 +1,6 @@
 package layouts
 
-import (
-	"PlantillaInstitucional/shared/entorno"
-)
+import "PlantillaInstitucional/shared/entorno"
 
 templ Pagina404() {
 	@BaseSinNav("Página no encontrada") {
@@ -10,7 +8,6 @@ templ Pagina404() {
 			<!-- Fondo Decorativo -->
 			<div class="absolute top-0 right-0 w-96 h-96 bg-[var(--color-naranja)] opacity-5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
 			<div class="absolute bottom-0 left-0 w-64 h-64 bg-[var(--color-guinda)] opacity-5 rounded-full translate-y-1/2 -translate-x-1/2"></div>
-
 			<div class="max-w-2xl w-full text-center space-y-12 relative z-10">
 				<!-- Código de Error -->
 				<div class="relative inline-block">
@@ -19,7 +16,6 @@ templ Pagina404() {
 						<span class="text-4xl sm:text-6xl font-black text-[var(--color-guinda)] uppercase tracking-widest">Perdido</span>
 					</div>
 				</div>
-
 				<div class="space-y-6">
 					<h1 class="text-3xl sm:text-4xl font-black text-gray-800 uppercase tracking-tighter">
 						Página <span class="text-[var(--color-naranja)]">no encontrada</span>
@@ -28,10 +24,9 @@ templ Pagina404() {
 						Lo sentimos, la ruta solicitada no existe o ha sido movida permanentemente.
 					</p>
 				</div>
-
 				<div class="pt-8">
-					<a 
-						href="/dashboard" 
+					<a
+						href="/dashboard"
 						class="inline-flex items-center gap-4 bg-[var(--color-guinda)] text-white px-10 py-5 rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-2xl hover:brightness-110 hover:-translate-y-1 active:scale-95 transition-all"
 					>
 						<span class="material-icons">dashboard</span>
@@ -49,7 +44,6 @@ templ Pagina500() {
 		<div class="min-h-screen flex items-center justify-center p-6 sm:p-12 bg-[var(--surface-arena-20)] relative overflow-hidden">
 			<!-- Fondo Decorativo -->
 			<div class="absolute top-0 left-0 w-96 h-96 bg-[var(--color-guinda)] opacity-5 rounded-full -translate-y-1/2 -translate-x-1/2"></div>
-			
 			<div class="max-w-2xl w-full text-center space-y-12 relative z-10">
 				<div class="relative inline-block">
 					<h2 class="text-[12rem] sm:text-[16rem] font-black text-white leading-none tracking-tighter drop-shadow-2xl">500</h2>
@@ -57,7 +51,6 @@ templ Pagina500() {
 						<span class="text-4xl sm:text-6xl font-black text-[var(--color-naranja)] uppercase tracking-widest">Oops</span>
 					</div>
 				</div>
-
 				<div class="space-y-6">
 					<h1 class="text-3xl sm:text-4xl font-black text-gray-800 uppercase tracking-tighter">
 						Error <span class="text-[var(--color-guinda)]">Interno</span>
@@ -69,10 +62,9 @@ templ Pagina500() {
 						{ reqId }
 					</div>
 				</div>
-
 				<div class="pt-8">
-					<a 
-						href="/dashboard" 
+					<a
+						href="/dashboard"
 						class="inline-flex items-center gap-4 bg-[var(--color-guinda)] text-white px-10 py-5 rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-2xl hover:brightness-110 transition-all"
 					>
 						<span class="material-icons">refresh</span>
@@ -89,7 +81,6 @@ templ Pagina403() {
 		<div class="min-h-screen flex items-center justify-center p-6 sm:p-12 bg-[var(--surface-arena-20)] relative overflow-hidden">
 			<!-- Fondo Decorativo -->
 			<div class="absolute top-0 right-0 w-96 h-96 bg-[var(--color-guinda)] opacity-5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
-			
 			<div class="max-w-2xl w-full text-center space-y-12 relative z-10">
 				<!-- Código de Error -->
 				<div class="relative inline-block">
@@ -98,7 +89,6 @@ templ Pagina403() {
 						<span class="text-4xl sm:text-6xl font-black text-[var(--color-guinda)] uppercase tracking-widest">Bloqueado</span>
 					</div>
 				</div>
-
 				<div class="space-y-6">
 					<h1 class="text-3xl sm:text-4xl font-black text-gray-800 uppercase tracking-tighter">
 						Acceso <span class="text-[var(--color-naranja)]">restringido</span>
@@ -107,10 +97,9 @@ templ Pagina403() {
 						Lo sentimos, no tenés los permisos necesarios para acceder a este módulo. Si creés que esto es un error, contactá al administrador.
 					</p>
 				</div>
-
 				<div class="pt-8">
-					<a 
-						href="/dashboard" 
+					<a
+						href="/dashboard"
 						class="inline-flex items-center gap-4 bg-[var(--color-guinda)] text-white px-10 py-5 rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-2xl hover:brightness-110 hover:-translate-y-1 active:scale-95 transition-all"
 					>
 						<span class="material-icons">lock_person</span>

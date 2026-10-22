@@ -18,7 +18,7 @@ templ ContenedorBase(titulo, icono, altura string) {
 }
 
 templ CardV2(card components.CardVista) {
-	<div class={ "js-stagger p-6 rounded-xl ring-1 ring-slate-900/5 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 h-full flex flex-col justify-between", card.BgClass, card.BorderClass } >
+	<div class={ "js-stagger p-6 rounded-xl ring-1 ring-slate-900/5 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 h-full flex flex-col justify-between", card.BgClass, card.BorderClass }>
 		<div class="flex items-center justify-between mb-2">
 			<span class={ "text-base font-semibold", card.TextClass }>{ card.Title }</span>
 			<span class={ "material-icons text-xl", card.IconClass }>{ card.Icon }</span>

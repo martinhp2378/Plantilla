@@ -3,9 +3,9 @@ package layouts
 import (
 	"PlantillaInstitucional/dashboard"
 	"PlantillaInstitucional/shared/pagina"
-	"PlantillaInstitucional/shared/views/layouts"
-	"PlantillaInstitucional/shared/views/components/v2"
 	"PlantillaInstitucional/shared/views/components/graficas"
+	"PlantillaInstitucional/shared/views/components/v2"
+	"PlantillaInstitucional/shared/views/layouts"
 )
 
 templ DashboardV2(data dashboard.DashboardData) {
@@ -39,7 +39,6 @@ templ DashboardV2(data dashboard.DashboardData) {
 					</a>
 				</div>
 			</div>
-
 			<!-- Grid de Tarjetas KPI -->
 			<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 				@v2.KPICardV2(v2.KPICardProps{
@@ -71,7 +70,6 @@ templ DashboardV2(data dashboard.DashboardData) {
 					Footer:     "Tiempo promedio: 1.8 hrs",
 				})
 			</div>
-
 			<!-- Grid de Gráficas ECharts -->
 			<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 				@graficas.LineChart(
@@ -89,7 +87,6 @@ templ DashboardV2(data dashboard.DashboardData) {
 					data.PieChartJSON,
 				)
 			</div>
-
 			<!-- Sección de Accesos Rápidos y Estado del Sistema -->
 			<div class="bg-white rounded-2xl border-2 border-[var(--color-arena)] p-6 shadow-sm">
 				<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 pb-4 border-b border-[var(--color-arena)]">

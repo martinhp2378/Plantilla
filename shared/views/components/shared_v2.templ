@@ -1,8 +1,6 @@
 package components
 
-import (
-	"PlantillaInstitucional/shared/sesionutil"
-)
+import "PlantillaInstitucional/shared/sesionutil"
 
 templ MensajesFlash() {
 	<div id="flash-messages" class="hidden">
@@ -51,7 +49,9 @@ templ PiePagina() {
 					<span class="material-icons text-[var(--color-guinda)] text-xl">security</span>
 				</div>
 				<p class="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-tight">
-					Sistema Protegido por Estándares<br/>de Seguridad Institucional
+					Sistema Protegido por Estándares
+					<br/>
+					de Seguridad Institucional
 				</p>
 			</div>
 			<div class="text-center md:text-right">

@@ -725,7 +725,7 @@ func DownloadButton(capital, plazo float64, ruta, nombtn string) templ.Component
 		var templ_7745c5c3_Var41 string
 		templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.JoinStringErrs(nombtn)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/compartidos/formcomponents.templ`, Line: 140, Col: 11}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/compartidos/formcomponents.templ`, Line: 139, Col: 11}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var41))
 		if templ_7745c5c3_Err != nil {
@@ -767,7 +767,7 @@ func TextInputField(name, label, value string, errors map[string]string) templ.C
 		var templ_7745c5c3_Var43 string
 		templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.ResolveAttributeValue(name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/compartidos/formcomponents.templ`, Line: 147, Col: 19}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/compartidos/formcomponents.templ`, Line: 146, Col: 19}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var43)
 		if templ_7745c5c3_Err != nil {
@@ -780,7 +780,7 @@ func TextInputField(name, label, value string, errors map[string]string) templ.C
 		var templ_7745c5c3_Var44 string
 		templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.JoinStringErrs(label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/compartidos/formcomponents.templ`, Line: 147, Col: 105}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/compartidos/formcomponents.templ`, Line: 146, Col: 105}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var44))
 		if templ_7745c5c3_Err != nil {
@@ -793,7 +793,7 @@ func TextInputField(name, label, value string, errors map[string]string) templ.C
 		var templ_7745c5c3_Var45 string
 		templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.ResolveAttributeValue(name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/compartidos/formcomponents.templ`, Line: 150, Col: 12}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/compartidos/formcomponents.templ`, Line: 149, Col: 12}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var45)
 		if templ_7745c5c3_Err != nil {
@@ -806,7 +806,7 @@ func TextInputField(name, label, value string, errors map[string]string) templ.C
 		var templ_7745c5c3_Var46 string
 		templ_7745c5c3_Var46, templ_7745c5c3_Err = templ.ResolveAttributeValue(name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/compartidos/formcomponents.templ`, Line: 151, Col: 14}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/compartidos/formcomponents.templ`, Line: 150, Col: 14}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var46)
 		if templ_7745c5c3_Err != nil {
@@ -819,7 +819,7 @@ func TextInputField(name, label, value string, errors map[string]string) templ.C
 		var templ_7745c5c3_Var47 string
 		templ_7745c5c3_Var47, templ_7745c5c3_Err = templ.ResolveAttributeValue(value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/compartidos/formcomponents.templ`, Line: 152, Col: 16}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/compartidos/formcomponents.templ`, Line: 151, Col: 16}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var47)
 		if templ_7745c5c3_Err != nil {
@@ -837,7 +837,7 @@ func TextInputField(name, label, value string, errors map[string]string) templ.C
 			var templ_7745c5c3_Var48 string
 			templ_7745c5c3_Var48, templ_7745c5c3_Err = templ.JoinStringErrs(errors[name])
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/compartidos/formcomponents.templ`, Line: 157, Col: 63}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/compartidos/formcomponents.templ`, Line: 156, Col: 63}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var48))
 			if templ_7745c5c3_Err != nil {
@@ -884,7 +884,7 @@ func DateInputField(name, label string, value string, errors map[string]string) 
 		var templ_7745c5c3_Var50 string
 		templ_7745c5c3_Var50, templ_7745c5c3_Err = templ.ResolveAttributeValue(name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/compartidos/formcomponents.templ`, Line: 164, Col: 19}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/compartidos/formcomponents.templ`, Line: 163, Col: 19}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var50)
 		if templ_7745c5c3_Err != nil {
@@ -897,7 +897,7 @@ func DateInputField(name, label string, value string, errors map[string]string) 
 		var templ_7745c5c3_Var51 string
 		templ_7745c5c3_Var51, templ_7745c5c3_Err = templ.JoinStringErrs(label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/compartidos/formcomponents.templ`, Line: 164, Col: 105}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/compartidos/formcomponents.templ`, Line: 163, Col: 105}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var51))
 		if templ_7745c5c3_Err != nil {
@@ -910,7 +910,7 @@ func DateInputField(name, label string, value string, errors map[string]string) 
 		var templ_7745c5c3_Var52 string
 		templ_7745c5c3_Var52, templ_7745c5c3_Err = templ.ResolveAttributeValue(name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/compartidos/formcomponents.templ`, Line: 167, Col: 12}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/compartidos/formcomponents.templ`, Line: 166, Col: 12}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var52)
 		if templ_7745c5c3_Err != nil {
@@ -923,7 +923,7 @@ func DateInputField(name, label string, value string, errors map[string]string) 
 		var templ_7745c5c3_Var53 string
 		templ_7745c5c3_Var53, templ_7745c5c3_Err = templ.ResolveAttributeValue(name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/compartidos/formcomponents.templ`, Line: 168, Col: 14}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/compartidos/formcomponents.templ`, Line: 167, Col: 14}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var53)
 		if templ_7745c5c3_Err != nil {
@@ -936,7 +936,7 @@ func DateInputField(name, label string, value string, errors map[string]string) 
 		var templ_7745c5c3_Var54 string
 		templ_7745c5c3_Var54, templ_7745c5c3_Err = templ.ResolveAttributeValue(value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/compartidos/formcomponents.templ`, Line: 169, Col: 16}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/compartidos/formcomponents.templ`, Line: 168, Col: 16}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var54)
 		if templ_7745c5c3_Err != nil {
@@ -954,7 +954,7 @@ func DateInputField(name, label string, value string, errors map[string]string) 
 			var templ_7745c5c3_Var55 string
 			templ_7745c5c3_Var55, templ_7745c5c3_Err = templ.JoinStringErrs(errors[name])
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/compartidos/formcomponents.templ`, Line: 174, Col: 63}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `shared/views/components/compartidos/formcomponents.templ`, Line: 173, Col: 63}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var55))
 			if templ_7745c5c3_Err != nil {

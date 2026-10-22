@@ -2,9 +2,9 @@ package layouts
 
 import (
 	"PlantillaInstitucional/shared/pagina"
+	"PlantillaInstitucional/shared/utils"
 	"PlantillaInstitucional/shared/views/components"
 	"PlantillaInstitucional/shared/views/components/v2"
-	"PlantillaInstitucional/shared/utils"
 )
 
 templ Base(titulo string) {
@@ -15,7 +15,7 @@ templ Base(titulo string) {
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<meta name="description" content="Plantilla ISSEMYM - UI v2"/>
 			<meta name="theme-color" content="#9F2241"/>
-			<meta name="csrf-token" content={ utils.GetCSRFToken(ctx) } />
+			<meta name="csrf-token" content={ utils.GetCSRFToken(ctx) }/>
 			<title>{ titulo }</title>
 			<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
 			<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>

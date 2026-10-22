@@ -41,7 +41,6 @@ templ FormCreateCrudV2(c crud.Crud, errors map[string]string) {
 					Required:    true,
 					Errors:      errors,
 				})
-
 				<!-- Correo Electrónico (EMAIL) -->
 				@v2.InputFieldV2(v2.InputPropsV2{
 					Label:       "Correo Electrónico (EMAIL)",
@@ -52,7 +51,6 @@ templ FormCreateCrudV2(c crud.Crud, errors map[string]string) {
 					Required:    true,
 					Errors:      errors,
 				})
-
 				<!-- Número Entero (INTEGER) -->
 				@v2.InputFieldV2(v2.InputPropsV2{
 					Label:       "Número Entero (INTEGER)",
@@ -63,7 +61,6 @@ templ FormCreateCrudV2(c crud.Crud, errors map[string]string) {
 					Required:    true,
 					Errors:      errors,
 				})
-
 				<!-- Número Decimal (NUMERIC / MONEDA) -->
 				@v2.InputFieldV2(v2.InputPropsV2{
 					Label:       "Número Decimal (NUMERIC)",
@@ -75,7 +72,6 @@ templ FormCreateCrudV2(c crud.Crud, errors map[string]string) {
 					Required:    true,
 					Errors:      errors,
 				})
-
 				<!-- Fecha (DATE) -->
 				@v2.InputFieldV2(v2.InputPropsV2{
 					Label:    "Fecha (DATE)",
@@ -85,7 +81,6 @@ templ FormCreateCrudV2(c crud.Crud, errors map[string]string) {
 					Required: true,
 					Errors:   errors,
 				})
-
 				<!-- Hora (TIME) -->
 				@v2.InputFieldV2(v2.InputPropsV2{
 					Label:    "Hora (TIME)",
@@ -95,7 +90,6 @@ templ FormCreateCrudV2(c crud.Crud, errors map[string]string) {
 					Required: true,
 					Errors:   errors,
 				})
-
 				<!-- Fecha y Hora (TIMESTAMPTZ) -->
 				@v2.InputFieldV2(v2.InputPropsV2{
 					Label:  "Fecha y Hora (TIMESTAMPTZ)",
@@ -104,7 +98,6 @@ templ FormCreateCrudV2(c crud.Crud, errors map[string]string) {
 					Value:  c.FechaHora,
 					Errors: errors,
 				})
-
 				<!-- Menú Desplegable (SELECT / ENUM) -->
 				@v2.SelectFieldV2(v2.SelectProps{
 					Label:         "Selección Desplegable (ENUM)",
@@ -114,7 +107,6 @@ templ FormCreateCrudV2(c crud.Crud, errors map[string]string) {
 					Required:      true,
 					Errors:        errors,
 				})
-
 				<!-- Teléfono (TEL) -->
 				@v2.InputFieldV2(v2.InputPropsV2{
 					Label:       "Teléfono (TEL)",
@@ -124,7 +116,6 @@ templ FormCreateCrudV2(c crud.Crud, errors map[string]string) {
 					Value:       c.Telefono,
 					Errors:      errors,
 				})
-
 				<!-- URL (ENLACE WEB) -->
 				@v2.InputFieldV2(v2.InputPropsV2{
 					Label:       "Enlace Web (URL)",
@@ -134,7 +125,6 @@ templ FormCreateCrudV2(c crud.Crud, errors map[string]string) {
 					Value:       c.URL,
 					Errors:      errors,
 				})
-
 				<!-- Selector de Color (COLOR) -->
 				@v2.InputFieldV2(v2.InputPropsV2{
 					Label:  "Color Distintivo (COLOR)",
@@ -143,7 +133,6 @@ templ FormCreateCrudV2(c crud.Crud, errors map[string]string) {
 					Value:  colorVal,
 					Errors: errors,
 				})
-
 				<!-- Booleano (BOOLEAN / TOGGLE) -->
 				<div class="space-y-2">
 					<div class="px-2">
@@ -165,7 +154,6 @@ templ FormCreateCrudV2(c crud.Crud, errors map[string]string) {
 						</label>
 					</div>
 				</div>
-
 				<!-- Texto Largo (TEXT) -->
 				<div class="md:col-span-2">
 					@v2.TextAreaFieldV2(v2.TextAreaPropsV2{
@@ -177,7 +165,6 @@ templ FormCreateCrudV2(c crud.Crud, errors map[string]string) {
 						Errors:      errors,
 					})
 				</div>
-
 				<!-- Auditoría: Razón de Inserción -->
 				<div class="md:col-span-2">
 					@v2.InputFieldV2(v2.InputPropsV2{
@@ -213,7 +200,6 @@ templ FormUpdateCrudV2(c *crud.Crud, errors map[string]string) {
 					Required: true,
 					Errors:   errors,
 				})
-
 				<!-- Correo Electrónico (EMAIL) -->
 				@v2.InputFieldV2(v2.InputPropsV2{
 					Label:    "Correo Electrónico (EMAIL)",
@@ -223,7 +209,6 @@ templ FormUpdateCrudV2(c *crud.Crud, errors map[string]string) {
 					Required: true,
 					Errors:   errors,
 				})
-
 				<!-- Número Entero (INTEGER) -->
 				@v2.InputFieldV2(v2.InputPropsV2{
 					Label:    "Número Entero (INTEGER)",
@@ -233,7 +218,6 @@ templ FormUpdateCrudV2(c *crud.Crud, errors map[string]string) {
 					Required: true,
 					Errors:   errors,
 				})
-
 				<!-- Número Decimal (NUMERIC) -->
 				@v2.InputFieldV2(v2.InputPropsV2{
 					Label:    "Número Decimal (NUMERIC)",
@@ -244,7 +228,6 @@ templ FormUpdateCrudV2(c *crud.Crud, errors map[string]string) {
 					Required: true,
 					Errors:   errors,
 				})
-
 				<!-- Fecha (DATE) -->
 				@v2.InputFieldV2(v2.InputPropsV2{
 					Label:    "Fecha (DATE)",
@@ -254,7 +237,6 @@ templ FormUpdateCrudV2(c *crud.Crud, errors map[string]string) {
 					Required: true,
 					Errors:   errors,
 				})
-
 				<!-- Hora (TIME) -->
 				@v2.InputFieldV2(v2.InputPropsV2{
 					Label:    "Hora (TIME)",
@@ -264,7 +246,6 @@ templ FormUpdateCrudV2(c *crud.Crud, errors map[string]string) {
 					Required: true,
 					Errors:   errors,
 				})
-
 				<!-- Fecha y Hora (TIMESTAMPTZ) -->
 				@v2.InputFieldV2(v2.InputPropsV2{
 					Label:  "Fecha y Hora (TIMESTAMPTZ)",
@@ -273,7 +254,6 @@ templ FormUpdateCrudV2(c *crud.Crud, errors map[string]string) {
 					Value:  c.FechaHora,
 					Errors: errors,
 				})
-
 				<!-- Menú Desplegable (SELECT / ENUM) -->
 				@v2.SelectFieldV2(v2.SelectProps{
 					Label:         "Selección Desplegable (ENUM)",
@@ -283,7 +263,6 @@ templ FormUpdateCrudV2(c *crud.Crud, errors map[string]string) {
 					Required:      true,
 					Errors:        errors,
 				})
-
 				<!-- Teléfono (TEL) -->
 				@v2.InputFieldV2(v2.InputPropsV2{
 					Label:  "Teléfono (TEL)",
@@ -292,7 +271,6 @@ templ FormUpdateCrudV2(c *crud.Crud, errors map[string]string) {
 					Value:  c.Telefono,
 					Errors: errors,
 				})
-
 				<!-- URL (ENLACE WEB) -->
 				@v2.InputFieldV2(v2.InputPropsV2{
 					Label:  "Enlace Web (URL)",
@@ -301,7 +279,6 @@ templ FormUpdateCrudV2(c *crud.Crud, errors map[string]string) {
 					Value:  c.URL,
 					Errors: errors,
 				})
-
 				<!-- Selector de Color (COLOR) -->
 				@v2.InputFieldV2(v2.InputPropsV2{
 					Label:  "Color Distintivo (COLOR)",
@@ -310,7 +287,6 @@ templ FormUpdateCrudV2(c *crud.Crud, errors map[string]string) {
 					Value:  colorVal,
 					Errors: errors,
 				})
-
 				<!-- Booleano (BOOLEAN / TOGGLE) -->
 				<div class="space-y-2">
 					<div class="px-2">
@@ -332,7 +308,6 @@ templ FormUpdateCrudV2(c *crud.Crud, errors map[string]string) {
 						</label>
 					</div>
 				</div>
-
 				<!-- Texto Largo (TEXT) -->
 				<div class="md:col-span-2">
 					@v2.TextAreaFieldV2(v2.TextAreaPropsV2{
@@ -343,7 +318,6 @@ templ FormUpdateCrudV2(c *crud.Crud, errors map[string]string) {
 						Errors: errors,
 					})
 				</div>
-
 				<!-- Auditoría: Razón de Modificación -->
 				<div class="md:col-span-2">
 					@v2.InputFieldV2(v2.InputPropsV2{
@@ -355,7 +329,6 @@ templ FormUpdateCrudV2(c *crud.Crud, errors map[string]string) {
 						Errors:      errors,
 					})
 				</div>
-
 				<!-- ID Primario (Solo Lectura) -->
 				<div class="md:col-span-2">
 					@v2.InputFieldV2(v2.InputPropsV2{

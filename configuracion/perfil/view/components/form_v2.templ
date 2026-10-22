@@ -11,12 +11,12 @@ templ FormCreatePerfilV2(p perfil.Perfil, errors map[string]string) {
 		<form hx-post="/configuracion/perfiles/" hx-target="#modal" hx-swap="innerHTML" class="space-y-8">
 			<div class="grid grid-cols-1 gap-y-6">
 				@v2.InputFieldV2(v2.InputPropsV2{
-					Label: "Nombre del Perfil",
-					Name: "nombre",
+					Label:       "Nombre del Perfil",
+					Name:        "nombre",
 					Placeholder: "Ej. ADMINISTRADOR",
-					Value: p.Nombre,
-					Required: true,
-					Errors: errors,
+					Value:       p.Nombre,
+					Required:    true,
+					Errors:      errors,
 				})
 			</div>
 			@v2.ModalFooterV2("Guardar Perfil")
@@ -29,11 +29,11 @@ templ FormUpdatePerfilV2(p *perfil.Perfil, errors map[string]string) {
 		<form hx-put={ "/configuracion/perfiles/" + url.PathEscape(p.Nombre) + "/" } hx-target="#modal" hx-swap="innerHTML" class="space-y-8">
 			<div class="grid grid-cols-1 gap-y-6">
 				@v2.InputFieldV2(v2.InputPropsV2{
-					Label: "Nombre del Perfil",
-					Name: "nombre",
-					Value: p.Nombre,
+					Label:    "Nombre del Perfil",
+					Name:     "nombre",
+					Value:    p.Nombre,
 					Required: true,
-					Errors: errors,
+					Errors:   errors,
 				})
 				<input type="hidden" name="nombre_original" value={ p.Nombre }/>
 			</div>

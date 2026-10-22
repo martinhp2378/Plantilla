@@ -1,8 +1,8 @@
 package v2
 
 import (
-	"strconv"
 	"fmt"
+	"strconv"
 )
 
 type TableHeader struct {
@@ -20,17 +20,17 @@ type DataTableV2Props struct {
 	Subtitle    string
 	Headers     []TableHeader
 	CreateURL   string
-	SearchURL   string      // URL para filtros/búsqueda
-	Target      string      // ID del contenedor para swaps
-	ModalTarget string      // ID del modal
-	OOB         bool        // Si es verdadero, añade hx-swap-oob="true"
+	SearchURL   string // URL para filtros/búsqueda
+	Target      string // ID del contenedor para swaps
+	ModalTarget string // ID del modal
+	OOB         bool   // Si es verdadero, añade hx-swap-oob="true"
 
 	// Estado de paginacion/orden
-	SortedBy    string
-	Direction   string
-	Page        int
-	Size        int
-	Total       int
+	SortedBy  string
+	Direction string
+	Page      int
+	Size      int
+	Total     int
 
 	// URLs de exportacion y carga masiva
 	PDFExportURL   string
@@ -40,8 +40,8 @@ type DataTableV2Props struct {
 }
 
 templ DataTableV2(props DataTableV2Props) {
-	<div 
-		id={ props.Target[1:] } 
+	<div
+		id={ props.Target[1:] }
 		if props.OOB {
 			hx-swap-oob="true"
 		}
@@ -49,7 +49,6 @@ templ DataTableV2(props DataTableV2Props) {
 	>
 		<!-- Titulo Seccion -->
 		<h1 class="text-3xl font-bold text-gray-800 tracking-tight">{ props.Title }</h1>
-
 		<!-- Barra de Acciones -->
 		<div class="flex items-center justify-between px-2">
 			<div class="flex items-center gap-3">
@@ -58,10 +57,9 @@ templ DataTableV2(props DataTableV2Props) {
 				</div>
 				<h2 class="text-xl font-bold text-gray-700">{ props.Subtitle }</h2>
 			</div>
-
 			<div class="flex items-center gap-3">
 				if props.PDFExportURL != "" {
-					<button 
+					<button
 						type="button"
 						class="js-export-action w-10 h-10 flex items-center justify-center bg-[#E74C3C] text-white rounded-lg shadow-md hover:brightness-110 transition-all active:scale-95"
 						data-export-url={ props.PDFExportURL }
@@ -71,7 +69,7 @@ templ DataTableV2(props DataTableV2Props) {
 					</button>
 				}
 				if props.ExcelExportURL != "" {
-					<button 
+					<button
 						type="button"
 						class="js-export-action w-10 h-10 flex items-center justify-center bg-[#2ECC71] text-white rounded-lg shadow-md hover:brightness-110 transition-all active:scale-95"
 						data-export-url={ props.ExcelExportURL }
@@ -81,22 +79,22 @@ templ DataTableV2(props DataTableV2Props) {
 					</button>
 				}
 				if props.UploadURL != "" {
-					<button 
+					<button
 						hx-get={ props.UploadURL }
 						hx-target={ props.ModalTarget }
 						hx-swap="innerHTML"
-						title="Carga Masiva (CSV)" 
+						title="Carga Masiva (CSV)"
 						class="w-10 h-10 flex items-center justify-center bg-[#2980B9] text-white rounded-lg shadow-md hover:brightness-110 transition-all active:scale-95"
 					>
 						<span class="material-icons text-xl">upload_file</span>
 					</button>
 				}
 				if props.CreateURL != "" {
-					<button 
+					<button
 						hx-get={ props.CreateURL }
 						hx-target={ props.ModalTarget }
 						hx-swap="innerHTML"
-						title="Agregar nuevo" 
+						title="Agregar nuevo"
 						class="w-10 h-10 flex items-center justify-center bg-[var(--color-guinda)] text-white rounded-lg shadow-md hover:brightness-110 transition-all active:scale-95"
 					>
 						<span class="material-icons text-xl">add</span>
@@ -104,7 +102,6 @@ templ DataTableV2(props DataTableV2Props) {
 				}
 			</div>
 		</div>
-
 		<!-- Card de Tabla con Form de Busqueda -->
 		<div class="bg-white rounded-2xl border-2 border-[var(--color-naranja)] shadow-sm overflow-hidden">
 			<form id="searchForm" onsubmit="return false;" class="overflow-x-auto">
@@ -113,19 +110,22 @@ templ DataTableV2(props DataTableV2Props) {
 				<input type="hidden" name="dir" value={ props.Direction }/>
 				<input type="hidden" name="page" value={ strconv.Itoa(props.Page) }/>
 				<input type="hidden" name="size" value={ strconv.Itoa(props.Size) }/>
-
 				<table class="w-full text-left border-collapse">
 					<thead>
 						<tr class="bg-white border-b-2 border-[var(--color-naranja)]">
 							for _, h := range props.Headers {
-								<th class={ "px-8 py-6 align-top", 
+								<th
+									class={ "px-8 py-6 align-top", 
 									templ.KV("text-center", h.Align == "center"),
 									templ.KV("text-right", h.Align == "right"),
-									templ.KV("text-left", h.Align == "left" || h.Align == "") }>
+									templ.KV("text-left", h.Align == "left" || h.Align == "") }
+								>
 									<div class="flex flex-col gap-3">
-										<div class={ "flex items-center justify-between",
+										<div
+											class={ "flex items-center justify-between",
 											templ.KV("justify-center", h.Align == "center"),
-											templ.KV("justify-end", h.Align == "right") }>
+											templ.KV("justify-end", h.Align == "right") }
+										>
 											if h.Sortable {
 												<a
 													hx-get={ h.SortURL }
@@ -138,9 +138,9 @@ templ DataTableV2(props DataTableV2Props) {
 													<span class="text-xs font-bold text-[var(--color-guinda)] uppercase tracking-wider group-hover:text-[var(--color-naranja)]">{ h.Label }</span>
 													<span class="material-icons text-gray-300 text-sm group-hover:text-[var(--color-naranja)]">
 														if h.SortIcon != "" {
-														  { h.SortIcon }
+															{ h.SortIcon }
 														} else {
-														  swap_vert
+															swap_vert
 														}
 													</span>
 												</a>
@@ -176,22 +176,32 @@ templ DataTableV2(props DataTableV2Props) {
 					</tbody>
 				</table>
 			</form>
-
 			<!-- Footer Paginacion -->
 			<div class="px-10 py-8 bg-white flex items-center justify-between border-t-2 border-[var(--color-naranja)]">
 				{{
 					pageSize := props.Size
-					if pageSize <= 0 { pageSize = 10 }
+					if pageSize <= 0 {
+						pageSize = 10
+					}
 					page := props.Page
-					if page <= 0 { page = 1 }
+					if page <= 0 {
+						page = 1
+					}
 
 					start := (page-1)*pageSize + 1
 					end := page * pageSize
-					if end > props.Total { end = props.Total }
-					if props.Total == 0 { start = 0; end = 0 }
+					if end > props.Total {
+						end = props.Total
+					}
+					if props.Total == 0 {
+						start = 0
+						end = 0
+					}
 
 					totalPages := (props.Total + pageSize - 1) / pageSize
-					if totalPages <= 0 { totalPages = 1 }
+					if totalPages <= 0 {
+						totalPages = 1
+					}
 				}}
 				<p class="text-sm font-medium text-gray-500 italic uppercase">
 					Mostrando { strconv.Itoa(start) } a { strconv.Itoa(end) } de { strconv.Itoa(props.Total) } registros
@@ -217,9 +227,9 @@ type PaginationV2Props struct {
 templ PaginationV2(props PaginationV2Props) {
 	<div class="flex items-center gap-4">
 		<!-- Left Button -->
-		<button 
+		<button
 			if props.Current > 1 {
-				hx-get={ fmt.Sprintf("%s?page=%d", props.BaseURL, props.Current - 1) }
+				hx-get={ fmt.Sprintf("%s?page=%d", props.BaseURL, props.Current-1) }
 				hx-target={ props.Target }
 				hx-include="#searchForm"
 				hx-swap="outerHTML"
@@ -229,7 +239,6 @@ templ PaginationV2(props PaginationV2Props) {
 		>
 			<span class="material-icons text-lg font-bold">chevron_left</span>
 		</button>
-
 		<div class="flex items-center gap-2">
 			for i := 1; i <= props.Total; i++ {
 				<button
@@ -245,11 +254,10 @@ templ PaginationV2(props PaginationV2Props) {
 				</button>
 			}
 		</div>
-
 		<!-- Right Button -->
-		<button 
+		<button
 			if props.Current < props.Total {
-				hx-get={ fmt.Sprintf("%s?page=%d", props.BaseURL, props.Current + 1) }
+				hx-get={ fmt.Sprintf("%s?page=%d", props.BaseURL, props.Current+1) }
 				hx-target={ props.Target }
 				hx-include="#searchForm"
 				hx-swap="outerHTML"
@@ -266,7 +274,7 @@ type DataRowV2Props struct {
 	Cells       []string
 	EditURL     string
 	DeleteURL   string
-	Target      string 
+	Target      string
 	ModalTarget string
 }
 
@@ -279,7 +287,7 @@ templ DataRowV2(props DataRowV2Props) {
 			<div class="flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
 				{ children... }
 				if props.EditURL != "" {
-					<button 
+					<button
 						hx-get={ props.EditURL }
 						hx-target={ props.ModalTarget }
 						hx-swap="innerHTML"
@@ -290,7 +298,7 @@ templ DataRowV2(props DataRowV2Props) {
 					</button>
 				}
 				if props.DeleteURL != "" {
-					<button 
+					<button
 						hx-delete={ props.DeleteURL }
 						hx-target={ props.Target }
 						hx-swap="outerHTML"

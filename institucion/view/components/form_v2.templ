@@ -11,61 +11,60 @@ templ FormCreatePersonaV2(p institucion.Persona, errors map[string]string) {
 		<form hx-post="/institucion/personas/" hx-target="#modal" hx-swap="innerHTML" class="space-y-8">
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
 				@v2.InputFieldV2(v2.InputPropsV2{
-					Label: "Nombre(s)",
-					Name: "nombre",
+					Label:       "Nombre(s)",
+					Name:        "nombre",
 					Placeholder: "Ej. Juan",
-					Value: p.Nombre,
-					Required: true,
-					Errors: errors,
+					Value:       p.Nombre,
+					Required:    true,
+					Errors:      errors,
 				})
 				@v2.InputFieldV2(v2.InputPropsV2{
-					Label: "Primer Apellido",
-					Name: "apellido1",
+					Label:       "Primer Apellido",
+					Name:        "apellido1",
 					Placeholder: "Ej. Pérez",
-					Value: p.Apellido1,
-					Required: true,
-					Errors: errors,
+					Value:       p.Apellido1,
+					Required:    true,
+					Errors:      errors,
 				})
 				@v2.InputFieldV2(v2.InputPropsV2{
-					Label: "Segundo Apellido",
-					Name: "apellido2",
+					Label:       "Segundo Apellido",
+					Name:        "apellido2",
 					Placeholder: "Ej. García",
-					Value: p.Apellido2,
-					Errors: errors,
+					Value:       p.Apellido2,
+					Errors:      errors,
 				})
 				@v2.InputFieldV2(v2.InputPropsV2{
-					Label: "RFC",
-					Name: "rfc",
+					Label:       "RFC",
+					Name:        "rfc",
 					Placeholder: "Ej. PEGJ800101XYZ",
-					Value: p.Rfc,
-					Required: true,
-					Errors: errors,
+					Value:       p.Rfc,
+					Required:    true,
+					Errors:      errors,
 				})
 				@v2.InputFieldV2(v2.InputPropsV2{
-					Label: "CURP",
-					Name: "curp",
+					Label:       "CURP",
+					Name:        "curp",
 					Placeholder: "Ej. PEGJ800101HDFRRN01",
-					Value: p.Curp,
-					Required: true,
-					Errors: errors,
+					Value:       p.Curp,
+					Required:    true,
+					Errors:      errors,
 				})
 				@v2.InputFieldV2(v2.InputPropsV2{
-					Label: "Clave ISSEMYM",
-					Name: "clave_issemym",
+					Label:       "Clave ISSEMYM",
+					Name:        "clave_issemym",
 					Placeholder: "Ej. 123456",
-					Value: p.ClaveIssemym,
-					Required: true,
-					Errors: errors,
+					Value:       p.ClaveIssemym,
+					Required:    true,
+					Errors:      errors,
 				})
-
 				<div class="md:col-span-2">
 					@v2.InputFieldV2(v2.InputPropsV2{
-						Label: "Motivo de Alta",
-						Name: "razon_i",
+						Label:       "Motivo de Alta",
+						Name:        "razon_i",
 						Placeholder: "Ej. Carga inicial de personal",
-						Value: p.Razon_i,
-						Required: true,
-						Errors: errors,
+						Value:       p.Razon_i,
+						Required:    true,
+						Errors:      errors,
 					})
 				</div>
 			</div>
@@ -79,63 +78,61 @@ templ FormUpdatePersonaV2(p *institucion.Persona, errors map[string]string) {
 		<form hx-put={ fmt.Sprintf("/institucion/personas/%s", p.UuidPersona) } hx-target="#modal" hx-swap="innerHTML" class="space-y-8">
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
 				@v2.InputFieldV2(v2.InputPropsV2{
-					Label: "Nombre(s)",
-					Name: "nombre",
-					Value: p.Nombre,
+					Label:    "Nombre(s)",
+					Name:     "nombre",
+					Value:    p.Nombre,
 					Required: true,
+					Errors:   errors,
+				})
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:    "Primer Apellido",
+					Name:     "apellido1",
+					Value:    p.Apellido1,
+					Required: true,
+					Errors:   errors,
+				})
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:  "Segundo Apellido",
+					Name:   "apellido2",
+					Value:  p.Apellido2,
 					Errors: errors,
 				})
 				@v2.InputFieldV2(v2.InputPropsV2{
-					Label: "Primer Apellido",
-					Name: "apellido1",
-					Value: p.Apellido1,
+					Label:    "RFC",
+					Name:     "rfc",
+					Value:    p.Rfc,
 					Required: true,
-					Errors: errors,
+					Errors:   errors,
 				})
 				@v2.InputFieldV2(v2.InputPropsV2{
-					Label: "Segundo Apellido",
-					Name: "apellido2",
-					Value: p.Apellido2,
-					Errors: errors,
+					Label:    "CURP",
+					Name:     "curp",
+					Value:    p.Curp,
+					Required: true,
+					Errors:   errors,
 				})
 				@v2.InputFieldV2(v2.InputPropsV2{
-					Label: "RFC",
-					Name: "rfc",
-					Value: p.Rfc,
+					Label:    "Clave ISSEMYM",
+					Name:     "clave_issemym",
+					Value:    p.ClaveIssemym,
 					Required: true,
-					Errors: errors,
+					Errors:   errors,
 				})
-				@v2.InputFieldV2(v2.InputPropsV2{
-					Label: "CURP",
-					Name: "curp",
-					Value: p.Curp,
-					Required: true,
-					Errors: errors,
-				})
-				@v2.InputFieldV2(v2.InputPropsV2{
-					Label: "Clave ISSEMYM",
-					Name: "clave_issemym",
-					Value: p.ClaveIssemym,
-					Required: true,
-					Errors: errors,
-				})
-
 				<div class="md:col-span-2">
 					@v2.InputFieldV2(v2.InputPropsV2{
-						Label: "Motivo de Modificación",
-						Name: "razon_m",
+						Label:       "Motivo de Modificación",
+						Name:        "razon_m",
 						Placeholder: "Ej. Corrección de CURP",
-						Value: p.Razon_m,
-						Required: true,
-						Errors: errors,
+						Value:       p.Razon_m,
+						Required:    true,
+						Errors:      errors,
 					})
 				</div>
-
 				<div class="md:col-span-2">
 					@v2.InputFieldV2(v2.InputPropsV2{
-						Label: "ID de Identidad",
-						Name: "uuid_display",
-						Value: p.UuidPersona.String(),
+						Label:    "ID de Identidad",
+						Name:     "uuid_display",
+						Value:    p.UuidPersona.String(),
 						Disabled: true,
 					})
 				</div>

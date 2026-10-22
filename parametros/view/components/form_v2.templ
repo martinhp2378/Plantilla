@@ -21,58 +21,54 @@ templ FormCreateParametroV2(p parametros.Parametro, errors map[string]string) {
 					}
 				}}
 				@v2.InputFieldV2(v2.InputPropsV2{
-					Label: "Clave",
-					Name: "clave",
+					Label:       "Clave",
+					Name:        "clave",
 					Placeholder: "Ej. SESION_TIMEOUT",
-					Value: p.Clave,
-					Required: true,
-					Errors: errors,
+					Value:       p.Clave,
+					Required:    true,
+					Errors:      errors,
 				})
 				@v2.InputFieldV2(v2.InputPropsV2{
-					Label: "Valor",
-					Name: "valor",
+					Label:       "Valor",
+					Name:        "valor",
 					Placeholder: "Ej. 3600",
-					Value: p.Valor,
-					Required: true,
-					Errors: errors,
+					Value:       p.Valor,
+					Required:    true,
+					Errors:      errors,
 				})
-				
 				@v2.SelectFieldV2(v2.SelectProps{
-					Label: "Tipo de Dato",
-					Name: "tipo_dato",
-					Options: optsTipo,
+					Label:         "Tipo de Dato",
+					Name:          "tipo_dato",
+					Options:       optsTipo,
 					SelectedValue: p.TipoDato,
-					Required: true,
-					Errors: errors,
+					Required:      true,
+					Errors:        errors,
 				})
-
 				@v2.SelectFieldV2(v2.SelectProps{
-					Label: "Estatus",
-					Name: "activo",
-					Options: convertidores.OptionFromEstatusGenerico(),
+					Label:         "Estatus",
+					Name:          "activo",
+					Options:       convertidores.OptionFromEstatusGenerico(),
 					SelectedValue: convertidores.Traducir(p.IsActive),
-					Required: true,
-					Errors: errors,
+					Required:      true,
+					Errors:        errors,
 				})
-
 				<div class="md:col-span-2">
 					@v2.TextAreaFieldV2(v2.TextAreaPropsV2{
-						Label: "Descripción",
-						Name: "descripcion",
+						Label:       "Descripción",
+						Name:        "descripcion",
 						Placeholder: "Explique el uso de este parámetro",
-						Value: p.Descripcion,
-						Errors: errors,
+						Value:       p.Descripcion,
+						Errors:      errors,
 					})
 				</div>
-
 				<div class="md:col-span-2">
 					@v2.InputFieldV2(v2.InputPropsV2{
-						Label: "Motivo de Creación",
-						Name: "razon_i",
+						Label:       "Motivo de Creación",
+						Name:        "razon_i",
 						Placeholder: "Ej. Configuración inicial",
-						Value: p.RazonI,
-						Required: true,
-						Errors: errors,
+						Value:       p.RazonI,
+						Required:    true,
+						Errors:      errors,
 					})
 				</div>
 			</div>
@@ -94,55 +90,51 @@ templ FormUpdateParametroV2(p *parametros.Parametro, errors map[string]string) {
 					}
 				}}
 				@v2.InputFieldV2(v2.InputPropsV2{
-					Label: "Clave",
-					Name: "clave",
-					Value: p.Clave,
+					Label:    "Clave",
+					Name:     "clave",
+					Value:    p.Clave,
 					Required: true,
-					Errors: errors,
+					Errors:   errors,
 				})
 				@v2.InputFieldV2(v2.InputPropsV2{
-					Label: "Valor",
-					Name: "valor",
-					Value: p.Valor,
+					Label:    "Valor",
+					Name:     "valor",
+					Value:    p.Valor,
 					Required: true,
-					Errors: errors,
+					Errors:   errors,
 				})
-				
 				@v2.SelectFieldV2(v2.SelectProps{
-					Label: "Tipo de Dato",
-					Name: "tipo_dato",
-					Options: optsTipo,
+					Label:         "Tipo de Dato",
+					Name:          "tipo_dato",
+					Options:       optsTipo,
 					SelectedValue: p.TipoDato,
-					Required: true,
-					Errors: errors,
+					Required:      true,
+					Errors:        errors,
 				})
-
 				@v2.SelectFieldV2(v2.SelectProps{
-					Label: "Estatus",
-					Name: "activo",
-					Options: convertidores.OptionFromEstatusGenerico(),
+					Label:         "Estatus",
+					Name:          "activo",
+					Options:       convertidores.OptionFromEstatusGenerico(),
 					SelectedValue: convertidores.Traducir(p.IsActive),
-					Required: true,
-					Errors: errors,
+					Required:      true,
+					Errors:        errors,
 				})
-
 				<div class="md:col-span-2">
 					@v2.TextAreaFieldV2(v2.TextAreaPropsV2{
-						Label: "Descripción",
-						Name: "descripcion",
-						Value: p.Descripcion,
+						Label:  "Descripción",
+						Name:   "descripcion",
+						Value:  p.Descripcion,
 						Errors: errors,
 					})
 				</div>
-
 				<div class="md:col-span-2">
 					@v2.InputFieldV2(v2.InputPropsV2{
-						Label: "Motivo de Modificación",
-						Name: "razon_m",
+						Label:       "Motivo de Modificación",
+						Name:        "razon_m",
 						Placeholder: "Ej. Ajuste de timeout",
-						Value: p.RazonM,
-						Required: true,
-						Errors: errors,
+						Value:       p.RazonM,
+						Required:    true,
+						Errors:      errors,
 					})
 				</div>
 			</div>

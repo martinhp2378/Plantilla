@@ -174,8 +174,8 @@ func TestCambiarImagen(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Unexpected error: %v", err)
 		}
-		if !strings.HasSuffix(name, ".png") || !strings.HasPrefix(name, uID.String()) {
-			t.Errorf("Generated filename unexpected: %s", name)
+		if !strings.HasSuffix(name, ".png") || len(name) > 40 {
+			t.Errorf("Generated filename unexpected or exceeds 40 chars: %s (len: %d)", name, len(name))
 		}
 		if repo.updatedImg != name {
 			t.Errorf("Repository was not updated with filename %s", name)

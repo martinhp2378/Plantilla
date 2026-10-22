@@ -1,6 +1,8 @@
--- Migration 000010: ABAC policies for Mi Perfil
+-- Migration 000010: ABAC policies for Mi Perfil and extend avatar filename
 -- Author: Antigravity
 -- Date: 2026-10-21
+
+ALTER TABLE institucion.persona ALTER COLUMN imagen_perfil TYPE VARCHAR(100);
 
 INSERT INTO sesion.recurso (nombre, descripcion, razon_i)
 VALUES ('mi_perfil', 'Módulo de Perfil de Usuario', 'Mi Perfil ABAC')

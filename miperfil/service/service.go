@@ -105,7 +105,7 @@ func (s *MiPerfilService) CambiarImagen(ctx context.Context, uuidPersona uuid.UU
 	// Reensamblar reader completo
 	fullReader := io.MultiReader(bytes.NewReader(headerBytes), reader)
 
-	nombreArchivo := fmt.Sprintf("%s_%d%s", uuidPersona.String(), time.Now().Unix(), ext)
+	nombreArchivo := fmt.Sprintf("%x_%x%s", uuidPersona.Bytes()[:10], time.Now().Unix(), ext)
 	rutaRelativa := filepath.Join("img", "perfil", nombreArchivo)
 
 	// Guardar mediante ManejadorArchivos si está configurado

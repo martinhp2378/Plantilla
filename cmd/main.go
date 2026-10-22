@@ -1,7 +1,6 @@
 package main
 
 import (
-	proveedor_handler "PlantillaInstitucional/proveedor/handler"
 	"PlantillaInstitucional/app"
 	bd "PlantillaInstitucional/app/db"
 	app_middleware "PlantillaInstitucional/app/middleware"
@@ -214,8 +213,6 @@ func main() {
 		crud_handler.Register(a, r)
 		dashboard_handler.Register(a, r)
 		miperfil_handler.Register(a, r)
-		proveedor_handler.Register(a, r)
-
 	})
 
 	app_middleware.RegistrarHandler404(r)

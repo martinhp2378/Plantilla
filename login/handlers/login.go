@@ -10,6 +10,7 @@ import (
 	errores "PlantillaInstitucional/shared/errores"
 	"PlantillaInstitucional/shared/pagina"
 	"PlantillaInstitucional/shared/sesionutil"
+	"PlantillaInstitucional/shared/tenantcontext"
 	"PlantillaInstitucional/shared/utils"
 
 	"github.com/go-chi/chi/v5"
@@ -94,6 +95,9 @@ func (h *HandlerLogin) HandlePostIngresar(w http.ResponseWriter, r *http.Request
 	datosExtra := make(map[string]any)
 	datosExtra["email"] = email
 	datosExtra[sesionutil.DatoExtraPerfilAplicacion] = datosUsuario.PerfilAplicacion
+	if tc, err := tenantcontext.TenantFromContext(ctx); err == nil && tc.Schema != "" {
+		datosExtra[sesionutil.DatoExtraTenantSchema] = tc.Schema
+	}
 
 	err = sesion.FirmarPersona(datosUsuario.UuidPersona, datosUsuario.PerfilSesion, datosExtra)
 	if err != nil {

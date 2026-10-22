@@ -53,7 +53,8 @@ func PolicyMiddleware(a *app.App) func(http.Handler) http.Handler {
 				if tenantSesion == "" {
 					tenantSesion = "public"
 				}
-				if tenantSesion != tc.Schema {
+				coincide := tenantSesion == tc.Schema || (tc.Schema == "local" && (tenantSesion == "local" || tenantSesion == "public"))
+				if !coincide {
 					a.Logger.WarnContext(r.Context(), "bloqueo por tenant de sesión inválido", "tenant_sesion", tenantSesion, "tenant_request", tc.Schema)
 					http.Error(w, "Acceso denegado: tenant inválido", http.StatusForbidden)
 					return

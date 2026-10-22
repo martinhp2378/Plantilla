@@ -93,6 +93,16 @@ func TestPolicyMiddleware(t *testing.T) {
 			expectedStatus: http.StatusForbidden,
 		},
 		{
+			name:           "Protected route allowed in local environment when session tenant is public",
+			path:           "/dashboard",
+			signedIn:       true,
+			profile:        "admin",
+			allowed:        true,
+			tenantRequest:  "local",
+			tenantSession:  "public",
+			expectedStatus: http.StatusOK,
+		},
+		{
 			name:           "Protected route denied if policy forbids",
 			path:           "/dashboard",
 			signedIn:       true,

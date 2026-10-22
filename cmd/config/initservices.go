@@ -4,9 +4,6 @@ import (
 	"PlantillaInstitucional/app"
 	perfil_service "PlantillaInstitucional/configuracion/perfil/service"
 	policy_service "PlantillaInstitucional/configuracion/policy/service"
-	usuario_events "PlantillaInstitucional/configuracion/usuario/events"
-	usuario_listeners "PlantillaInstitucional/configuracion/usuario/listeners"
-	usuario_service "PlantillaInstitucional/configuracion/usuario/service"
 	persona_repo "PlantillaInstitucional/institucion/repository"
 	persona_service "PlantillaInstitucional/institucion/service"
 	sharedEvents "PlantillaInstitucional/shared/events"
@@ -22,15 +19,8 @@ func InitServices(a *app.App) {
 	a.EventDispatcher = dispatcher
 
 	// 2. Core Services
-	a.Services.Usuario = usuario_service.NewUsuarioService(a.Repositories.Usuario, validate, a.Logger, a.ManejadorArchivos, dispatcher)
 	a.Services.Perfil = perfil_service.NewPerfilService(a.Repositories.Perfil, validate, a.Logger, a.ManejadorArchivos)
 	a.Services.Policy = policy_service.NewService(a.Repositories.Policy)
 	personaRepo := persona_repo.NewPersonaRepository(a.Pools)
 	a.Services.Persona = *persona_service.NewPersonaService(personaRepo, validate, a.Logger, a.ManejadorArchivos)
-
-	// 3. Listeners
-	userEmailListener := usuario_listeners.NewUserEmailListener(a.ServicioEmail)
-
-	// 4. Register Listeners
-	dispatcher.Register(usuario_events.SendUserActivationEvent{}.Name(), userEmailListener)
 }

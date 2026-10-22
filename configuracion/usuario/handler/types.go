@@ -10,7 +10,6 @@ import (
 	"PlantillaInstitucional/pagination"
 	shared "PlantillaInstitucional/shared/errores"
 	sharedEvents "PlantillaInstitucional/shared/events"
-	"PlantillaInstitucional/shared/pagina"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
@@ -60,7 +59,7 @@ func NewUsuarioHandler(svc UsuarioServiceProvider, personaService PersonaService
 // --- Helpers de Parseo de Requests (Privados) ---
 
 func (h *UsuarioHandler) RegisterRoutes(r chi.Router) {
-	rutas := pagina.GlobalRutas.Usuarios
+	rutas := usuario.Rutas
 	r.Route(rutas.Prefix, func(r chi.Router) {
 		r.Get("/", h.Index)
 		r.Get("/tabla", h.SearchTable)

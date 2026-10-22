@@ -8,9 +8,6 @@ import (
 	"PlantillaInstitucional/configuracion/policy"
 	policy_handler "PlantillaInstitucional/configuracion/policy/handler"
 	policy_repo "PlantillaInstitucional/configuracion/policy/repository"
-	usuario_handler "PlantillaInstitucional/configuracion/usuario/handler"
-	usuario_repo "PlantillaInstitucional/configuracion/usuario/repository"
-	usuario_service "PlantillaInstitucional/configuracion/usuario/service"
 	persona_service "PlantillaInstitucional/institucion/service"
 	login_repo "PlantillaInstitucional/login/db"
 	login_handler "PlantillaInstitucional/login/handlers"
@@ -58,10 +55,9 @@ type App struct {
 }
 
 type Handlers struct {
-	Usuario   *usuario_handler.UsuarioHandler
-	Perfil    *perfil_handler.PerfilHandler
-	Policy    *policy_handler.PolicyHandler
-	Login     *login_handler.HandlerLogin
+	Perfil *perfil_handler.PerfilHandler
+	Policy *policy_handler.PolicyHandler
+	Login  *login_handler.HandlerLogin
 }
 
 type PolicyResolver interface {
@@ -76,18 +72,16 @@ type PolicyResolver interface {
 }
 
 type Services struct {
-	Usuario   usuario_service.UsuarioServiceProvider
-	Perfil    perfil_service.PerfilServiceProvider
-	Policy    PolicyResolver
-	Persona   persona_service.PersonaService
+	Perfil  perfil_service.PerfilServiceProvider
+	Policy  PolicyResolver
+	Persona persona_service.PersonaService
 }
 
 type Repositories struct {
-	Tenants   tenants.Repository
-	Usuario   *usuario_repo.UsuarioRepository
-	Perfil    *perfil_repo.PerfilRepository
-	Policy    *policy_repo.PolicyRepository
-	Login     *login_repo.RepositorioPsql
+	Tenants tenants.Repository
+	Perfil  *perfil_repo.PerfilRepository
+	Policy  *policy_repo.PolicyRepository
+	Login   *login_repo.RepositorioPsql
 }
 
 func NewApp(ctx context.Context, env *entorno.Env,

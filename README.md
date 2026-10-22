@@ -86,7 +86,7 @@ make new-module NAME=proveedor
 ```
 
 Parámetros opcionales:
-- `SCHEMA`: esquema de base de datos (por defecto `institucion`).
+- `SCHEMA`: esquema de base de datos (por defecto `sistema`).
 - `TITLE`: título legible para la vista (por defecto capitalizado en plural).
 
 Ejemplo:

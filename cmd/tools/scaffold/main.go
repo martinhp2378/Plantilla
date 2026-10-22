@@ -25,7 +25,7 @@ type Config struct {
 
 func main() {
 	nameFlag := flag.String("name", "", "Module name in singular (e.g. proveedor, articulo)")
-	schemaFlag := flag.String("schema", "institucion", "Database schema (default: institucion)")
+	schemaFlag := flag.String("schema", "sistema", "Database schema (default: sistema)")
 	titleFlag := flag.String("title", "", "Human readable title (default: auto capitalized)")
 	pluralFlag := flag.String("plural", "", "Plural name (default: auto)")
 	noMountFlag := flag.Bool("no-mount", false, "Do not auto-mount in cmd/main.go")

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"regexp"
 	"sync"
 	"time"
 
@@ -166,7 +167,22 @@ func (l *Lifecycle) cleanup(ctx context.Context, item retainedReport) error {
 
 type pgRetentionRepo struct{ pool *pgxpool.Pool }
 
+var uuidRegex = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
+
+func (r *pgRetentionRepo) resolveTenantID(ctx context.Context, tenantID string) string {
+	if uuidRegex.MatchString(tenantID) {
+		return tenantID
+	}
+	var fallbackID string
+	err := r.pool.QueryRow(ctx, `SELECT tenant_id::text FROM institucion.cat_tenants LIMIT 1`).Scan(&fallbackID)
+	if err == nil && fallbackID != "" {
+		return fallbackID
+	}
+	return tenantID
+}
+
 func (r *pgRetentionRepo) tenantTx(ctx context.Context, tenantID string, fn func(pgx.Tx) error) error {
+	tenantID = r.resolveTenantID(ctx, tenantID)
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -182,6 +198,7 @@ func (r *pgRetentionRepo) tenantTx(ctx context.Context, tenantID string, fn func
 }
 
 func (r *pgRetentionRepo) prepare(ctx context.Context, tenantID, path string) (uuid.UUID, error) {
+	tenantID = r.resolveTenantID(ctx, tenantID)
 	id := uuid.Must(uuid.NewV4())
 	err := r.tenantTx(ctx, tenantID, func(tx pgx.Tx) error {
 		// Pending rows reserve five minutes solely for orphan compensation before activation.
@@ -194,6 +211,7 @@ func (r *pgRetentionRepo) prepare(ctx context.Context, tenantID, path string) (u
 }
 
 func (r *pgRetentionRepo) activate(ctx context.Context, tenantID string, id uuid.UUID) error {
+	tenantID = r.resolveTenantID(ctx, tenantID)
 	return r.tenantTx(ctx, tenantID, func(tx pgx.Tx) error {
 		tag, err := tx.Exec(ctx, `UPDATE sistema.reportes_generados SET state='active', expires_at=created_at + INTERVAL '24 hours' WHERE report_id=$1`, id)
 		if err != nil {
@@ -207,6 +225,7 @@ func (r *pgRetentionRepo) activate(ctx context.Context, tenantID string, id uuid
 }
 
 func (r *pgRetentionRepo) remove(ctx context.Context, tenantID string, id uuid.UUID) error {
+	tenantID = r.resolveTenantID(ctx, tenantID)
 	return r.tenantTx(ctx, tenantID, func(tx pgx.Tx) error {
 		_, err := tx.Exec(ctx, `DELETE FROM sistema.reportes_generados WHERE report_id=$1`, id)
 		return err

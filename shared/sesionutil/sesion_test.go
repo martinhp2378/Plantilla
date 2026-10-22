@@ -1,6 +1,69 @@
 package sesionutil
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/issemym-repos/sesiones"
+)
+
+func TestPerfilSesionParaFirmar(t *testing.T) {
+	tests := []struct {
+		name    string
+		perfil  string
+		want    sesiones.Perfil
+		wantErr bool
+	}{
+		{name: "superadmin", perfil: PerfilSuperAdmin, want: sesiones.PerfilSuperAdmin},
+		{name: "admin", perfil: PerfilAdmin, want: sesiones.PerfilMedico},
+		{name: "operativo", perfil: PerfilOperativo, want: sesiones.PerfilRecepcion},
+		{name: "ejecutivo", perfil: PerfilEjecutivo, want: sesiones.PerfilAdminClinica},
+		{name: "anonimo", perfil: PerfilAnonimo, want: sesiones.PerfilAnonimo},
+		{name: "coordinacion", perfil: PerfilCoordinacion, want: sesiones.PerfilAnonimo},
+		{name: "unknown", perfil: "medico", wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := PerfilSesionParaFirmar(tt.perfil)
+			if tt.wantErr {
+				if err == nil {
+					t.Fatalf("expected error")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if got != tt.want {
+				t.Fatalf("PerfilSesionParaFirmar(%q) = %q, want %q", tt.perfil, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPerfilAplicacionDesdeSesion(t *testing.T) {
+	tests := []struct {
+		name   string
+		perfil sesiones.Perfil
+		want   string
+	}{
+		{name: "superadmin", perfil: sesiones.PerfilSuperAdmin, want: PerfilSuperAdmin},
+		{name: "medico alias", perfil: sesiones.PerfilMedico, want: PerfilAdmin},
+		{name: "recepcion alias", perfil: sesiones.PerfilRecepcion, want: PerfilOperativo},
+		{name: "adminclinica alias", perfil: sesiones.PerfilAdminClinica, want: PerfilEjecutivo},
+		{name: "anonimo", perfil: sesiones.PerfilAnonimo, want: PerfilAnonimo},
+		{name: "unknown passthrough", perfil: sesiones.Perfil("externo"), want: "externo"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := PerfilAplicacionDesdeSesion(tt.perfil)
+			if got != tt.want {
+				t.Fatalf("PerfilAplicacionDesdeSesion(%q) = %q, want %q", tt.perfil, got, tt.want)
+			}
+		})
+	}
+}
 
 func TestImagenPerfilValida(t *testing.T) {
 	tests := []struct {

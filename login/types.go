@@ -6,7 +6,9 @@ import (
 )
 
 type DatosSesion struct {
-	UuidPersona uuid.UUID
-	Email       string
-	Perfil      sesiones.Perfil
+	UuidPersona      uuid.UUID
+	Email            string
+	PerfilAplicacion string
+	PerfilSesion     sesiones.Perfil
+	Perfil           sesiones.Perfil
 }

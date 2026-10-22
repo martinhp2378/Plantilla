@@ -8,8 +8,7 @@ import (
 	"PlantillaInstitucional/login"
 	errores "PlantillaInstitucional/shared/errores"
 	pass "PlantillaInstitucional/shared/password"
-
-	"github.com/issemym-repos/sesiones"
+	"PlantillaInstitucional/shared/sesionutil"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -63,9 +62,16 @@ func (r RepositorioPsql) ValidarEmailPassword(ctx context.Context,
 		return nil, errors.Join(errores.ErrCredencialesInvalidas, err)
 	}
 
+	perfilSesion, err := sesionutil.PerfilSesionParaFirmar(row.Perfil)
+	if err != nil {
+		return nil, errors.Join(errores.ErrCredencialesInvalidas, err)
+	}
+
 	return &login.DatosSesion{
-		UuidPersona: row.UuidPersona,
-		Email:       row.Email,
-		Perfil:      sesiones.Perfil(row.Perfil),
+		UuidPersona:      row.UuidPersona,
+		Email:            row.Email,
+		PerfilAplicacion: row.Perfil,
+		PerfilSesion:     perfilSesion,
+		Perfil:           perfilSesion,
 	}, nil
 }

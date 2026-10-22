@@ -19,9 +19,16 @@ var (
 )
 
 func (r *PolicyRepository) RouteAllowed(ctx context.Context, profile string, path string) (bool, error) {
+	return r.RouteAllowedWithMethod(ctx, profile, "*", path)
+}
+
+func (r *PolicyRepository) RouteAllowedWithMethod(ctx context.Context, profile string, method string, path string) (bool, error) {
+	if method == "" {
+		method = "*"
+	}
 	var allowed bool
 	err := r.Tenant.Read(ctx, func(tx pgx.Tx) error {
-		return tx.QueryRow(ctx, routeAllowedQuery, profile, path).Scan(&allowed)
+		return tx.QueryRow(ctx, routeAllowedQuery, profile, method, path).Scan(&allowed)
 	})
 	if err != nil {
 		return false, err
@@ -115,7 +122,7 @@ func (r *PolicyRepository) ObtenerPolitica(ctx context.Context, nombre string) (
 func (r *PolicyRepository) CrearPolitica(ctx context.Context, p policy.Politica) error {
 	return r.Tenant.Write(ctx, func(tx pgx.Tx) error {
 		var nuevo string
-		if err := tx.QueryRow(ctx, insertPolitica, p.Nombre, p.Descripcion, p.Perfil, p.Recurso, p.Accion, p.PathPrefix).Scan(&nuevo); err != nil {
+		if err := tx.QueryRow(ctx, insertPolitica, p.Nombre, p.Descripcion, p.Perfil, p.Recurso, p.Accion, p.Reglas, p.PathPrefix).Scan(&nuevo); err != nil {
 			return fmt.Errorf("CrearPolitica: error al insertar: %w", err)
 		}
 		return nil
@@ -124,7 +131,7 @@ func (r *PolicyRepository) CrearPolitica(ctx context.Context, p policy.Politica)
 
 func (r *PolicyRepository) ActualizarPolitica(ctx context.Context, p policy.Politica, nombreOriginal string) error {
 	return r.Tenant.Write(ctx, func(tx pgx.Tx) error {
-		ct, err := tx.Exec(ctx, updatePolitica, p.Nombre, p.Descripcion, p.Perfil, p.Recurso, p.Accion, p.PathPrefix, nombreOriginal)
+		ct, err := tx.Exec(ctx, updatePolitica, p.Nombre, p.Descripcion, p.Perfil, p.Recurso, p.Accion, p.Reglas, p.PathPrefix, nombreOriginal)
 		if err != nil {
 			return fmt.Errorf("ActualizarPolitica: %w", err)
 		}

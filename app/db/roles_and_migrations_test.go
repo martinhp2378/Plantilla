@@ -253,3 +253,39 @@ func TestDedicatedAdminSchemaMigration(t *testing.T) {
 		t.Fatal("admin schema down migration must reverse the schema move")
 	}
 }
+
+func TestAbacPoliciesAndProfilesMigration(t *testing.T) {
+	upPath := filepath.Join("..", "..", "sql", "migrations", "000009_abac_policies_and_profiles.up.sql")
+	upBytes, err := os.ReadFile(upPath)
+	if err != nil {
+		t.Fatalf("failed to read abac policies up migration: %v", err)
+	}
+	upContent := string(upBytes)
+
+	downPath := filepath.Join("..", "..", "sql", "migrations", "000009_abac_policies_and_profiles.down.sql")
+	downBytes, err := os.ReadFile(downPath)
+	if err != nil {
+		t.Fatalf("failed to read abac policies down migration: %v", err)
+	}
+	downContent := string(downBytes)
+
+	for _, profile := range []string{"superadmin", "admin", "operativo", "ejecutivo", "anonimo", "coordinacion"} {
+		if !strings.Contains(upContent, "'"+profile+"'") {
+			t.Fatalf("up migration must include canonical profile %s", profile)
+		}
+	}
+
+	for _, compat := range []string{"medico", "recepcion", "adminclinica"} {
+		if !strings.Contains(upContent, "'"+compat+"'") {
+			t.Fatalf("up migration must include compatibility alias %s", compat)
+		}
+	}
+
+	if !strings.Contains(upContent, "policy-superadmin-all-routes") {
+		t.Fatal("up migration must define policy-superadmin-all-routes")
+	}
+
+	if !strings.Contains(downContent, "DELETE FROM sesion.politica") {
+		t.Fatal("down migration must delete seeded policies")
+	}
+}

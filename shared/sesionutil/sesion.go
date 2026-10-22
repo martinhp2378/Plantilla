@@ -2,6 +2,7 @@ package sesionutil
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -11,19 +12,68 @@ import (
 
 const SinImagenPerfil = "placeholder.png"
 
+const (
+	PerfilSuperAdmin   = "superadmin"
+	PerfilAdmin        = "admin"
+	PerfilOperativo    = "operativo"
+	PerfilEjecutivo    = "ejecutivo"
+	PerfilAnonimo      = "anonimo"
+	PerfilCoordinacion = "coordinacion"
+
+	DatoExtraPerfilAplicacion = "perfil_app"
+	DatoExtraTenantSchema     = "tenant_schema"
+)
+
+// PerfilSesionParaFirmar maps canonical application profiles to perfiles accepted by sesiones.
+func PerfilSesionParaFirmar(perfilAplicacion string) (sesiones.Perfil, error) {
+	switch perfilAplicacion {
+	case PerfilSuperAdmin:
+		return sesiones.PerfilSuperAdmin, nil
+	case PerfilAdmin:
+		return sesiones.PerfilMedico, nil
+	case PerfilOperativo:
+		return sesiones.PerfilRecepcion, nil
+	case PerfilEjecutivo:
+		return sesiones.PerfilAdminClinica, nil
+	case PerfilAnonimo, PerfilCoordinacion:
+		return sesiones.PerfilAnonimo, nil
+	default:
+		return "", fmt.Errorf("perfil de aplicacion desconocido: %s", perfilAplicacion)
+	}
+}
+
+// PerfilAplicacionDesdeSesion maps perfiles from existing sesiones/JWTs to canonical application profiles.
+func PerfilAplicacionDesdeSesion(perfil sesiones.Perfil) string {
+	switch perfil {
+	case sesiones.PerfilSuperAdmin:
+		return PerfilSuperAdmin
+	case sesiones.PerfilMedico:
+		return PerfilAdmin
+	case sesiones.PerfilRecepcion:
+		return PerfilOperativo
+	case sesiones.PerfilAdminClinica:
+		return PerfilEjecutivo
+	case sesiones.PerfilAnonimo:
+		return PerfilAnonimo
+	default:
+		return string(perfil)
+	}
+}
+
 // Usuario es un tipo de dato que acumula algunos datos comunes entre
 // diferentes tipos de usuario. Se debe de instanciar y agregar a la sesión a
 // la hora de firmar un usuario. Se utiliza en las plantillas templ base.
 type Usuario struct {
-	UuidPersona         string          `json:"uuid_persona"`
-	Nombre              string          `json:"nombre"`
-	Apellido1           string          `json:"apellido1"`
-	Apellido2           string          `json:"apellido2"`
-	Curp                string          `json:"curp"`
-	ClaveIssemym        string          `json:"clave_issemym"`
-	ArchivoImagenPerfil string          `json:"archivo_imagen_perfil"`
-	Email               string          `json:"email"`
-	Perfil              sesiones.Perfil `json:"perfil"`
+	UuidPersona         string `json:"uuid_persona"`
+	Nombre              string `json:"nombre"`
+	Apellido1           string `json:"apellido1"`
+	Apellido2           string `json:"apellido2"`
+	Curp                string `json:"curp"`
+	ClaveIssemym        string `json:"clave_issemym"`
+	ArchivoImagenPerfil string `json:"archivo_imagen_perfil"`
+	Email               string `json:"email"`
+	Perfil              string `json:"perfil"`
+	TenantSchema        string `json:"tenant_schema"`
 }
 
 func ImagenPerfilValida(nombreImagenPerfil string) string {

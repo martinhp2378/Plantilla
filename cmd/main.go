@@ -5,9 +5,11 @@ import (
 	bd "PlantillaInstitucional/app/db"
 	app_middleware "PlantillaInstitucional/app/middleware"
 	"PlantillaInstitucional/cmd/config"
+	"PlantillaInstitucional/institucion"
 	"PlantillaInstitucional/shared/email"
 	"PlantillaInstitucional/shared/entorno"
 	reportes "PlantillaInstitucional/shared/reportes"
+	"PlantillaInstitucional/shared/sesionutil"
 	"context"
 	"log/slog"
 	"net/http"
@@ -95,8 +97,34 @@ func main() {
 	var constructorSesion *sesiones.ConstructorSesion
 	var constructorSesionJWT *sesiones.ConstructorSesionJWT
 	regTipos := sesiones.NuevoRegistroTipos()
-	fnObtenerDatos := func(u uuid.UUID, p sesiones.Perfil, m ...map[string]any) []any {
-		return []any{}
+	_, _ = regTipos.RegistrarTipo(institucion.Persona{})
+	_, _ = regTipos.RegistrarTipo(sesionutil.Usuario{})
+
+	fnObtenerDatos := func(uuidPersona uuid.UUID, perfil sesiones.Perfil, datosExtra ...map[string]any) []any {
+		datos := make([]any, 0)
+		email := ""
+		perfilAplicacion := sesionutil.PerfilAplicacionDesdeSesion(perfil)
+		tenantSchema := "public"
+		if len(datosExtra) > 0 {
+			if emailExtra, ok := datosExtra[0]["email"].(string); ok {
+				email = emailExtra
+			}
+			if perfilExtra, ok := datosExtra[0][sesionutil.DatoExtraPerfilAplicacion].(string); ok && perfilExtra != "" {
+				perfilAplicacion = perfilExtra
+			}
+			if tenantExtra, ok := datosExtra[0][sesionutil.DatoExtraTenantSchema].(string); ok && tenantExtra != "" {
+				tenantSchema = tenantExtra
+			}
+		}
+
+		datos = append(datos, sesionutil.Usuario{
+			UuidPersona:  uuidPersona.String(),
+			Email:        email,
+			Perfil:       perfilAplicacion,
+			TenantSchema: tenantSchema,
+		})
+
+		return datos
 	}
 	constructorSesion = sesiones.NuevoConstructor(pqWrite, configSesiones(env), regTipos, fnObtenerDatos)
 	constructorSesionJWT, _ = sesiones.NuevoConstructorJWT(pqWrite, configSesiones(env), configJWT(env), regTipos, fnObtenerDatos)

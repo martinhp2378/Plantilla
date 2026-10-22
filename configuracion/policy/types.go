@@ -9,6 +9,7 @@ type Politica struct {
 	Recurso     string `db:"recurso" validate:"required"`
 	Accion      string `db:"accion" validate:"required"`
 	PathPrefix  string `db:"path_prefix" validate:"required"`
+	Reglas      string `db:"reglas"`
 }
 
 func (p Politica) ToCriteria(page, size int, sortField, sortDir string) pagination.CriteriosPagina[Politica] {

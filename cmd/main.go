@@ -1,6 +1,7 @@
 package main
 
 import (
+	elver_handler "PlantillaInstitucional/elver/handler"
 	"PlantillaInstitucional/app"
 	bd "PlantillaInstitucional/app/db"
 	app_middleware "PlantillaInstitucional/app/middleware"
@@ -213,6 +214,8 @@ func main() {
 		crud_handler.Register(a, r)
 		dashboard_handler.Register(a, r)
 		miperfil_handler.Register(a, r)
+		elver_handler.Register(a, r)
+
 	})
 
 	app_middleware.RegistrarHandler404(r)

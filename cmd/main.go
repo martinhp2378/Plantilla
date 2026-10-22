@@ -8,6 +8,7 @@ import (
 	crud_handler "PlantillaInstitucional/crud/handler"
 	dashboard_handler "PlantillaInstitucional/dashboard/handler"
 	"PlantillaInstitucional/institucion"
+	persona_handler "PlantillaInstitucional/institucion/handler"
 	miperfil_handler "PlantillaInstitucional/miperfil/handler"
 	parametros_handler "PlantillaInstitucional/parametros/handler"
 	"PlantillaInstitucional/shared/email"
@@ -205,7 +206,7 @@ func main() {
 		a.Handlers.Usuario.RegisterRoutes(r)
 		a.Handlers.Perfil.RegisterRoutes(r)
 		a.Handlers.Policy.RegisterRoutes(r)
-		a.Handlers.Persona.RegisterRoutes(r)
+		persona_handler.Register(a, r)
 		parametros_handler.Register(a, r)
 		crud_handler.Register(a, r)
 		dashboard_handler.Register(a, r)

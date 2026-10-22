@@ -11,8 +11,6 @@ import (
 	usuario_handler "PlantillaInstitucional/configuracion/usuario/handler"
 	usuario_repo "PlantillaInstitucional/configuracion/usuario/repository"
 	usuario_service "PlantillaInstitucional/configuracion/usuario/service"
-	persona_handler "PlantillaInstitucional/institucion/handler"
-	persona_repo "PlantillaInstitucional/institucion/repository"
 	persona_service "PlantillaInstitucional/institucion/service"
 	login_repo "PlantillaInstitucional/login/db"
 	login_handler "PlantillaInstitucional/login/handlers"
@@ -63,7 +61,6 @@ type Handlers struct {
 	Usuario   *usuario_handler.UsuarioHandler
 	Perfil    *perfil_handler.PerfilHandler
 	Policy    *policy_handler.PolicyHandler
-	Persona   persona_handler.PersonaHandler
 	Login     *login_handler.HandlerLogin
 }
 
@@ -90,7 +87,6 @@ type Repositories struct {
 	Usuario   *usuario_repo.UsuarioRepository
 	Perfil    *perfil_repo.PerfilRepository
 	Policy    *policy_repo.PolicyRepository
-	Persona   *persona_repo.PersonaRepository
 	Login     *login_repo.RepositorioPsql
 }
 

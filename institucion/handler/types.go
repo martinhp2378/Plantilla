@@ -4,7 +4,6 @@ import (
 	"PlantillaInstitucional/institucion"
 	"PlantillaInstitucional/pagination"
 	errores "PlantillaInstitucional/shared/errores"
-	"PlantillaInstitucional/shared/pagina"
 	"context"
 	"fmt"
 	"net/http"
@@ -73,7 +72,7 @@ func NewPersonaHandler(service PersonaServiceProvider, logger *logs.Logger, vali
 // --- Helpers de Parseo de Requests (Privados) ---
 
 func (h *personaHandler) RegisterRoutes(r chi.Router) {
-	rutas := pagina.GlobalRutas.Personas
+	rutas := institucion.Rutas
 	r.Route(rutas.Prefix, func(r chi.Router) {
 		r.Get("/", h.Index)
 		r.Get("/tabla", h.SearchTable)

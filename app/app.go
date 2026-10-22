@@ -3,7 +3,6 @@ package app
 import (
 	bd "PlantillaInstitucional/app/db"
 	"PlantillaInstitucional/configuracion/policy"
-	policy_handler "PlantillaInstitucional/configuracion/policy/handler"
 	policy_repo "PlantillaInstitucional/configuracion/policy/repository"
 	persona_service "PlantillaInstitucional/institucion/service"
 	login_repo "PlantillaInstitucional/login/db"
@@ -52,8 +51,7 @@ type App struct {
 }
 
 type Handlers struct {
-	Policy *policy_handler.PolicyHandler
-	Login  *login_handler.HandlerLogin
+	Login *login_handler.HandlerLogin
 }
 
 type PolicyResolver interface {

@@ -46,6 +46,7 @@ func TableV2(criterios pagination.CriteriosPagina[policy.Politica], oob bool) te
 			{Label: "Recurso", Key: "recurso", Sortable: true, SortURL: buildSortURL("recurso"), SortIcon: criterios.SortIcon("recurso"), FilterVal: criterios.GetFilterValue("recurso")},
 			{Label: "Acción", Key: "accion", Sortable: true, SortURL: buildSortURL("accion"), SortIcon: criterios.SortIcon("accion"), FilterVal: criterios.GetFilterValue("accion")},
 			{Label: "Path Prefix", Key: "path_prefix", Sortable: false},
+			{Label: "Reglas JSONB", Key: "reglas", Sortable: false},
 		}
 		props := v2.DataTableV2Props{
 			Title:       "Políticas ABAC",
@@ -76,7 +77,7 @@ func TableV2(criterios pagination.CriteriosPagina[policy.Politica], oob bool) te
 			ctx = templ.InitializeContext(ctx)
 			for _, p := range criterios.Data {
 				templ_7745c5c3_Err = v2.DataRowV2(v2.DataRowV2Props{
-					Cells:       []string{p.Nombre, p.Perfil, p.Recurso, p.Accion, p.PathPrefix},
+					Cells:       []string{p.Nombre, p.Perfil, p.Recurso, p.Accion, p.PathPrefix, p.Reglas},
 					EditURL:     rutas.GetEditar(p.Nombre),
 					DeleteURL:   rutas.GetBorrar(p.Nombre),
 					Target:      "#tablapoliticas",

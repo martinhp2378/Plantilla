@@ -4,6 +4,7 @@ import (
 	"PlantillaInstitucional/app"
 	"PlantillaInstitucional/shared/pagina"
 	"PlantillaInstitucional/shared/sesionutil"
+	"PlantillaInstitucional/shared/tenantcontext"
 	"PlantillaInstitucional/shared/utils"
 	"PlantillaInstitucional/shared/views/layouts"
 	"context"
@@ -45,8 +46,21 @@ func PolicyMiddleware(a *app.App) func(http.Handler) http.Handler {
 				return
 			}
 
-			// 3. Validar Política
+			// Validar Tenant de la sesión contra el request
 			u := sesionutil.UsuarioDeContexto(r.Context())
+			if tc, err := tenantcontext.TenantFromContext(r.Context()); err == nil && tc.Schema != "" {
+				tenantSesion := u.TenantSchema
+				if tenantSesion == "" {
+					tenantSesion = "public"
+				}
+				if tenantSesion != tc.Schema {
+					a.Logger.WarnContext(r.Context(), "bloqueo por tenant de sesión inválido", "tenant_sesion", tenantSesion, "tenant_request", tc.Schema)
+					http.Error(w, "Acceso denegado: tenant inválido", http.StatusForbidden)
+					return
+				}
+			}
+
+			// 3. Validar Política
 			perfil := u.Perfil
 			if perfil == "" {
 				perfil = string(ses.Perfil)

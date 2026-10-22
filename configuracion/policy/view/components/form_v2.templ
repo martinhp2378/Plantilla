@@ -48,4 +48,5 @@ templ formFields(p policy.Politica, errors map[string]string, perfiles []string,
 		@v2.SelectFieldV2(v2.SelectProps{Label: "Acción", Name: "accion", Options: accionOpts, SelectedValue: p.Accion, Required: true, Errors: errors})
 	</div>
 	@v2.TextAreaFieldV2(v2.TextAreaPropsV2{Label: "Descripción", Name: "descripcion", Value: p.Descripcion, Rows: 3, Errors: errors})
+	@v2.TextAreaFieldV2(v2.TextAreaPropsV2{Label: "Reglas JSONB", Name: "reglas", Value: p.Reglas, Placeholder: `{"path_prefix":"/configuracion","routes":[{"method":"*","prefix":"/configuracion","accion":"consultar"}]}`, Rows: 6, Errors: errors})
 }

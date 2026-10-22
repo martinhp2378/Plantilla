@@ -224,6 +224,10 @@ func formFields(p policy.Politica, errors map[string]string, perfiles []string, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = v2.TextAreaFieldV2(v2.TextAreaPropsV2{Label: "Reglas JSONB", Name: "reglas", Value: p.Reglas, Placeholder: `{"path_prefix":"/configuracion","routes":[{"method":"*","prefix":"/configuracion","accion":"consultar"}]}`, Rows: 6, Errors: errors}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		return nil
 	})
 }

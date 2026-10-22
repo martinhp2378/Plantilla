@@ -56,6 +56,7 @@ func (h *PolicyHandler) parseForm(r *http.Request) (policy.Politica, error) {
 		Recurso:     r.FormValue("recurso"),
 		Accion:      r.FormValue("accion"),
 		PathPrefix:  r.FormValue("path_prefix"),
+		Reglas:      r.FormValue("reglas"),
 	}, nil
 }
 

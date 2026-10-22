@@ -4,6 +4,7 @@ import (
 	"PlantillaInstitucional/configuracion/policy"
 	"PlantillaInstitucional/pagination"
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -47,6 +48,9 @@ func (s *Service) ObtenerPolitica(ctx context.Context, nombre string) (policy.Po
 }
 
 func (s *Service) CrearPolitica(ctx context.Context, p policy.Politica) error {
+	if err := normalizePolicyRules(&p); err != nil {
+		return err
+	}
 	if err := validatePolicy(p); err != nil {
 		return err
 	}
@@ -56,6 +60,9 @@ func (s *Service) CrearPolitica(ctx context.Context, p policy.Politica) error {
 func (s *Service) ActualizarPolitica(ctx context.Context, p policy.Politica, nombreOriginal string) error {
 	if strings.TrimSpace(nombreOriginal) == "" {
 		return fmt.Errorf("nombre original requerido")
+	}
+	if err := normalizePolicyRules(&p); err != nil {
+		return err
 	}
 	if err := validatePolicy(p); err != nil {
 		return err
@@ -99,5 +106,62 @@ func validatePolicy(p policy.Politica) error {
 	if !strings.HasPrefix(strings.TrimSpace(p.PathPrefix), "/") {
 		return fmt.Errorf("path_prefix debe iniciar con /")
 	}
+	if strings.TrimSpace(p.Reglas) == "" {
+		return fmt.Errorf("reglas JSON requerido")
+	}
+	return nil
+}
+
+func normalizePolicyRules(p *policy.Politica) error {
+	pathPrefix := strings.TrimSpace(p.PathPrefix)
+	rulesText := strings.TrimSpace(p.Reglas)
+	if rulesText == "" {
+		if pathPrefix == "" {
+			return fmt.Errorf("path_prefix requerido")
+		}
+		rules := map[string]any{
+			"path_prefix": pathPrefix,
+			"routes": []map[string]any{
+				{"method": "*", "prefix": pathPrefix, "accion": p.Accion},
+				{"method": "GET", "path": pathPrefix, "accion": "consultar"},
+			},
+		}
+		compact, err := json.Marshal(rules)
+		if err != nil {
+			return fmt.Errorf("error serializando reglas: %w", err)
+		}
+		p.Reglas = string(compact)
+		return nil
+	}
+
+	var rules map[string]any
+	if err := json.Unmarshal([]byte(rulesText), &rules); err != nil {
+		return fmt.Errorf("reglas debe ser JSON válido: %w", err)
+	}
+	if rules == nil {
+		return fmt.Errorf("reglas debe ser un objeto JSON")
+	}
+	if len(rules) == 0 {
+		return fmt.Errorf("reglas JSON no puede estar vacío")
+	}
+
+	if jsonPathPrefix, ok := rules["path_prefix"].(string); ok && strings.TrimSpace(jsonPathPrefix) != "" {
+		pathPrefix = strings.TrimSpace(jsonPathPrefix)
+	} else if pathPrefix != "" {
+		rules["path_prefix"] = pathPrefix
+	} else {
+		return fmt.Errorf("reglas.path_prefix requerido")
+	}
+
+	if !strings.HasPrefix(pathPrefix, "/") {
+		return fmt.Errorf("path_prefix debe iniciar con /")
+	}
+
+	compact, err := json.Marshal(rules)
+	if err != nil {
+		return fmt.Errorf("reglas debe ser JSON válido: %w", err)
+	}
+	p.PathPrefix = pathPrefix
+	p.Reglas = string(compact)
 	return nil
 }

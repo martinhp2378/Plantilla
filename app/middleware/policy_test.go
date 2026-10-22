@@ -9,6 +9,8 @@ import (
 	"PlantillaInstitucional/app"
 	"PlantillaInstitucional/configuracion/policy"
 	"PlantillaInstitucional/pagination"
+	"PlantillaInstitucional/shared/sesionutil"
+	"PlantillaInstitucional/shared/tenantcontext"
 	"github.com/gofrs/uuid/v5"
 	"github.com/issemym-repos/logs"
 	"github.com/issemym-repos/sesiones"
@@ -63,6 +65,8 @@ func TestPolicyMiddleware(t *testing.T) {
 		isHTMX         bool
 		expectedStatus int
 		expectedTarget string
+		tenantRequest  string
+		tenantSession  string
 	}{
 		{
 			name:           "Excluded route allowed without session",
@@ -77,6 +81,16 @@ func TestPolicyMiddleware(t *testing.T) {
 			profile:        "admin",
 			allowed:        true,
 			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "Protected route denied if session tenant mismatches request tenant",
+			path:           "/dashboard",
+			signedIn:       true,
+			profile:        "admin",
+			allowed:        true,
+			tenantRequest:  "tenant_b",
+			tenantSession:  "tenant_a",
+			expectedStatus: http.StatusForbidden,
 		},
 		{
 			name:           "Protected route denied if policy forbids",
@@ -120,15 +134,27 @@ func TestPolicyMiddleware(t *testing.T) {
 			}
 
 			// Mock session
-			ses := &sesiones.Sesion{}
+			regTipos := sesiones.NuevoRegistroTipos()
+			_, _ = regTipos.RegistrarTipo(sesionutil.Usuario{})
+			constructor := sesiones.NuevoConstructor(nil, &sesiones.ConfigSesion{}, regTipos, nil)
+			ses := constructor.NuevaSesion(req)
 			if tt.signedIn {
 				ses.Perfil = sesiones.Perfil(tt.profile)
 				u := uuid.Must(uuid.NewV4())
 				ses.UuidPersona = &u
+				_ = constructor.AgregarInstancia(ses, sesionutil.Usuario{
+					Perfil:       tt.profile,
+					TenantSchema: tt.tenantSession,
+				})
 			} else {
 				ses.Perfil = sesiones.PerfilAnonimo
 			}
 			ctx := context.WithValue(req.Context(), sesiones.LlaveContexto, ses)
+			if tt.tenantRequest != "" {
+				ctx = tenantcontext.WithTenant(ctx, tenantcontext.TenantContext{
+					ID: "tenant-b", Schema: tt.tenantRequest, CanonicalHost: "b.example.test",
+				})
+			}
 			req = req.WithContext(ctx)
 
 			rr := httptest.NewRecorder()

@@ -8,7 +8,6 @@ import (
 	"PlantillaInstitucional/configuracion/policy"
 	policy_handler "PlantillaInstitucional/configuracion/policy/handler"
 	policy_repo "PlantillaInstitucional/configuracion/policy/repository"
-	dashboard_handler "PlantillaInstitucional/dashboard/handler"
 	usuario_handler "PlantillaInstitucional/configuracion/usuario/handler"
 	usuario_repo "PlantillaInstitucional/configuracion/usuario/repository"
 	usuario_service "PlantillaInstitucional/configuracion/usuario/service"
@@ -69,7 +68,6 @@ type Handlers struct {
 	Policy    *policy_handler.PolicyHandler
 	Persona   persona_handler.PersonaHandler
 	Login     *login_handler.HandlerLogin
-	Dashboard *dashboard_handler.DashboardHandler
 	MiPerfil  *miperfil_handler.MiPerfilHandler
 }
 

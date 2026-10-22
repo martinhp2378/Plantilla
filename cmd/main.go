@@ -6,6 +6,7 @@ import (
 	app_middleware "PlantillaInstitucional/app/middleware"
 	"PlantillaInstitucional/cmd/config"
 	crud_handler "PlantillaInstitucional/crud/handler"
+	dashboard_handler "PlantillaInstitucional/dashboard/handler"
 	"PlantillaInstitucional/institucion"
 	parametros_handler "PlantillaInstitucional/parametros/handler"
 	"PlantillaInstitucional/shared/email"
@@ -206,7 +207,7 @@ func main() {
 		a.Handlers.Persona.RegisterRoutes(r)
 		parametros_handler.Register(a, r)
 		crud_handler.Register(a, r)
-		a.Handlers.Dashboard.RegisterRoutes(r)
+		dashboard_handler.Register(a, r)
 		a.Handlers.MiPerfil.RegisterRoutes(r)
 	})
 

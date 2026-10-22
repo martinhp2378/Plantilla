@@ -6,7 +6,6 @@ import (
 
 	"PlantillaInstitucional/dashboard"
 	"PlantillaInstitucional/dashboard/view/layouts"
-	"PlantillaInstitucional/shared/pagina"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/issemym-repos/logs"
@@ -23,8 +22,8 @@ func NewDashboardHandler(logger *logs.Logger) *DashboardHandler {
 }
 
 func (h *DashboardHandler) RegisterRoutes(r chi.Router) {
-	r.Get(pagina.GlobalRutas.Dashboard.Prefix, h.Index)
-	r.Route(pagina.GlobalRutas.Dashboard.Prefix, func(r chi.Router) {
+	r.Get(dashboard.Rutas.Prefix, h.Index)
+	r.Route(dashboard.Rutas.Prefix, func(r chi.Router) {
 		r.Get("/", h.Index)
 	})
 }

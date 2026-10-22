@@ -182,6 +182,7 @@ func main() {
 		a.Handlers.Parametro.RegisterRoutes(r)
 		a.Handlers.Crud.RegisterRoutes(r)
 		a.Handlers.Dashboard.RegisterRoutes(r)
+		a.Handlers.MiPerfil.RegisterRoutes(r)
 	})
 
 	app_middleware.RegistrarHandler404(r)

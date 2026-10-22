@@ -9,6 +9,7 @@ import (
 	crud_handler "PlantillaInstitucional/crud/handler"
 	dashboard_handler "PlantillaInstitucional/dashboard/handler"
 	login_handler "PlantillaInstitucional/login/handlers"
+	miperfil_handler "PlantillaInstitucional/miperfil/handler"
 	parametros_handler "PlantillaInstitucional/parametros/handler"
 
 	"github.com/go-playground/validator/v10"
@@ -25,4 +26,5 @@ func InitHandlers(a *app.App) {
 	a.Handlers.Parametro = parametros_handler.NewHandler(a.Services.Parametro, a.Logger)
 	a.Handlers.Crud = crud_handler.NewCrudHandler(&a.Services.Crud, a.Logger, validate, a.ManejadorArchivos)
 	a.Handlers.Dashboard = dashboard_handler.NewDashboardHandler(a.Logger)
+	a.Handlers.MiPerfil = miperfil_handler.NewMiPerfilHandler(a.Services.MiPerfil, a.Logger, a.ConstructorSesion)
 }

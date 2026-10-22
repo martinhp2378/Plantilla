@@ -97,6 +97,24 @@ templ SidebarItem(target, active pagina.Pagina, icon, label string) {
 }
 
 templ TopbarV2() {
+	{{
+		usuarioActual := sesionutil.UsuarioDeContexto(ctx)
+		nombreUsuario := "Usuario"
+		perfilUsuario := "Anonimo"
+		if usuarioActual != nil {
+			if nombreCompleto := usuarioActual.NombreCompleto(); nombreCompleto != "" {
+				nombreUsuario = nombreCompleto
+			} else if usuarioActual.Nombre != "" {
+				nombreUsuario = usuarioActual.Nombre
+			} else if usuarioActual.Email != "" {
+				nombreUsuario = usuarioActual.Email
+			}
+			if usuarioActual.Perfil != "" {
+				perfilUsuario = usuarioActual.Perfil
+			}
+		}
+		urlAvatar := sesionutil.UrlImagenPerfil(ctx)
+	}}
 	<div class="fixed top-0 left-0 right-0 z-50 flex flex-col">
 		@EncabezadoInstitucional()
 
@@ -114,14 +132,16 @@ templ TopbarV2() {
 				<div class="relative">
 					<button 
 						@click="menuAbierto = !menuAbierto"
-						class="flex items-center gap-3 hover:opacity-80 transition-all focus:outline-none"
+						class="flex items-center gap-3 hover:opacity-80 transition-all focus:outline-none cursor-pointer"
 					>
-						<div class="w-10 h-10 rounded-xl bg-[var(--surface-arena-20)] flex items-center justify-center text-[var(--color-guinda)] shadow-sm">
-							<span class="material-icons">account_circle</span>
-						</div>
+						<img 
+							src={ urlAvatar } 
+							alt="Foto de perfil" 
+							class="w-10 h-10 rounded-xl object-cover border border-[var(--color-arena)] shadow-sm"
+						/>
 						<div class="text-right hidden sm:block">
-							<p class="text-xs font-black text-gray-900 uppercase tracking-tighter">Usuario Demo</p>
-							<p class="text-[10px] font-bold text-gray-400 uppercase">Administrador</p>
+							<p class="text-xs font-black text-gray-900 uppercase tracking-tighter max-w-[150px] truncate">{ nombreUsuario }</p>
+							<p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{ perfilUsuario }</p>
 						</div>
 						<span class="material-icons text-gray-400 transition-transform duration-200" :class="menuAbierto ? 'rotate-180' : ''">expand_more</span>
 					</button>
@@ -132,6 +152,11 @@ templ TopbarV2() {
 						class="absolute right-0 mt-3 w-56 bg-white border border-[var(--color-arena)] rounded-xl shadow-xl z-[60] py-2 overflow-hidden"
 						style="display: none;"
 					>
+						<a href={ templ.SafeURL(pagina.GlobalRutas.MiPerfil.Prefix) } class="flex items-center gap-3 px-6 py-3 text-xs font-bold text-gray-700 hover:bg-[var(--surface-arena-20)] hover:text-[var(--color-guinda)] uppercase tracking-wider transition-colors">
+							<span class="material-icons text-lg">account_circle</span>
+							Mi Perfil
+						</a>
+						<div class="h-px bg-[var(--color-arena)] mx-4 my-1"></div>
 						<a href={ templ.SafeURL(pagina.GlobalRutas.Login.Base + "salir") } class="flex items-center gap-3 px-6 py-3 text-xs font-bold text-red-500 hover:bg-red-50 uppercase tracking-wider transition-colors">
 							<span class="material-icons text-lg">logout</span>
 							Cerrar Sesión

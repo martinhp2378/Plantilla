@@ -40,6 +40,7 @@ var GlobalRutas = struct {
 	Parametros Rutas
 	Personas   Rutas
 	Crud       Rutas
+	MiPerfil   Rutas
 }{
 	Login:      nuevaRuta("/login"),
 	Dashboard:  nuevaRuta("/dashboard"),
@@ -49,6 +50,7 @@ var GlobalRutas = struct {
 	Parametros: nuevaRuta("/configuracion/parametros"),
 	Personas:   nuevaRuta("/institucion/personas"),
 	Crud:       nuevaRuta("/crud"),
+	MiPerfil:   nuevaRuta("/perfil"),
 }
 
 func nuevaRuta(base string) Rutas {

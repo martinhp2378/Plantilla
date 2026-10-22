@@ -14,4 +14,5 @@ const (
 	Politicas  Pagina = "politicas"
 	Parametros Pagina = "parametros"
 	Crud       Pagina = "crud"
+	MiPerfil   Pagina = "mi_perfil"
 )

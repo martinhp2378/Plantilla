@@ -604,9 +604,9 @@ func New<<.NameUpper>>Handler(svc service.<<.NameUpper>>ServiceProvider, logger 
 
 func (h *<<.NameUpper>>Handler) RegisterRoutes(r chi.Router) {
 	rutas := <<.Name>>.Rutas
+	r.Get(rutas.Prefix, h.Index)
 	r.Route(rutas.Prefix, func(r chi.Router) {
 		r.Get("/", h.Index)
-		r.Get("", h.Index)
 		r.Get("/tabla", h.SearchTable)
 		r.Get("/modales/nuevo", h.ModalCreate)
 		r.Post("/", h.Create)
@@ -1000,10 +1000,12 @@ CREATE TABLE IF NOT EXISTS <<.Table>> (
 );
 
 -- Triggers de auditoria y fecha de modificacion
+DROP TRIGGER IF EXISTS tr_set_fecha_m_<<.Name>> ON <<.Table>>;
 CREATE TRIGGER tr_set_fecha_m_<<.Name>>
 BEFORE UPDATE ON <<.Table>>
 FOR EACH ROW EXECUTE FUNCTION sistema.fn_set_fecha_m();
 
+DROP TRIGGER IF EXISTS tr_auditoria_<<.Name>> ON <<.Table>>;
 CREATE TRIGGER tr_auditoria_<<.Name>>
 AFTER INSERT OR UPDATE OR DELETE ON <<.Table>>
 FOR EACH ROW EXECUTE FUNCTION sistema.fn_registrar_auditoria('id');

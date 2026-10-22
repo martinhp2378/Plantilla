@@ -31,21 +31,32 @@ func main() {
 	noMountFlag := flag.Bool("no-mount", false, "Do not auto-mount in cmd/main.go")
 	flag.Parse()
 
-	if *nameFlag == "" {
+	rawName := strings.TrimSpace(*nameFlag)
+	if rawName == "" {
 		fmt.Println("Error: el parametro -name es obligatorio. Ej: go run cmd/tools/scaffold/main.go -name proveedor")
 		os.Exit(1)
 	}
 
-	name := strings.ToLower(strings.TrimSpace(*nameFlag))
-	schema := strings.ToLower(strings.TrimSpace(*schemaFlag))
-
-	plural := *pluralFlag
-	if plural == "" {
-		plural = autoPlural(name)
+	name := toSnakeCase(rawName)
+	if name == "" || !regexp.MustCompile(`^[a-z][a-z0-9_]*$`).MatchString(name) {
+		fmt.Printf("Error: el nombre '%s' no produce un identificador válido para Go (resultado: '%s'). Debe comenzar con una letra.\n", rawName, name)
+		os.Exit(1)
 	}
 
-	nameUpper := capitalize(name)
-	pluralUpper := capitalize(plural)
+	schema := toSnakeCase(strings.TrimSpace(*schemaFlag))
+	if schema == "" {
+		schema = "sistema"
+	}
+
+	plural := strings.TrimSpace(*pluralFlag)
+	if plural == "" {
+		plural = autoPlural(name)
+	} else {
+		plural = toSnakeCase(plural)
+	}
+
+	nameUpper := toPascalCase(name)
+	pluralUpper := toPascalCase(plural)
 	if *titleFlag != "" {
 		pluralUpper = *titleFlag
 	}
@@ -103,11 +114,27 @@ func autoPlural(s string) string {
 	return s + "es"
 }
 
-func capitalize(s string) string {
-	if s == "" {
-		return ""
+func toSnakeCase(s string) string {
+	s = strings.TrimSpace(s)
+	re := regexp.MustCompile(`[\-\s]+`)
+	s = re.ReplaceAllString(s, "_")
+	reCamel := regexp.MustCompile(`([a-z0-9])([A-Z])`)
+	s = reCamel.ReplaceAllString(s, "${1}_${2}")
+	reInvalid := regexp.MustCompile(`[^a-zA-Z0-9_]`)
+	s = reInvalid.ReplaceAllString(s, "")
+	return strings.ToLower(s)
+}
+
+func toPascalCase(s string) string {
+	parts := strings.FieldsFunc(s, func(r rune) bool {
+		return r == '_' || r == '-' || r == ' '
+	})
+	for i, p := range parts {
+		if len(p) > 0 {
+			parts[i] = strings.ToUpper(p[:1]) + strings.ToLower(p[1:])
+		}
 	}
-	return strings.ToUpper(s[:1]) + s[1:]
+	return strings.Join(parts, "")
 }
 
 func getNextMigrationNumber() string {

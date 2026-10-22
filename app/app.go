@@ -4,6 +4,8 @@ import (
 	bd "PlantillaInstitucional/app/db"
 	"PlantillaInstitucional/configuracion/policy"
 	policy_repo "PlantillaInstitucional/configuracion/policy/repository"
+	policy_service "PlantillaInstitucional/configuracion/policy/service"
+	persona_repo "PlantillaInstitucional/institucion/repository"
 	persona_service "PlantillaInstitucional/institucion/service"
 	"PlantillaInstitucional/pagination"
 	"PlantillaInstitucional/shared/email"
@@ -17,6 +19,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/issemym-repos/archivos"
 	"github.com/issemym-repos/logs"
 	"github.com/issemym-repos/sesiones"
@@ -90,10 +93,40 @@ func NewAppWithTenantPolicy(ctx context.Context, env *entorno.Env,
 		return nil, fmt.Errorf("invalid tenant policy: %w", err)
 	}
 	pools := bd.NewAppPools(pqRead, pqWrite)
-	return &App{Env: env, Logger: logger, Instrumentacion: instrumentacion, ConexionRedis: conexionRedis,
-		PqWrite: pqWrite, PqRead: pqRead, Pools: pools, ConstructorSesion: constructorSesion,
-		ConstructorSesionJWT: constructorSesionJWT, ManejadorArchivos: manejadorArchivos,
-		ServicioEmail: servicioEmail, TenantPolicy: tenantPolicy, tenants: make(map[string]string)}, nil
+	validate := validator.New()
+
+	tenantsRepo := tenants.NewStaticRepository()
+	policyRepo := policy_repo.NewPolicyRepository(pools)
+
+	dispatcher := sharedEvents.NewDispatcher()
+	policySvc := policy_service.NewService(policyRepo)
+	personaRepo := persona_repo.NewPersonaRepository(pools)
+	personaSvc := persona_service.NewPersonaService(personaRepo, validate, logger, manejadorArchivos)
+
+	return &App{
+		Env:                  env,
+		Logger:               logger,
+		Instrumentacion:      instrumentacion,
+		ConexionRedis:        conexionRedis,
+		PqWrite:              pqWrite,
+		PqRead:               pqRead,
+		Pools:                pools,
+		ConstructorSesion:    constructorSesion,
+		ConstructorSesionJWT: constructorSesionJWT,
+		ManejadorArchivos:    manejadorArchivos,
+		ServicioEmail:        servicioEmail,
+		EventDispatcher:      dispatcher,
+		Services: Services{
+			Policy:  policySvc,
+			Persona: *personaSvc,
+		},
+		Repositories: Repositories{
+			Tenants: tenantsRepo,
+			Policy:  policyRepo,
+		},
+		TenantPolicy: tenantPolicy,
+		tenants:      make(map[string]string),
+	}, nil
 }
 
 func (a *App) Close() {

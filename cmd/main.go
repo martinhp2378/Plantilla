@@ -4,7 +4,6 @@ import (
 	"PlantillaInstitucional/app"
 	bd "PlantillaInstitucional/app/db"
 	app_middleware "PlantillaInstitucional/app/middleware"
-	"PlantillaInstitucional/cmd/config"
 	perfil_handler "PlantillaInstitucional/configuracion/perfil/handler"
 	policy_handler "PlantillaInstitucional/configuracion/policy/handler"
 	usuario_handler "PlantillaInstitucional/configuracion/usuario/handler"
@@ -180,9 +179,6 @@ func main() {
 	defer a.Close()
 	reportLifecycle := reportes.NewLifecycle(pqWrite, manejadorArchivos, time.Hour)
 	reportLifecycle.Start(context.Background())
-
-	config.InitRepositories(a)
-	config.InitServices(a)
 
 	r := chi.NewRouter()
 

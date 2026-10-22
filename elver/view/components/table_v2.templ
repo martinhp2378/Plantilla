@@ -1,0 +1,57 @@
+package components
+
+import (
+	"PlantillaInstitucional/elver"
+	"PlantillaInstitucional/pagination"
+	"PlantillaInstitucional/shared/convertidores"
+	"PlantillaInstitucional/shared/views/components/v2"
+)
+
+templ TableV2(criterios pagination.CriteriosPagina[elver.Elver], baseURL string, oob bool) {
+	{{
+		rutas := elver.Rutas
+		buildSortURL := func(field string) string {
+			return criterios.WithSort(field).BuildURL(rutas.Tabla, 1)
+		}
+
+		headers := []v2.TableHeader{
+			{Label: "Nombre", Key: "nombre", Sortable: true, SortURL: buildSortURL("nombre"), SortIcon: criterios.SortIcon("nombre"), FilterVal: criterios.GetFilterValue("nombre")},
+			{Label: "Codigo", Key: "codigo", Sortable: true, SortURL: buildSortURL("codigo"), SortIcon: criterios.SortIcon("codigo"), FilterVal: criterios.GetFilterValue("codigo")},
+			{Label: "Descripcion", Key: "descripcion", Sortable: false},
+			{Label: "Estatus", Key: "is_active", Sortable: true, SortURL: buildSortURL("is_active"), SortIcon: criterios.SortIcon("is_active"), FilterVal: criterios.GetFilterValue("is_active")},
+		}
+
+		tableProps := v2.DataTableV2Props{
+			Title:          "Catalogo de Elveres",
+			Subtitle:       "Gestion Institucional",
+			Headers:        headers,
+			CreateURL:      rutas.Nuevo,
+			SearchURL:      rutas.Tabla,
+			Target:         "#tablaelver",
+			ModalTarget:    "#modal",
+			OOB:            oob,
+			SortedBy:       criterios.SortedBy,
+			Direction:      criterios.Direction,
+			Page:           criterios.Index,
+			Size:           criterios.Size,
+			Total:          criterios.Count,
+			PDFExportURL:   rutas.Export.PDF,
+			ExcelExportURL: rutas.Export.Excel,
+			ToastURL:       rutas.Export.Notificacion,
+		}
+	}}
+	@v2.DataTableV2(tableProps) {
+		for _, item := range criterios.Data {
+			@v2.DataRowV2(v2.DataRowV2Props{
+				Cells: []string{
+					item.Nombre,
+					item.Codigo,
+					item.Descripcion,
+					convertidores.Traducir(item.IsActive),
+				},
+				EditURL:   rutas.GetEditar(item.ID),
+				DeleteURL: rutas.GetBorrar(item.ID),
+			})
+		}
+	}
+}

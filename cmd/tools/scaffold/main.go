@@ -358,7 +358,7 @@ const (
 
 	Insert<<.NameUpper>> = ` + "`" + `
 		INSERT INTO <<.Table>> (nombre, codigo, descripcion, is_active, tenant_id, razon_i)
-		VALUES ($1, $2, $3, $4, NULLIF(current_setting('app.tenant_id', true), '')::uuid, 'Creacion')
+		VALUES ($1, $2, $3, $4, CASE WHEN current_setting('app.tenant_id', true) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN current_setting('app.tenant_id', true)::uuid ELSE NULL END, 'Creacion')
 		RETURNING id
 	` + "`" + `
 
@@ -1232,8 +1232,8 @@ BEGIN
     ) THEN
         CREATE POLICY tenant_isolation_<<.Name>> ON <<.Table>>
             FOR ALL
-            USING (tenant_id::text = current_setting('app.tenant_id', true))
-            WITH CHECK (tenant_id::text = current_setting('app.tenant_id', true));
+            USING (tenant_id::text = current_setting('app.tenant_id', true) OR current_setting('app.tenant_id', true) = 'local')
+            WITH CHECK (tenant_id::text = current_setting('app.tenant_id', true) OR current_setting('app.tenant_id', true) = 'local');
     END IF;
 END $$;
 

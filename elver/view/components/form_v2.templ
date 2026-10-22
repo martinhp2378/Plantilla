@@ -1,0 +1,93 @@
+package components
+
+import (
+	"PlantillaInstitucional/elver"
+	"PlantillaInstitucional/shared/convertidores"
+	"PlantillaInstitucional/shared/views/components/v2"
+)
+
+templ FormCreateElverV2(item elver.Elver, errors map[string]string) {
+	@v2.ModalV2("Nuevo Elver") {
+		<form hx-post={ elver.Rutas.Crear } hx-target="#modal" hx-swap="innerHTML" class="space-y-6">
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:       "Nombre",
+					Name:        "nombre",
+					Placeholder: "Ingrese nombre",
+					Value:       item.Nombre,
+					Required:    true,
+					Errors:      errors,
+				})
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:       "Codigo",
+					Name:        "codigo",
+					Placeholder: "Ej. COD-001",
+					Value:       item.Codigo,
+					Required:    true,
+					Errors:      errors,
+				})
+				@v2.SelectFieldV2(v2.SelectProps{
+					Label:         "Estatus",
+					Name:          "activo",
+					Options:       convertidores.OptionFromEstatusGenerico(),
+					SelectedValue: convertidores.Traducir(item.IsActive),
+					Required:      true,
+					Errors:        errors,
+				})
+				<div class="md:col-span-2">
+					@v2.TextAreaFieldV2(v2.TextAreaPropsV2{
+						Label:       "Descripcion",
+						Name:        "descripcion",
+						Placeholder: "Detalles adicionales",
+						Value:       item.Descripcion,
+						Errors:      errors,
+					})
+				</div>
+			</div>
+			@v2.ModalFooterV2("Guardar")
+		</form>
+	}
+}
+
+templ FormUpdateElverV2(item *elver.Elver, errors map[string]string) {
+	@v2.ModalV2("Editar Elver") {
+		<form hx-put={ elver.Rutas.GetUpdate(item.ID) } hx-target="#modal" hx-swap="innerHTML" class="space-y-6">
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:       "Nombre",
+					Name:        "nombre",
+					Placeholder: "Ingrese nombre",
+					Value:       item.Nombre,
+					Required:    true,
+					Errors:      errors,
+				})
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:       "Codigo",
+					Name:        "codigo",
+					Placeholder: "Ej. COD-001",
+					Value:       item.Codigo,
+					Required:    true,
+					Errors:      errors,
+				})
+				@v2.SelectFieldV2(v2.SelectProps{
+					Label:         "Estatus",
+					Name:          "activo",
+					Options:       convertidores.OptionFromEstatusGenerico(),
+					SelectedValue: convertidores.Traducir(item.IsActive),
+					Required:      true,
+					Errors:        errors,
+				})
+				<div class="md:col-span-2">
+					@v2.TextAreaFieldV2(v2.TextAreaPropsV2{
+						Label:       "Descripcion",
+						Name:        "descripcion",
+						Placeholder: "Detalles adicionales",
+						Value:       item.Descripcion,
+						Errors:      errors,
+					})
+				</div>
+			</div>
+			@v2.ModalFooterV2("Actualizar")
+		</form>
+	}
+}

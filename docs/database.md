@@ -1,54 +1,85 @@
-# 🗄️ Base de Datos y Migraciones
+# 🗄️ Guía Amigable de Base de Datos y Migraciones (PostgreSQL)
 
-La Plantilla Institucional utiliza **PostgreSQL** como motor relacional primario. La gestión se basa en esquemas para soportar multi-tenancy y migraciones versionadas.
+Esta guía explica cómo está organizada la base de datos en **PostgreSQL**, cómo conectarte a ella desde tu computadora para ver tus tablas y datos, cómo crear migraciones nuevas y cómo escribir consultas en Go de forma segura.
 
-## 🗂️ Estructura de Esquemas
+---
 
-El proyecto utiliza múltiples esquemas para organizar los datos:
-*   `public`: Esquema por defecto y datos globales de tenants.
-*   `sistema`: Configuración transversal del sistema (parámetros).
-*   `sesion`: Almacenamiento de sesiones persistentes.
-*   `institucion`: Datos de negocio (ej. catálogo de personas).
+## 🗂️ 1. Cómo están Organizados los Esquemas
 
-## 🚀 Gestión de Migraciones
+En lugar de meter todas las tablas revueltas en un solo lugar, PostgreSQL las organiza en **esquemas** (como si fueran carpetas dentro de la base de datos):
 
-Utilizamos `golang-migrate` para asegurar que todos los entornos tengan la misma estructura de base de datos.
+| Esquema | Qué tablas se guardan aquí | Ejemplos |
+| :--- | :--- | :--- |
+| **`sistema`** | Configuración general, catálogos del sistema, bitácora de auditoría y retención de reportes. | `sistema.cfg_parametros`, `sistema.bitacora_cambios`, `sistema.reportes_generados` |
+| **`institucion`** | Tablas de negocio de la institución e identidad de personas. | `institucion.persona`, `institucion.cat_tenants`, `institucion.crud` |
+| **`sesion`** | Usuarios, contraseñas, sesiones activas y permisos por perfil (ABAC). | `sesion.usuario`, `sesion.sesion`, `sesion.recurso`, `sesion.politica` |
 
-### Ubicación
-Las migraciones se encuentran en `sql/migrations/`.
-*   `.up.sql`: Cambios para aplicar (crear tablas, agregar columnas).
-*   `.down.sql`: Cambios para revertir.
+---
 
-### Ejecución Automática
-Al iniciar la aplicación (`cmd/main.go`), el sistema intenta ejecutar todas las migraciones pendientes automáticamente usando la URL de conexión de escritura (`PQ_WRITE_HOST`).
+## 🔍 2. Comandos Listos para Copiar y Pegar: Cómo Ver tu Base de Datos en Docker
 
-*   **Entornos de Producción / Serverless**: En entornos como **Google Cloud Run** donde el servidor escala horizontalmente a múltiples instancias concurrentes, la ejecución automática simultánea al bootear puede generar bloqueos competitivos (`locks`) y latencias innecesarias (Cold Start).
-*   **SKIP_MIGRATIONS**: Puedes configurar `SKIP_MIGRATIONS=true` en tu consola de Cloud Run para desactivar este comportamiento. De esta forma, las migraciones se deben correr de forma controlada y secuencial mediante un paso previo en tu pipeline de **Google Cloud Build** o utilizando un **Cloud Run Job** aislado.
+Si quieres revisar qué tablas existen o hacer una consulta SQL rápida sin instalar programas externos:
 
-### Crear Nueva Migración
+### A) Entrar a la consola interactiva de PostgreSQL
+🟢 **Copiar y pegar tal cual**:
 ```bash
-migrate create -ext sql -dir sql/migrations -seq nombre_de_la_migracion
+docker exec -it plantillainstitucional-db-1 psql -U postgres -d plantilla
+```
+*(Nota: Si en tu archivo `.env` cambiaste `PQ_WRITE_USER` por otro usuario, cambia `postgres` por tu usuario. Para salir de la consola de PostgreSQL en cualquier momento, escribe `\q` y presiona `Enter`).*
+
+### B) Comandos útiles dentro de la consola de PostgreSQL
+
+| ¿Qué quieres ver? | Comando (🟢 Copiar y pegar dentro de `psql`) |
+| :--- | :--- |
+| Ver todas las tablas del esquema `sistema` | `\dt sistema.*` |
+| Ver todas las tablas del esquema `institucion` | `\dt institucion.*` |
+| Ver las columnas de una tabla específica | `\d sistema.cfg_parametros` |
+| Ver qué número de migración tiene aplicada la BD | `SELECT * FROM schema_migrations;` |
+| Salir de PostgreSQL y volver a tu terminal normal | `\q` |
+
+---
+
+## 📦 3. Qué son las Migraciones y Cómo Funcionan
+
+Las **migraciones** son archivos `.sql` numerados que viven en la carpeta `sql/migrations/`. Sirven para que cuando un compañero descargue tus cambios y encienda su Docker, **sus tablas se creen o actualicen automáticamente** igual que en tu computadora.
+
+- Cada migración tiene **2 archivos**:
+  1. `000011_nombre.up.sql`: Instrucciones para **crear** la tabla o agregar columnas.
+  2. `000011_nombre.down.sql`: Instrucciones para **deshacer** ese cambio si fuera necesario.
+
+> [!TIP]
+> **Cuando usas `make new-module NAME=proveedor`**, el generador crea automáticamente ambos archivos `.up.sql` y `.down.sql` con el número siguiente que toca. ¡No tienes que crearlos a mano!
+
+### ¿Cómo crear una migración manual si solo quieres agregar una columna a una tabla existente?
+
+Si no estás creando un módulo nuevo, sino modificando una tabla que ya existe, puedes crear el par de archivos vacíos con este comando:
+
+🟡 **Modificar antes de ejecutar**:
+Cambia **`agregar_telefono_a_proveedor`** por una descripción corta separada por guiones bajos:
+```bash
+migrate create -ext sql -dir sql/migrations -seq agregar_telefono_a_proveedor
 ```
 
-## 🏗️ Repositorios y Consultas
+---
 
-Los repositorios operan bajo estricto aislamiento transaccional utilizando `TenantTxRunner`, el cual encapsula el acceso a los pools de `Read` y `Write`.
+## 🏗️ 4. Cómo Hacer Consultas SQL en Go (`TenantTxRunner`)
 
-### Patrón de Repositorio:
-1.  **Aislamiento Transaccional Obligatorio**: No se permite acceso directo a `*pgxpool.Pool`. Todas las operaciones deben ejecutarse dentro de los closures `r.db.Tenant.Read(ctx, func(tx pgx.Tx) error)` o `r.db.Tenant.Write(...)`.
-2.  **Configuración Automática**: El runner valida el `TenantContext`, inyecta la variable de sesión `app.tenant_id` y configura el `search_path` (ej. `SET LOCAL search_path TO "schema_name", pg_catalog`) de manera segura, revirtiéndolo al hacer commit o rollback.
-3.  **Auditoría y Sesión**: Las variables para triggers de auditoría (como `session_variables.uuid_persona`) se inyectan automáticamente en la misma transacción. No debe llamarse a configuradores externos o persistentes.
+Por seguridad institucional, todas las tablas cuentan con **Row Level Security (RLS)** para que los datos de una dependencia o tenant jamás se mezclen con los de otra.
 
-### Aislamiento Multi-tenant (RLS):
-El motor PostgreSQL aplica aislamiento en defensa en profundidad:
-*   **Roles y Permisos**: La aplicación se conecta con un rol de privilegios mínimos (`app_runtime_tenant`) que posee `NOBYPASSRLS` y no tiene permisos sobre el esquema `public`.
-*   **Row Level Security (RLS)**: Cada tabla tenant-scoped (ej. `persona`, `usuario`, `sesion`) tiene habilitado `FORCE ROW LEVEL SECURITY`. Las políticas validan matemáticamente que `tenant_id::text = current_setting('app.tenant_id', true)` para operaciones `SELECT`, y exigen lo mismo con `WITH CHECK` para modificaciones.
-*   **Fall-closed**: Si un query no pasa por el runner transaccional, carece de contexto local y RLS denegará silenciosa y universalmente el acceso.
+Por eso, en los archivos dentro de `repository/`, las consultas siempre se envuelven dentro de **`r.db.Tenant.Read`** (para leer datos con `SELECT`) o **`r.db.Tenant.Write`** (para guardar o borrar con `INSERT`, `UPDATE`, `DELETE`).
 
-## 🚀 Estrategia de Migraciones Multi-tenant (Expand & Contract)
+### Ejemplo para Leer Datos (`Read`) — Listo para copiar y adaptar:
+```go
+err := r.db.Tenant.Read(ctx, func(tx pgx.Tx) error {
+	return tx.QueryRow(ctx, `SELECT id, nombre, codigo FROM sistema.proveedor WHERE id = $1`, id).
+		Scan(&item.ID, &item.Nombre, &item.Codigo)
+})
+```
 
-Para garantizar zero-downtime y evitar reversas destructivas con pérdida de datos, cualquier cambio en las barreras de aislamiento debe ejecutarse en fases:
-
-1. **Expand**: Se aplican cambios aditivos (roles, columnas, índices, RLS). Se requiere prueba canary, observabilidad y rollback de aplicación/configuración seguro que jamás restaure acceso a `public` ni desactive RLS.
-2. **Contract**: Solo se ejecuta (vía un script SQL final destructivo) tras acumular evidencia técnica empírica de compatibilidad total y ausencia de consumidores antiguos (legacy pooling hooks).
-3. **Rollback de DB (Forward-fix)**: La base de datos siempre avanza. Los scripts `.down.sql` de las fases expand retiran políticas y desactivan restricciones sin hacer `DROP COLUMN` que destruya datos.
+### Ejemplo para Guardar o Actualizar Datos (`Write`) — Listo para copiar y adaptar:
+```go
+err := r.db.Tenant.Write(ctx, func(tx pgx.Tx) error {
+	_, err := tx.Exec(ctx, `UPDATE sistema.proveedor SET nombre = $1 WHERE id = $2`, nuevoNombre, id)
+	return err
+})
+```

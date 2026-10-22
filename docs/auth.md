@@ -1,69 +1,72 @@
-# 🔐 Autenticación y Autorización
+# 🔐 Autenticación, Sesiones y Permisos (ABAC)
 
-La seguridad es una prioridad en la Plantilla Institucional, implementando un sistema de doble capa (Autenticación + Políticas).
-
-## 🎟️ Autenticación (Sesiones y JWT)
-
-### Sesiones Tradicionales
-Para la interfaz web, usamos sesiones seguras gestionadas por la librería `sesiones`.
-*   **Almacenamiento**: PostgreSQL (por defecto) o Redis.
-*   **Middleware**: `a.ConstructorSesion.Middleware` inyecta la sesión en cada petición.
-*   **Seguridad**: Cookies con flags `HttpOnly`, `Secure` y `SameSite`.
-*   **Despliegue**: La actualización de aislamiento exige rotar cookies e invalidar sesiones existentes según [`session_security.md`](session_security.md).
-
-### JWT (JSON Web Tokens)
-Soportado para APIs o comunicaciones stateless.
-*   Configurado mediante `ConstructorSesionJWT`.
-*   Permite autenticación mediante el header `Authorization: Bearer <token>`.
-
-## 🛡️ Capa de Seguridad (Hardenización)
-
-Además de la autenticación, el sistema implementa medidas proactivas contra ataques comunes de la web.
-
-### Activación y recuperación de contraseña
-
-Las cuentas nuevas permanecen inactivas hasta que su titular consume un enlace de activación de un solo uso. Los tokens se generan con entropía criptográfica, se almacenan exclusivamente como hash, expiran en 24 horas y se eliminan al consumirse. La recuperación responde de forma no enumerante y limita solicitudes por dirección IP.
-
-Los reportes de personas y parámetros se almacenan en el repositorio privado. En producción, esto entrega URLs firmadas de duración limitada. El despliegue local expone la ruta privada mediante el servidor estático de desarrollo; antes de exponer un entorno compartido, debe instalarse una capa de autorización que valide la sesión y la política antes de entregar dichos archivos.
-
-### Protección CSRF (Cross-Site Request Forgery)
-Gestionada mediante la librería `nosurf` en `app/middleware/security.go`.
-*   **Funcionamiento**: Todas las peticiones mutables (POST, PUT, DELETE) requieren un token válido.
-*   **Integración HTMX**: El token se inyecta automáticamente en los headers de cada petición AJAX gracias a la configuración en `base.templ`.
-*   **Uso en Formularios**: En formularios tradicionales, se debe incluir un campo oculto:
-    ```templ
-    <input type="hidden" name="csrf_token" value={ utils.GetCSRFToken(ctx) } />
-    ```
-
-### Cabeceras de Seguridad (OWASP)
-El `SecurityHeadersMiddleware` inyecta automáticamente cabeceras recomendadas:
-*   `X-Frame-Options: DENY`: Previene ataques de Clickjacking.
-*   `X-Content-Type-Options: nosniff`: Evita que el navegador adivine el tipo MIME.
-*   `Strict-Transport-Security (HSTS)`: Fuerza el uso de HTTPS.
-
-## 📜 Autorización (Middleware de Políticas)
-
-No basta con estar autenticado; el usuario debe tener permiso para acceder al recurso específico.
-
-### `PolicyMiddleware`
-Ubicado en `app/middleware/policy.go`.
-*   **Recurso**: Identificado por el path o prefijo.
-*   **Acción**: Determina qué puede hacer el usuario (consultar, crear, modificar, eliminar).
-*   **Reglas**: Las políticas se guardan en la base de datos (tabla `politica`) y vinculan Perfiles con Recursos y Acciones.
-
-## 🕵️ Auditoría y Contexto
-
-Para que la base de datos (mediante triggers) pueda registrar quién realiza una acción de forma segura en entornos multi-tenant:
-
-1.  **Middleware**: `AuditContextMiddleware` extrae el UUID del usuario autenticado de la sesión.
-2.  **Contexto**: El UUID se inyecta en el `context.Context` utilizando `contextkey.AuditUUIDKey`.
-3.  **Inyección en DB**: Al iniciar una operación de base de datos, el `TenantTxRunner` lee este UUID del contexto y ejecuta `SET LOCAL session_variables.uuid_persona`. De esta forma, los triggers de auditoría (por ejemplo en `sistema.bitacora_cambios`) recuperan el autor exacto sin acoplar el código de los repositorios.
+Esta guía explica cómo funciona el inicio de sesión en el sistema, cómo se protegen los formularios y los reportes privados, y cómo dar permisos a distintos perfiles de usuario sobre tus módulos.
 
 ---
 
-## 👤 Perfiles Predeterminados
+## 🔑 1. Usuario de Prueba para Desarrollo Local
 
-La plantilla incluye perfiles base listos para usar:
-*   `superadmin`: Acceso total a configuración y gestión.
-*   `operador`: Acceso a módulos de negocio (Personas).
-*   `anonimo`: Para usuarios no autenticados con acceso limitado.
+Cuando levantas el proyecto con Docker por primera vez, la base de datos ya incluye un usuario con acceso total (`superadmin`) para que puedas probar todas las pantallas de inmediato:
+
+| Dato | Valor |
+| :--- | :--- |
+| **Pantalla de acceso** | [http://localhost:8080/login](http://localhost:8080/login) |
+| **Correo electrónico** | `admin@issemym.gob.mx` |
+| **Contraseña** | `admin123` |
+| **Perfil asignado** | `superadmin` |
+
+---
+
+## 🎟️ 2. Cómo Funcionan las Sesiones
+
+1. **Cookies Seguras**: Al iniciar sesión en la web, el sistema crea una sesión en PostgreSQL (o Redis si se activa en producción) y entrega al navegador una cookie protegida (`HttpOnly`, `SameSite=Strict`).
+2. **Aislamiento de Sesiones**: El sistema utiliza `github.com/issemym-repos/sesiones` (`v0.4.5+`), que garantiza que ningún cliente sin cookie válida pueda recuperar la sesión de otro navegador.
+3. **Rotación de Cookies en Despliegues de Seguridad**:
+   - En el archivo `.env`, la variable `COOKIE_NOMBRE=plantilla_v2` define el nombre de la cookie de sesión.
+   - Si en producción se requiere forzar que absolutamente todos los usuarios vuelvan a iniciar sesión tras una actualización crítica, basta con cambiar `COOKIE_NOMBRE` a un identificador nuevo (por ejemplo `mi_sistema_v2`) y limpiar la tabla `sesion.sesion`.
+
+---
+
+## 📜 3. Permisos por Perfil (ABAC)
+
+No basta con que un usuario haya iniciado sesión; el sistema verifica en cada clic si su **Perfil** tiene permiso para entrar a ese **Recurso** (módulo) y realizar esa **Acción** (`consultar`, `crear`, `modificar`, `eliminar`).
+
+### Perfiles que ya vienen en la Plantilla
+
+| Perfil | Qué puede hacer por defecto |
+| :--- | :--- |
+| **`superadmin`** | Acceso total a todos los módulos del sistema y a los módulos nuevos creados con `make new-module`. |
+| **`admin`** | Acceso de consulta, creación y modificación en los módulos generados con `make new-module`. |
+| **`operador`** | Acceso operativo a módulos específicos que se le asignen en la tabla `sesion.politica`. |
+| **`anonimo`** | Usuarios que aún no han iniciado sesión (solo pueden ver `/login` y recuperación de contraseña). |
+
+### ¿Cómo dar permiso a otro perfil (ej. `operador`) sobre un módulo nuevo?
+
+Cuando creas un módulo con `make new-module`, la migración SQL le da permiso automáticamente a `superadmin` y `admin`. Si también quieres darle permiso al perfil `operador` (o a un perfil nuevo), solo copia y pega estas líneas al final del archivo `.up.sql` de tu módulo:
+
+🟡 **Modificar antes de guardar**:
+Cambia **`proveedor`** por el nombre de tu módulo y **`operador`** por el perfil al que quieres darle acceso:
+
+```sql
+-- Dar permiso de consulta, creación y edición al perfil 'operador'
+INSERT INTO sesion.politica (perfil, recurso, accion, razon_i) VALUES
+    ('operador', 'proveedor', 'consultar', 'Permiso operativo de consulta'),
+    ('operador', 'proveedor', 'crear', 'Permiso operativo de registro'),
+    ('operador', 'proveedor', 'modificar', 'Permiso operativo de edicion')
+ON CONFLICT (perfil, recurso, accion) DO NOTHING;
+```
+
+---
+
+## 🛡️ 4. Protecciones Automáticas que ya trabajan por ti
+
+No tienes que programar nada extra para contar con estas defensas:
+
+1. **Protección CSRF (`nosurf`)**:
+   - Todas las peticiones que guardan o borran datos (`POST`, `PUT`, `DELETE`) están protegidas contra ataques de falsificación de peticiones.
+   - Si usas HTMX (`hx-post`, `hx-put`, `hx-delete`), el layout base ya envía el token CSRF automáticamente en cada clic.
+2. **Descarga Protegida de Reportes (`/private-reports/*`)**:
+   - Los reportes PDF y Excel generados nunca se guardan en carpetas públicas.
+   - Solo un usuario con sesión activa y perteneciente a la institución (tenant) propietaria del reporte puede descargarlo.
+3. **Bitácora de Auditoría Automática (`sistema.bitacora_cambios`)**:
+   - Cada vez que un usuario crea, edita o elimina un registro, el sistema inyecta automáticamente su identificador (`uuid_persona`) en la transacción de PostgreSQL y un *trigger* guarda el historial del cambio sin que tengas que escribir código adicional.

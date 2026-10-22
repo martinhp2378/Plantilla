@@ -1,32 +1,41 @@
-# Contrato de autoridad de tenant
+# 🏢 Configuración de Dominios e Instituciones (Autoridad de Tenant)
 
-La plantilla resuelve el tenant antes de cualquier handler. La autoridad no comprobada se deniega con `421 Misdirected Request`; la respuesta HTTP es genérica y no expone host, tenant, esquema, IP, URL, headers, secretos ni PII.
+> [!TIP]
+> **¿Necesitas configurar esto para trabajar en tu computadora?**
+> **No.** Mientras tu archivo `.env` tenga `AMBIENTE=LOCAL` y `TENANT_AUTHORITY_CONFIG=` vacío, la aplicación configura automáticamente `localhost` para que puedas trabajar sin hacer nada extra.
+>
+> Este documento solo aplica cuando el sistema se despliega en servidores de **`DESARROLLO`** o **`PRODUCCION`**.
 
-## Contrato aplicable
+---
 
-| Perfil | Autoridad permitida | Rechazos obligatorios |
-|---|---|---|
-| `gcp_cloud_run_alb` | `Host` preservado por el ALB; `X-Forwarded-Proto` sólo valida el esquema. | `X-Forwarded-Host`, valores conflictivos, multihop o acceso directo no probado. No se infiere confianza por CIDR. |
-| `onprem_nginx_single_hop` | Un `X-Forwarded-Host` de un peer incluido en `NginxTrustedCIDRs`; `Host` upstream válido y un `X-Forwarded-Proto` permitido. | Peer fuera de CIDR, header ausente, duplicado, conflictivo, `Forwarded` o cadena de proxies. |
-| `local_direct` | `Host` directo de una fixture local explícita. | Cualquier header `Forwarded` o `X-Forwarded-*`, o política productiva. |
+## 🛡️ 1. ¿Para qué sirve la Autoridad de Tenant?
 
-`X-Forwarded-For` nunca selecciona un tenant. Un único valor puede existir para atribución de cliente sin alterar la autoridad; una cadena multihop se deniega. Sólo una entrada de catálogo `active` y asociada exactamente a una regla canónica puede continuar. No hay fallback a `public`.
+Antes de procesar cualquier petición web, el sistema verifica qué dominio o subdominio escribió el usuario en su navegador (por ejemplo, `inventario.issemym.gob.mx`) para saber a qué institución o área (`tenant`) pertenece y asignarle su propio esquema de base de datos.
 
-## Diagnóstico y efectos laterales
+Si alguien intenta entrar desde un dominio desconocido o manipulando cabeceras HTTP, el sistema rechaza la petición automáticamente con el código HTTP **`421 Misdirected Request`** antes de tocar la base de datos.
 
-Los diagnósticos internos usan reason codes estables y de baja cardinalidad: `authority_untrusted_peer`, `authority_conflicting_headers`, `authority_multihop`, `authority_invalid`, `tenant_unknown` y `tenant_inactive`. La respuesta pública conserva el estado determinista `421` y no revela el reason code ni datos de entrada.
+---
 
-Un rechazo ocurre antes de invocar el handler downstream. Por ello no debe abrir una operación tenant-scoped ni seleccionar un esquema de base de datos. Las pruebas locales ejercitan esta matriz mediante handlers centinela; no son evidencia de infraestructura externa.
+## ⚙️ 2. Perfiles de Despliegue Soportados
 
-## Fixtures e inventario
+Dependiendo de dónde esté instalado el sistema, se elige uno de estos 3 perfiles dentro del JSON:
 
-Las fixtures locales son exclusivamente para `local_direct` y no sustituyen el snapshot DB autoritativo de producción. La referencia `plantilla-institucional.issemym.gob.mx` permanece en estado `provisioning`, no enrutable: cada sistema nuevo debe sustituirla o aprobarla explícitamente con ownership, evidencia, versión y ventana válidos.
+| Perfil (`deployment_profile`) | Cuándo se usa | Cómo valida el dominio |
+| :--- | :--- | :--- |
+| **`local_direct`** | Automático en tu computadora (`AMBIENTE=LOCAL`). | Acepta directamente `localhost`. No se permite en producción. |
+| **`gcp_cloud_run_alb`** | Despliegue en **Google Cloud Run** detrás de un Balanceador de Carga (ALB). | Toma el dominio del header `Host` enviado por el balanceador bajo `HTTPS`. |
+| **`onprem_nginx_single_hop`** | Despliegue en servidores propios detrás de un proxy **NGINX**. | Valida que la petición venga de la IP autorizada del NGINX (`nginx_trusted_cidrs`) y lee `X-Forwarded-Host`. |
 
-## Configuración de arranque
+---
 
-Cuando `AMBIENTE=LOCAL` y `TENANT_AUTHORITY_CONFIG` está vacío, la aplicación instala intencionalmente la fixture `localhost` con el perfil `local_direct`. Este es el único fallback permitido. `DESARROLLO` y `PRODUCCION` requieren `TENANT_AUTHORITY_CONFIG`; si falta, contiene JSON inválido, campos desconocidos, un perfil incompatible con el ambiente o un catálogo no válido, el proceso falla antes de construir la aplicación.
+## 📋 3. Ejemplo de JSON para `TENANT_AUTHORITY_CONFIG` (Listo para adaptar)
 
-`TENANT_AUTHORITY_CONFIG` es un objeto JSON con este contrato:
+En los ambientes `DESARROLLO` y `PRODUCCION`, debes definir la variable de entorno `TENANT_AUTHORITY_CONFIG` con un JSON como el siguiente (en una sola línea o inyectado desde Secret Manager):
+
+🟡 **Modificar antes de usar en Desarrollo/Producción**:
+- Cambia `sistema.issemym.gob.mx` por el dominio real de tu aplicación.
+- Cambia `tenant_id` por el UUID real registrado en la tabla `institucion.cat_tenants`.
+- Ajusta las fechas de vigencia `valid_from` y `valid_until` en formato ISO (`YYYY-MM-DDTHH:MM:SSZ`).
 
 ```json
 {
@@ -34,47 +43,38 @@ Cuando `AMBIENTE=LOCAL` y `TENANT_AUTHORITY_CONFIG` está vacío, la aplicación
   "allowed_schemes": ["https"],
   "global_access_policy_id": "global-readers-v1",
   "canonical_hosts": [
-    {"host": "sistema.issemym.gob.mx", "tenant_id": "sistema", "schema": "sistema", "active": true}
+    {
+      "host": "sistema.issemym.gob.mx",
+      "tenant_id": "6163cc43-be78-428c-8fd6-7ebc3e961f3f",
+      "schema": "admin",
+      "active": true
+    }
   ],
   "catalog": {
     "source": "tenant-catalog-db",
-    "version": "2026-08-31.1",
-    "valid_from": "2026-08-31T00:00:00Z",
-    "valid_until": "2026-09-30T00:00:00Z",
+    "version": "2026-10-01.1",
+    "valid_from": "2026-01-01T00:00:00Z",
+    "valid_until": "2027-12-31T23:59:59Z",
     "entries": [
       {
         "host": "sistema.issemym.gob.mx",
-        "tenant_id": "sistema",
-        "schema": "sistema",
-        "institution_owner": "institution-owner-id",
-        "platform_owner": "platform-owner-id",
+        "tenant_id": "6163cc43-be78-428c-8fd6-7ebc3e961f3f",
+        "schema": "admin",
+        "institution_owner": "issemym-ti",
+        "platform_owner": "plataforma-cloud",
         "source": "tenant-catalog-db",
-        "version": "2026-08-31.1",
+        "version": "2026-10-01.1",
         "lifecycle": "active",
         "institution_approved": true,
         "platform_approved": true,
         "evidence_approved": true,
-        "valid_from": "2026-08-31T00:00:00Z",
-        "valid_until": "2026-09-30T00:00:00Z"
+        "valid_from": "2026-01-01T00:00:00Z",
+        "valid_until": "2027-12-31T23:59:59Z"
       }
     ]
   }
 }
 ```
 
-El perfil `onprem_nginx_single_hop` requiere además `"nginx_trusted_cidrs": ["10.0.0.0/8"]`. El perfil `local_direct` nunca es válido con `AMBIENTE=PRODUCCION`.
-
-Las fechas usan RFC 3339 y la ventana es semiabierta: `valid_from <= ahora < valid_until`. Tanto el snapshot como cada entrada deben estar vigentes. Una fecha futura, una expiración alcanzada o una ventana mal formada produce `startup_catalog_invalid`. El reloj se consulta en el límite de validación para permitir pruebas deterministas y reevaluación durante la resolución de solicitudes.
-
-## Límites de runtime y despliegue
-
-La aplicación valida el contrato recibido, pero no puede demostrar desde una solicitud la topología de Cloud Run, ALB, serverless NEG, URL `run.app`, CIDRs reales ni la configuración efectiva de NGINX. Esas pruebas son evidencia late-bound y bloquean el cutover hasta que plataforma y el owner institucional las aprueben.
-
-El rollout inicia con un canary limitado a un host `active` aprobado. Debe observar rechazos redactados, errores y latencia dentro de umbrales aprobados. Si falla autoridad, catálogo o observabilidad, el rollback retira el mapping o el host rule y conserva la denegación segura; nunca restaura `public` ni habilita una ruta de bypass.
-## Aislamiento Transaccional (Base de Datos)
-
-El cumplimiento del tenant context no se detiene en la capa HTTP. La plantilla fuerza una arquitectura **fail-closed** a nivel transaccional y de motor de base de datos (PostgreSQL).
-
-1. **Aislamiento en Memoria**: `TenantTxRunner` requiere una instancia de contexto inmutable válida para cada unidad de trabajo. Inyecta la resolución (`search_path` y `app.tenant_id`) a través de un set transaccional (`SET LOCAL`), garantizando que la configuración sea efímera y se elimine automáticamente en cada `commit` o `rollback`. No existe un fallback a la red pública (schema `public`).
-2. **Defensa en Profundidad (RLS)**: La identidad inyectada en tiempo de transacción se evalúa internamente a través de restricciones Row Level Security (RLS) habilitadas y forzadas (`FORCE ROW LEVEL SECURITY`) en cada tabla, validando y requiriendo validación en escrituras (`WITH CHECK`).
-3. **Mínimo Privilegio**: La aplicación web se conecta usando un rol `NOBYPASSRLS` (`app_runtime_tenant`). Se impide programáticamente el acceso cruzado de datos.
+> [!IMPORTANT]
+> Si usas el perfil **`onprem_nginx_single_hop`**, agrega también la propiedad `"nginx_trusted_cidrs": ["10.0.0.0/8"]` en la raíz del JSON con el rango IP de tu servidor NGINX.

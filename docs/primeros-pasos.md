@@ -10,14 +10,38 @@ Para que sea muy fácil de seguir, cada comando tiene una etiqueta:
 
 ## 🛠️ Fase 0: Programas que necesitas instalar (solo la primera vez)
 
-Antes de empezar, asegúrate de tener instalados estos 4 programas en tu computadora:
+Antes de empezar, asegúrate de tener instalados estos 5 programas en tu computadora:
 
-| Programa | Para qué sirve | Enlace de descarga |
+| Programa | Para qué sirve | Enlace o Comando de instalación |
 | :--- | :--- | :--- |
 | **1. Git** | Descargar el código y guardar tu historial de cambios. | [Descargar Git](https://git-scm.com/downloads) |
 | **2. Docker Desktop** | Levantar la base de datos PostgreSQL y la aplicación sin instalar nada extra. | [Descargar Docker Desktop](https://www.docker.com/products/docker-desktop/) |
 | **3. Go (1.25+)** | El lenguaje de programación del sistema (necesario para el generador de módulos). | [Descargar Go](https://go.dev/dl/) |
 | **4. Visual Studio Code** | El editor de código recomendado para ver y modificar tus archivos. | [Descargar VS Code](https://code.visualstudio.com/) |
+| **5. Templ CLI** | Compila las vistas HTML (`.templ`) en código Go cuando creas o editas pantallas. | Ver comando abajo 👇 |
+
+### Cómo instalar Templ CLI (una vez que ya instalaste Go)
+
+Abre tu terminal y ejecuta este comando:
+
+🟢 **Copiar y pegar tal cual**:
+```bash
+go install github.com/a-h/templ/cmd/templ@latest
+```
+
+Si usas **Mac (macOS)** o **Linux**, asegúrate de que tu terminal encuentre el comando `templ` ejecutando también esta línea (solo necesitas hacerlo una vez):
+
+🟢 **Copiar y pegar tal cual**:
+```bash
+export PATH="$PATH:$(go env GOPATH)/bin"
+grep -qxF 'export PATH="$PATH:$(go env GOPATH)/bin"' ~/.zshrc 2>/dev/null || echo 'export PATH="$PATH:$(go env GOPATH)/bin"' >> ~/.zshrc
+```
+
+Para comprobar que quedó bien instalado, escribe:
+🟢 **Copiar y pegar tal cual**:
+```bash
+templ version
+```
 
 > [!IMPORTANT]
 > **Antes de continuar**, abre la aplicación **Docker Desktop** en tu computadora y espera a que el ícono de la ballena indique que está en ejecución (*Engine running*).

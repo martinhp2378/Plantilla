@@ -1030,9 +1030,9 @@ INSERT INTO sesion.recurso (nombre, descripcion, razon_i) VALUES
 ON CONFLICT (nombre) DO NOTHING;
 
 INSERT INTO sesion.politica (nombre, descripcion, perfil, recurso, accion, reglas, razon_i) VALUES
-('Acceso <<.NameUpper>> Superadmin', 'Acceso al modulo <<.Name>>', 'superadmin', '<<.Name>>', 'consultar', '{"path_prefix": "<<.Prefix>>"}', 'Carga Inicial'),
-('Acceso <<.NameUpper>> Administrador', 'Acceso al modulo <<.Name>>', 'administrador', '<<.Name>>', 'consultar', '{"path_prefix": "<<.Prefix>>"}', 'Carga Inicial'),
-('Acceso <<.NameUpper>> Operador', 'Acceso al modulo <<.Name>>', 'operador', '<<.Name>>', 'consultar', '{"path_prefix": "<<.Prefix>>"}', 'Carga Inicial')
+('Acceso <<.NameUpper>> Superadmin', 'Acceso al modulo <<.Name>>', 'superadmin', '<<.Name>>', 'consultar', '{"path_prefix": "<<.Prefix>>", "routes": [{"method": "*", "prefix": "<<.Prefix>>"}]}', 'Carga Inicial'),
+('Acceso <<.NameUpper>> Admin', 'Acceso al modulo <<.Name>>', 'admin', '<<.Name>>', 'consultar', '{"path_prefix": "<<.Prefix>>", "routes": [{"method": "*", "prefix": "<<.Prefix>>"}]}', 'Carga Inicial'),
+('Acceso <<.NameUpper>> Operador', 'Acceso al modulo <<.Name>>', 'operador', '<<.Name>>', 'consultar', '{"path_prefix": "<<.Prefix>>", "routes": [{"method": "*", "prefix": "<<.Prefix>>"}]}', 'Carga Inicial')
 ON CONFLICT (nombre) DO NOTHING;
 `
 

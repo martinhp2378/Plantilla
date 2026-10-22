@@ -9,7 +9,6 @@ import (
 	usuario_service "PlantillaInstitucional/configuracion/usuario/service"
 	persona_service "PlantillaInstitucional/institucion/service"
 	miperfil_service "PlantillaInstitucional/miperfil/service"
-	parametros_service "PlantillaInstitucional/parametros/service"
 	sharedEvents "PlantillaInstitucional/shared/events"
 
 	"github.com/go-playground/validator/v10"
@@ -23,11 +22,6 @@ func InitServices(a *app.App) {
 	a.EventDispatcher = dispatcher
 
 	// 2. Core Services
-	a.Services.Parametro = parametros_service.NewService(a.Logger, a.Repositories.Parametro, validate, a.ManejadorArchivos)
-
-	// Inject Parameters into Email Service
-	a.ServicioEmail.SetParametersProvider(a.Services.Parametro)
-
 	a.Services.Usuario = usuario_service.NewUsuarioService(a.Repositories.Usuario, validate, a.Logger, a.ManejadorArchivos, dispatcher)
 	a.Services.Perfil = perfil_service.NewPerfilService(a.Repositories.Perfil, validate, a.Logger, a.ManejadorArchivos)
 	a.Services.Policy = policy_service.NewService(a.Repositories.Policy)

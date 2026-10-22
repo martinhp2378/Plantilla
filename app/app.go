@@ -21,9 +21,6 @@ import (
 	miperfil_repo "PlantillaInstitucional/miperfil/repository"
 	miperfil_service "PlantillaInstitucional/miperfil/service"
 	"PlantillaInstitucional/pagination"
-	parametros_handler "PlantillaInstitucional/parametros/handler"
-	parametros_repo "PlantillaInstitucional/parametros/repository"
-	parametros_service "PlantillaInstitucional/parametros/service"
 	"PlantillaInstitucional/shared/email"
 	"PlantillaInstitucional/shared/entorno"
 	sharedEvents "PlantillaInstitucional/shared/events"
@@ -72,7 +69,6 @@ type Handlers struct {
 	Policy    *policy_handler.PolicyHandler
 	Persona   persona_handler.PersonaHandler
 	Login     *login_handler.HandlerLogin
-	Parametro *parametros_handler.Handler
 	Dashboard *dashboard_handler.DashboardHandler
 	MiPerfil  *miperfil_handler.MiPerfilHandler
 }
@@ -93,7 +89,6 @@ type Services struct {
 	Perfil    perfil_service.PerfilServiceProvider
 	Policy    PolicyResolver
 	Persona   persona_service.PersonaService
-	Parametro parametros_service.ParametrosServiceProvider
 	MiPerfil  miperfil_service.ServiceProvider
 }
 
@@ -104,7 +99,6 @@ type Repositories struct {
 	Policy    *policy_repo.PolicyRepository
 	Persona   *persona_repo.PersonaRepository
 	Login     *login_repo.RepositorioPsql
-	Parametro *parametros_repo.ParametrosRepository
 	MiPerfil  *miperfil_repo.MiPerfilRepository
 }
 

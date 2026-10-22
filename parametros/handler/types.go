@@ -7,7 +7,6 @@ import (
 	"PlantillaInstitucional/parametros"
 	"PlantillaInstitucional/shared/db"
 	errores "PlantillaInstitucional/shared/errores"
-	"PlantillaInstitucional/shared/pagina"
 	"fmt"
 	"net/http"
 
@@ -30,7 +29,7 @@ type ParametrosServiceProvider interface {
 }
 
 func (h *ParametrosHandler) RegisterRoutes(r chi.Router) {
-	rutas := pagina.GlobalRutas.Parametros
+	rutas := parametros.Rutas
 	r.Route(rutas.Prefix, func(r chi.Router) {
 		r.Get("/", h.CargarPagina_templ)
 		r.Get("/tabla", h.CargarTabla_templ)

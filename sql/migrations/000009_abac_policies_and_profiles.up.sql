@@ -33,15 +33,15 @@ ON CONFLICT (nombre) DO UPDATE SET
 
 -- 3. Canonical application profiles and compatibility aliases for sesiones v0.4.0
 INSERT INTO perfil (nombre, razon_i) VALUES 
-('superadmin', 'Administrador Total del Sistema'), 
-('admin', 'Administrador de Configuración y Operación'), 
-('operativo', 'Personal Operativo de Unidad'), 
-('ejecutivo', 'Consulta de Indicadores y Reportes'),
-('anonimo', 'Perfil Público no Autenticado'),
-('coordinacion', 'Personal de Coordinación'),
-('medico', 'Compat sesiones v0.4.0'),
-('recepcion', 'Compat sesiones v0.4.0'),
-('adminclinica', 'Compat sesiones v0.4.0')
+('superadmin', 'ABAC Granular'), 
+('admin', 'ABAC Granular'), 
+('operativo', 'ABAC Granular'), 
+('ejecutivo', 'ABAC Granular'),
+('anonimo', 'ABAC Granular'),
+('coordinacion', 'ABAC Granular'),
+('medico', 'Compat sesiones'),
+('recepcion', 'Compat sesiones'),
+('adminclinica', 'Compat sesiones')
 ON CONFLICT (nombre) DO UPDATE SET
     razon_m = 'ABAC Granular',
     fecha_m = NOW();

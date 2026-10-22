@@ -4,17 +4,36 @@ Esta sección detalla cómo utilizar la plantilla para iniciar tu propio proyect
 
 ## 🌟 Cómo Empezar tu Nuevo Proyecto
 
-Si vas a usar esta plantilla para un proyecto nuevo, sigue estos pasos iniciales:
+> 👉 Si es tu primera vez con Go, Git o Docker, sigue la **[Guía Paso a Paso: De Cero a tu Propio Proyecto](./primeros-pasos.md)**, donde cada paso viene explicado desde cero.
 
-1.  **Clona el repositorio** (o usa el botón "Use this template" si está en GitHub).
-2.  **Renombra el módulo Go**: Usa `find` y `sed` (o buscar y reemplazar en tu IDE) para cambiar `PlantillaInstitucional` por la ruta de tu nuevo módulo en `go.mod` y en todos los `.go` y `.templ`.
-3.  **Configura tu entorno**:
+Resumen rápido de comandos para inicializar un nuevo sistema a partir de esta plantilla:
+
+1.  **Clonar el repositorio con el nombre de tu nuevo proyecto** (🟡 *Cambia `MiNuevoProyecto` por el nombre de tu sistema*):
+    ```bash
+    git clone https://github.com/issemym-repos/PlantillaInstitucional.git MiNuevoProyecto
+    cd MiNuevoProyecto
+    git remote remove origin
+    ```
+2.  **Renombrar el módulo Go en todo el código** (🟡 *Cambia `MiNuevoProyecto` por el nombre de tu sistema*):
+    - **En Mac (macOS)**:
+      ```bash
+      go mod edit -module MiNuevoProyecto
+      find . -type f \( -name "*.go" -o -name "*.templ" \) -not -path "./vendor/*" -not -path "./.git/*" -exec sed -i '' 's/PlantillaInstitucional/MiNuevoProyecto/g' {} +
+      ```
+    - **En Linux / Windows (Git Bash / WSL)**:
+      ```bash
+      go mod edit -module MiNuevoProyecto
+      find . -type f \( -name "*.go" -o -name "*.templ" \) -not -path "./vendor/*" -not -path "./.git/*" -exec sed -i 's/PlantillaInstitucional/MiNuevoProyecto/g' {} +
+      ```
+3.  **Configurar tu entorno local** (🟢 *Copiar y pegar tal cual*):
     ```bash
     cp .env.example .env
     ```
-    *(Ajusta las variables de base de datos, credenciales SMTP y el `DOMAIN` base de tu proyecto).*
-4.  **Registra un Tenant (Institución)**:
-    El sistema exige multi-tenancy. Debes crear el esquema y un registro inicial en la BD (o utilizar un script seed) antes de poder acceder por el navegador a tu subdominio (ej. `midominio.localhost`).
+4.  **Levantar con Docker** (🟢 *Copiar y pegar tal cual*):
+    ```bash
+    docker compose -f docker-compose.local.yml up --build -d
+    ```
+    Accede en [http://localhost:8080/login](http://localhost:8080/login) con `admin@issemym.gob.mx` / `admin123`.
 
 ## 🛠️ Herramientas Recomendadas
 

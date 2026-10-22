@@ -2,6 +2,13 @@
 
 Una base sólida y moderna para el desarrollo de aplicaciones institucionales robustas, construida con el poder de **Go**, la interactividad de **HTMX** y la seguridad de tipos de **Templ**.
 
+> [!TIP]
+> **¿Es tu primera vez usando esta plantilla, Go, Git o Docker?**
+> Comienza aquí con nuestras guías paso a paso diseñadas con comandos listos para copiar y pegar:
+> 1. 🌱 **[Guía Paso a Paso: De Cero a tu Propio Proyecto (Clonar, Renombrar y Levantar)](./docs/primeros-pasos.md)**
+> 2. ⚡ **[Guía Amigable: Cómo Crear y Personalizar un Nuevo Módulo CRUD](./docs/scaffolding.md)**
+> 3. 📚 **[Índice Completo de Documentación](./docs/index.md)**
+
 ---
 
 ## 🚀 Filosofía del Proyecto
@@ -42,69 +49,60 @@ El sistema incluye una capa de hardenización por defecto:
 
 ## 🏁 Inicio Rápido
 
+> 👉 Si vas a crear un **proyecto nuevo a partir de esta plantilla** (clonar, desvincular Git y renombrar con los datos de tu sistema), sigue primero la **[Guía Paso a Paso: De Cero a tu Propio Proyecto](./docs/primeros-pasos.md)**.
+
 ### Prerrequisitos
 - Go 1.25 o superior
-- Docker Desktop / OrbStack
+- Docker Desktop / OrbStack (debe estar abierto y en ejecución)
 - [Templ CLI](https://templ.guide/quick-start/installation)
 
-### Configuración Local
+### Levantar el Proyecto en tu Computadora
 
-1.  **Preparar el Entorno**:
+1.  **Crear el archivo de configuración local** (🟢 *Copiar y pegar tal cual*):
     ```bash
     cp .env.example .env
     ```
 
-2.  **Levantar con Docker**:
-    El proyecto está configurado para sincronizar las variables del `.env` directamente con los contenedores.
+2.  **Construir y encender con Docker** (🟢 *Copiar y pegar tal cual*):
     ```bash
     docker compose -f docker-compose.local.yml up --build -d
     ```
 
-3.  **Generar Código Templ (Manual)**:
-    Si no usas Docker para el desarrollo, recuerda generar los componentes:
-    ```bash
-    templ generate
-    ```
+3.  **Abrir en el navegador e iniciar sesión**:
+    - **URL**: [http://localhost:8080/login](http://localhost:8080/login)
+    - **Correo de prueba**: `admin@issemym.gob.mx`
+    - **Contraseña de prueba**: `admin123`
 
 ---
 
-## 📦 Migraciones
+## ⚡ Generación de Módulos CRUD (Scaffolding)
 
-Las migraciones se ejecutan automáticamente al iniciar la aplicación. Para crear una nueva:
-```bash
-migrate create -ext sql -dir sql/migrations -seq nombre_de_la_migración
-```
+Para crear un módulo CRUD completo (tabla, buscador, modales de alta/edición, exportación a **PDF** y **Excel**, migración SQL con permisos y registro automático en el menú lateral):
 
----
-
-## ⚡ Generación de Módulos (Scaffolding)
-
-Para crear un nuevo módulo CRUD vertical completo y autónomo (entidad, repositorio multi-tenant, servicio, reportes PDF/Excel, handlers, vistas Templ v2, migraciones SQL con RLS/ABAC, registro en el menú lateral y auto-montaje en `cmd/main.go`):
-
+### 1. Ejecutar el generador
+🟡 *Modificar antes de ejecutar: cambia **`proveedor`** por el nombre de tu módulo en singular*:
 ```bash
 make new-module NAME=proveedor
 ```
 
-### Parámetros Disponibles
-
-| Parámetro | Obligatorio | Por defecto | Descripción |
-| :--- | :---: | :--- | :--- |
-| `NAME` | Sí | — | Nombre del módulo en singular (normaliza automáticamente guiones o espacios a `snake_case` y `PascalCase`). |
-| `SCHEMA` | No | `sistema` | Esquema de base de datos en PostgreSQL (`sistema`, `institucion`, etc.). |
-| `TITLE` | No | Plural de `NAME` | Título legible para la interfaz, menú de navegación y encabezados de reportes. |
-
-Ejemplo personalizado:
+O especificando el esquema de base de datos y el título con acentos:
+🟡 *Modificar antes de ejecutar: cambia **`orden-compra`**, **`institucion`** y **`"Órdenes de Compra"`** por los datos de tu módulo*:
 ```bash
 make new-module NAME=orden-compra SCHEMA=institucion TITLE="Órdenes de Compra"
 ```
 
-### Qué Incluye el Módulo Generado
-1. **`/<modulo>`**: Entidad de dominio y rutas canónicas descentralizadas (`types.go`, `rutas.go`).
-2. **`/<modulo>/repository`**: Consultas tipadas sobre `TenantTxRunner` con paginación, filtros dinámicos, ordenamiento seguro y soporte transparente para desarrollo local.
-3. **`/<modulo>/service`**: Reglas de negocio, validación con `validator/v10` y exportación nativa a **PDF** (con soporte de acentos/UTF-8) y **Excel** (`reportes.go`).
-4. **`/<modulo>/handler`**: Handlers HTTP/HTMX, descarga privada de reportes y función `Register(a *app.App, r chi.Router)` que monta rutas y registra el módulo en el menú lateral.
-5. **`/<modulo>/view`**: Componentes Templ v2 (tabla dinámica con búsqueda/filtros, botones de exportación, modales de alta/edición apuntando a `#modal` y layout institucional).
-6. **`/sql/migrations`**: Migraciones `.up.sql` y `.down.sql` secuenciales con triggers de auditoría, `FORCE ROW LEVEL SECURITY` y políticas ABAC para `superadmin` y `admin`.
-7. **Auto-montaje en `cmd/main.go`**: Inyección automática del import y registro en una sola línea.
+### 2. Actualizar el contenedor para ver el nuevo módulo en el navegador
+🟢 *Copiar y pegar tal cual*:
+```bash
+docker compose -f docker-compose.local.yml build --no-cache app && docker compose -f docker-compose.local.yml up -d app
+```
 
-📖 Consulta la [Guía Completa de Scaffolding](./docs/scaffolding.md) y el [Índice de Documentación](./docs/index.md) para más detalles.
+### Parámetros Disponibles
+
+| Parámetro | Obligatorio | Por defecto | Qué debes poner |
+| :--- | :---: | :--- | :--- |
+| `NAME` | Sí | — | Nombre del módulo en singular (puedes usar guiones como `orden-compra`; se normaliza solo a `snake_case` y `PascalCase`). |
+| `SCHEMA` | No | `sistema` | Esquema de PostgreSQL donde se creará la tabla (`sistema` o `institucion`). |
+| `TITLE` | No | Plural de `NAME` | Título con espacios y acentos para la pantalla, menú lateral y reportes. |
+
+📖 Consulta la **[Guía Amigable para Crear y Personalizar Módulos](./docs/scaffolding.md)** (incluye cómo agregar campos nuevos y cómo borrar módulos de prueba).

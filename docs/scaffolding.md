@@ -1,110 +1,149 @@
-# ⚡ Generación de Módulos (Scaffolding)
+# ⚡ Guía Amigable: Cómo Crear y Personalizar un Nuevo Módulo CRUD
 
-El generador de módulos (`cmd/tools/scaffold`) crea un módulo CRUD vertical completo —desde la migración SQL con políticas ABAC y Row Level Security (RLS) hasta las vistas interactivas con HTMX/Templ v2 y exportación de reportes en PDF y Excel— y lo monta automáticamente en la aplicación.
+Esta guía te enseña cómo crear una pantalla completa del sistema (con tabla, buscador, ventana para crear y editar registros, botones para descargar reportes en **PDF** y **Excel**, permisos en base de datos y acceso en el menú lateral) **ejecutando un solo comando**.
 
-## Ruta Rápida (Quick Path)
+Cada comando tiene un indicador claro para que sepas qué hacer:
+- 🟢 **Copiar y pegar tal cual**: No tienes que cambiarle nada, solo cópialo, pégalo en tu terminal y presiona `Enter`.
+- 🟡 **Modificar antes de ejecutar**: Te diremos exactamente qué palabra cambiar por el nombre de tu nuevo módulo.
 
-1. **Generar el módulo**:
-   ```bash
-   make new-module NAME=proveedor SCHEMA=institucion TITLE="Proveedores"
-   ```
-2. **Compilar componentes Templ y verificar integridad**:
+---
+
+## 🚀 Paso 1: Crear tu Nuevo Módulo
+
+Abre la terminal dentro de la carpeta de tu proyecto y elige una de las dos opciones siguientes:
+
+### Opción A: Creación Rápida (Usando los valores por defecto)
+
+🟡 **Modificar antes de ejecutar**:
+Cambia únicamente la palabra **`proveedor`** por el nombre de tu módulo en **singular** (si tiene varias palabras, puedes separarlas con guion medio `-` o guion bajo `_`, por ejemplo: `orden-compra`, `tipo-contrato`, `almacen`).
+
+```bash
+make new-module NAME=proveedor
+```
+
+### Opción B: Creación Personalizada (Eligiendo esquema de BD y título con acentos)
+
+🟡 **Modificar antes de ejecutar**:
+- Cambia **`orden-compra`** por el nombre técnico de tu módulo en singular.
+- Cambia **`institucion`** por el esquema de PostgreSQL donde quieres guardar la tabla (`sistema` o `institucion`).
+- Cambia **`"Órdenes de Compra"`** por el título exacto (con mayúsculas, espacios y acentos) que quieres que vean los usuarios en la pantalla y en los reportes.
+
+```bash
+make new-module NAME=orden-compra SCHEMA=institucion TITLE="Órdenes de Compra"
+```
+
+> [!TIP]
+> **¿Qué pasa si escribes guiones o espacios en `NAME`?**
+> No te preocupes: el sistema convierte automáticamente `orden-compra` en `orden_compra` para las carpetas, paquetes y tablas de base de datos, y en `OrdenCompra` para el código interno de Go y Templ.
+
+---
+
+## 🔄 Paso 2: Encender o Actualizar el Sistema para Ver tu Módulo
+
+Una vez que el comando del Paso 1 termine y muestre el mensaje `🎉 Modulo creado exitosamente`, actualiza el contenedor de la aplicación para que cargue tu nuevo módulo y cree su tabla en la base de datos:
+
+🟢 **Copiar y pegar tal cual**:
+```bash
+docker compose -f docker-compose.local.yml build --no-cache app && docker compose -f docker-compose.local.yml up -d app
+```
+
+Cuando termine de cargar (tarda unos 20 a 30 segundos):
+1. Entra o recarga tu navegador en **[http://localhost:8080/sistema](http://localhost:8080/sistema)**.
+2. Verás tu nuevo módulo en el **menú lateral izquierdo**.
+3. ¡Ya puedes **crear registros**, **editarlos en su ventana modal**, **buscar/filtrar** y **descargar los reportes en PDF y Excel**!
+
+---
+
+## 🧹 ¿Hiciste un Módulo Solo para Probar y Quieres Borrarlo?
+
+Si creaste un módulo de prueba (por ejemplo, llamado `pruebita` o `prueba_borrarlo`) y quieres eliminarlo por completo para no subir basura al repositorio de Git, sigue estos **2 pasos**:
+
+### 1. Limpiar la tabla de prueba en la base de datos local
+
+🟡 **Modificar antes de ejecutar**:
+En el siguiente bloque, cambia las **3 veces** que aparece la palabra **`prueba_borrarlo`** por el nombre en `snake_case` (con guion bajo) del módulo que creaste, y verifica si el número `11` corresponde a la última migración real antes de tu prueba:
+
+```bash
+docker exec plantillainstitucional-db-1 psql -U postgres -d plantilla -c "
+DELETE FROM sesion.politica WHERE recurso = 'prueba_borrarlo';
+DELETE FROM sesion.recurso WHERE nombre = 'prueba_borrarlo';
+DROP TABLE IF EXISTS sistema.prueba_borrarlo CASCADE;
+UPDATE schema_migrations SET version = 11, dirty = false;
+"
+```
+*(Nota: Si en tu archivo `.env` cambiaste el usuario de base de datos `PQ_WRITE_USER` por otro nombre distinto de `postgres`, reemplaza `-U postgres` por `-U TU_USUARIO`).*
+
+### 2. Borrar la carpeta del módulo y restaurar el archivo principal
+
+🟡 **Modificar antes de ejecutar**:
+Cambia las **2 veces** que aparece **`prueba_borrarlo`** por el nombre de la carpeta de tu módulo de prueba:
+
+```bash
+rm -rf prueba_borrarlo sql/migrations/*_create_prueba_borrarlo_table.*
+git checkout cmd/main.go
+```
+
+Por último, vuelve a actualizar el contenedor para que quede limpio:
+🟢 **Copiar y pegar tal cual**:
+```bash
+docker compose -f docker-compose.local.yml up --build -d app
+```
+
+---
+
+## 🗂️ ¿Qué Archivos Creó el Generador por Ti?
+
+Por defecto, tu módulo nuevo viene con **4 campos listos para usar**: `Nombre`, `Código`, `Descripción` y `Activo` (Estatus). Todo se encuentra dentro de una carpeta con el nombre de tu módulo:
+
+| Archivo | Qué hace (en palabras sencillas) | ¿Cuándo necesitas abrirlo? |
+| :--- | :--- | :--- |
+| `sql/migrations/..._create_<modulo>_table.up.sql` | Crea la tabla en PostgreSQL y da permisos para entrar al módulo. | Cuando quieras agregar más columnas a la tabla de base de datos. |
+| `<modulo>/types.go` | Define qué datos tiene un registro de tu módulo. | Cuando quieras agregar o cambiar campos (ej. `Telefono`, `FechaNacimiento`). |
+| `<modulo>/repository/queries.go` | Contiene las consultas SQL (`SELECT`, `INSERT`, `UPDATE`). | Cuando agregues columnas nuevas y quieras guardarlas o leerlas en la BD. |
+| `<modulo>/repository/repository.go` | Conecta las consultas SQL con los campos de Go. | Cuando agregues columnas nuevas al leer o guardar. |
+| `<modulo>/service/reportes.go` | Configura las columnas que salen en el **PDF** y en el **Excel**. | Cuando quieras cambiar los títulos o campos que se descargan en los reportes. |
+| `<modulo>/handler/types.go` | Lee los datos que el usuario escribió en el formulario web (`parseForm`). | Cuando agregues un campo nuevo al formulario. |
+| `<modulo>/view/components/form_v2.templ` | Dibuja la ventana emergente (modal) de **Nuevo / Editar**. | Cuando quieras agregar o quitar cajas de texto en el formulario. |
+| `<modulo>/view/components/table_v2.templ` | Dibuja las columnas y filas de la **tabla principal**. | Cuando quieras mostrar más o menos columnas en la tabla. |
+| `<modulo>/handler/register.go` | Configura el texto y el ícono que aparecen en el **menú lateral**. | Cuando quieras cambiar el ícono o nombre del menú. |
+
+---
+
+## 🛠️ Cómo Agregar un Campo Nuevo a tu Módulo (Paso a Paso)
+
+Supongamos que creaste el módulo `proveedor` y, además de `Nombre`, `Código` y `Descripción`, quieres agregar un campo llamado **`Telefono`**. Solo sigue este orden:
+
+1. **En la migración SQL (`sql/migrations/..._create_proveedor_table.up.sql`)**:
+   Agrega la columna `telefono VARCHAR(20) NOT NULL DEFAULT ''` debajo de `descripcion`.
+2. **En `<modulo>/types.go`**:
+   Agrega `Telefono string` dentro de `type Proveedor struct`.
+3. **En `<modulo>/repository/queries.go` y `<modulo>/repository/repository.go`**:
+   Agrega `telefono` en el `SELECT`, `INSERT` y `UPDATE`, y pásalo en `Scan(...)` y `Exec(...)`.
+4. **En `<modulo>/handler/types.go` (función `parseForm`)**:
+   Agrega `Telefono: r.FormValue("telefono"),`.
+5. **En las vistas (`form_v2.templ` y `table_v2.templ`)**:
+   Copia el bloque del input de `codigo` en `form_v2.templ` y cámbialo para `telefono`, y agrega la columna en `table_v2.templ`.
+6. **En los reportes (`<modulo>/service/reportes.go`)**:
+   Agrega `"Teléfono"` en `ReportHeaders` y `"Telefono"` en `ReportFields`.
+7. **Regenera las vistas y actualiza tu contenedor**:
+   🟢 **Copiar y pegar tal cual**:
    ```bash
    make check
-   ```
-3. **Reconstruir y levantar el contenedor**:
-   ```bash
-   docker compose -f docker-compose.local.yml up --build -d app
-   ```
-
-Al iniciar la aplicación, la migración SQL se ejecuta automáticamente, el módulo aparece en el menú lateral y las rutas CRUD y de reportes quedan operativas.
-
----
-
-## Parámetros del Generador
-
-| Parámetro | Obligatorio | Valor por defecto | Descripción |
-| :--- | :---: | :--- | :--- |
-| `NAME` | Sí | — | Nombre de la entidad en singular (ej. `proveedor`, `orden_compra` o `orden-compra`). |
-| `SCHEMA` | No | `sistema` | Esquema de PostgreSQL donde se creará la tabla (`sistema`, `institucion`, etc.). |
-| `TITLE` | No | Plural de `NAME` | Título visible en la interfaz, encabezados de reportes y menú lateral. |
-
-### Normalización Automática de Identificadores
-
-El generador normaliza cualquier entrada con guiones (`-`) o espacios para garantizar código Go, rutas y objetos SQL válidos:
-
-| Entrada (`NAME`) | Paquete / Tabla SQL (`snake_case`) | Structs / Componentes Templ (`PascalCase`) | Ruta HTTP Base |
-| :--- | :--- | :--- | :--- |
-| `proveedor` | `proveedor` | `Proveedor` | `/sistema/proveedores` |
-| `orden-compra` | `orden_compra` | `OrdenCompra` | `/sistema/orden_compras` |
-| `tipo documento` | `tipo_documento` | `TipoDocumento` | `/sistema/tipo_documentos` |
-
----
-
-## Anatomía del Módulo Generado
-
-Cada módulo es autónomo y sigue **Arquitectura Hexagonal / Vertical Slicing**:
-
-| Archivo / Directorio | Capa | Responsabilidad |
-| :--- | :--- | :--- |
-| `<modulo>/types.go` | Dominio | Entidad principal, filtros de búsqueda y estructura de resultados paginados. |
-| `<modulo>/rutas.go` | Dominio / Rutas | Definición canónica de rutas mediante `pagina.NuevaRuta("/<schema>/<plural>")`. |
-| `<modulo>/repository/` | Adaptador Salida | Consultas SQL parametrizadas sobre `TenantTxRunner` (lectura/escritura aislada por tenant). |
-| `<modulo>/service/service.go` | Aplicación | Validación de negocio (`validator/v10`), normalización y orquestación transaccional. |
-| `<modulo>/service/reportes.go` | Aplicación | Generación de reportes **PDF** y **Excel** conectados al almacenamiento privado. |
-| `<modulo>/handler/crud.go` | Adaptador Entrada | Endpoints HTTP/HTMX para crear (`POST`), actualizar (`PUT`) y eliminar (`DELETE`). |
-| `<modulo>/handler/views.go` | Adaptador Entrada | Renderizado de página completa (`Index`), tabla parcial (`SearchTable`) y modales. |
-| `<modulo>/handler/files.go` | Adaptador Entrada | Descarga de reportes (`/reportes/pdf`, `/reportes/excel`) con redirección segura `303 See Other`. |
-| `<modulo>/handler/register.go` | Ensamblaje | Función `Register(a *app.App, r chi.Router)` que inyecta dependencias y registra el ítem en el menú lateral. |
-| `<modulo>/view/` | Presentación | Vistas Templ v2 (`layouts/`, `components/table_v2.templ`, `components/form_v2.templ`). |
-| `sql/migrations/` | Base de Datos | Archivos `.up.sql` y `.down.sql` secuenciales con tabla, índices, triggers de auditoría, RLS y permisos ABAC. |
-| `cmd/main.go` | Punto de Entrada | Inyección automática del `import` y la llamada `<modulo>_handler.Register(a, r)`. |
-
----
-
-## Funcionalidades Incluidas de Fábrica
-
-### 1. CRUD Interactivo con HTMX y Templ v2
-- **Búsqueda y filtrado en vivo**: Filtrado por texto y estatus con debounce (`delay:300ms`) y actualización parcial del contenedor `#<modulo>-table-container`.
-- **Paginación dinámica**: Navegación por páginas preservando los filtros activos (`hx-include="#filter-form"`).
-- **Modales desacoplados**: Alta y edición cargadas dinámicamente en `#modal` (`ModalTarget: "#modal"`), con cierre automático al guardar y refresco de tabla más notificación toast OOB (`hx-swap-oob="true"`).
-
-### 2. Exportación de Reportes (PDF y Excel)
-- **Botones integrados en Toolbar**: La vista principal incluye acciones directas para exportar a PDF y Excel mediante `export-actions.js`.
-- **Soporte completo de acentos y caracteres en español**: El motor PDF (`shared/reportes/generarReportePDF.go`) traduce automáticamente cadenas UTF-8 a CP1252 mediante `UnicodeTranslatorFromDescriptor`, garantizando que tildes (`á, é, í, ó, ú`), diéresis (`ü`) y eñes (`ñ, Ñ`) se representen y midan correctamente.
-- **Almacenamiento privado y retención**: Los archivos se guardan mediante `StorePrivateReport` bajo `/private-reports/reportes/<schema>/...` y su ciclo de vida se registra en `sistema.reportes_generados` con expiración y limpieza automática.
-
-### 3. Aislamiento Multi-Tenant y Desarrollo Local
-- **Producción**: Tanto las consultas de repositorio como la retención de reportes utilizan el UUID del tenant activo e inyectan `app.tenant_id` en la transacción local para cumplir con `FORCE ROW LEVEL SECURITY`.
-- **Entorno Local (`LOCAL`)**: Cuando el contexto de desarrollo local utiliza el identificador `"local"`, el repositorio del módulo y el gestor de retención de reportes resuelven automáticamente el UUID del tenant semilla en `institucion.cat_tenants`, permitiendo probar altas, ediciones y descargas de reportes sin errores de casteo UUID (`22P02`).
-
----
-
-## Cómo Revertir un Módulo de Prueba
-
-Si generaste un módulo únicamente para pruebas locales y deseas eliminarlo antes de hacer commit:
-
-1. **Revertir la migración en PostgreSQL** (suponiendo que la migración generada fue la `000011`):
-   ```bash
-   docker exec plantillainstitucional-db-1 psql -U JRosendo -d plantilla -c "
-   DELETE FROM sesion.politica WHERE recurso = '<nombre_modulo>';
-   DELETE FROM sesion.recurso WHERE nombre = '<nombre_modulo>';
-   DROP TABLE IF EXISTS <schema>.<nombre_modulo> CASCADE;
-   UPDATE schema_migrations SET version = 10, dirty = false;
-   "
-   ```
-2. **Borrar los archivos generados y restaurar `cmd/main.go`**:
-   ```bash
-   rm -rf <nombre_modulo> sql/migrations/000011_create_<nombre_modulo>_table.*
-   git checkout cmd/main.go
+   docker compose -f docker-compose.local.yml build --no-cache app && docker compose -f docker-compose.local.yml up -d app
    ```
 
 ---
 
-## Lista de Verificación para Personalizar un Módulo Nuevo
+## ✅ Lista de Verificación antes de Guardar en Git
 
-- [ ] **Campos de Dominio**: Ajustar los campos en `<modulo>/types.go` y en la migración `.up.sql` según los requerimientos del negocio.
-- [ ] **Consultas SQL**: Actualizar `SELECT`, `INSERT` y `UPDATE` en `<modulo>/repository/queries.go` y `<modulo>/repository/repository.go`.
-- [ ] **Formulario y Tabla**: Añadir o modificar los inputs en `<modulo>/view/components/form_v2.templ` y las columnas en `table_v2.templ`.
-- [ ] **Encabezados de Reporte**: Sincronizar `<modulo>ReportHeaders` y `<modulo>ReportFields` en `<modulo>/service/reportes.go`.
-- [ ] **Validación Completa**: Ejecutar `make check` (`templ fmt`, `templ generate`, `golangci-lint` y `go test ./...`) antes de abrir un Pull Request.
+Antes de subir tu nuevo módulo al repositorio del equipo, corre este comando para verificar que no haya ningún error de formato ni de compilación:
+
+🟢 **Copiar y pegar tal cual**:
+```bash
+make check
+```
+
+Si termina sin errores:
+- [ ] El formulario crea registros nuevos sin error.
+- [ ] El botón de editar abre la ventana modal y guarda los cambios.
+- [ ] Los botones de **PDF** y **Excel** descargan los archivos correctamente y los acentos se ven bien.

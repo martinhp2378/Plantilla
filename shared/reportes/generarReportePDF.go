@@ -99,13 +99,17 @@ func GenerarReportePDF[T any](
 	yPos := 10.0
 	pdf.Image(logoPath, xPos, yPos, desiredImageWidth_mm, imageH_mm, false, "", 0, "")
 
+	tr := pdf.UnicodeTranslatorFromDescriptor("")
+
 	pdf.SetFont(fuenteTabla, fuenteBold, 18)
-	tw := pdf.GetStringWidth(titulo)
-	pdf.Text((pageWidth-tw)/2, yPos+imageH_mm+5, titulo)
+	tituloTr := tr(titulo)
+	tw := pdf.GetStringWidth(tituloTr)
+	pdf.Text((pageWidth-tw)/2, yPos+imageH_mm+5, tituloTr)
 
 	pdf.SetFont(fuenteTabla, fuenteRegular, 12)
 	fecha := time.Now().Format("02/01/2006 15:04")
-	pdf.Text((pageWidth-pdf.GetStringWidth("Generado el:"))/2, yPos+imageH_mm+15, "Generado el:")
+	generadoEl := tr("Generado el:")
+	pdf.Text((pageWidth-pdf.GetStringWidth(generadoEl))/2, yPos+imageH_mm+15, generadoEl)
 	pdf.Text((pageWidth-pdf.GetStringWidth(fecha))/2, yPos+imageH_mm+22, fecha)
 
 	colAnchos := CalcularAnchosColumnas(pdf, encabezados, datos, rutasCampos, renderFuncs, usableWidth)
@@ -153,15 +157,16 @@ func GenerarReportePDF[T any](
 }
 
 func CalcularAnchosColumnas[T any](pdf *gofpdf.Fpdf, encabezados []string, datos []T, rutasCampos []string, renderFuncs map[string]func(any) string, maxAncho float64) []float64 {
+	tr := pdf.UnicodeTranslatorFromDescriptor("")
 	pdf.SetFont(fuenteTabla, fuenteBold, 11)
 	colAnchos := make([]float64, len(encabezados))
 	for i, h := range encabezados {
-		colAnchos[i] = pdf.GetStringWidth(h)
+		colAnchos[i] = pdf.GetStringWidth(tr(h))
 	}
 	pdf.SetFont(fuenteTabla, fuenteRegular, 9)
 	for _, item := range datos {
 		for i, ruta := range rutasCampos {
-			val := ObtenerValorCampo(item, ruta, renderFuncs)
+			val := tr(ObtenerValorCampo(item, ruta, renderFuncs))
 			w := pdf.GetStringWidth(val)
 			if w > colAnchos[i] {
 				colAnchos[i] = w
@@ -185,10 +190,11 @@ func CalcularAnchosColumnas[T any](pdf *gofpdf.Fpdf, encabezados []string, datos
 }
 
 func PrepararFila[T any](pdf *gofpdf.Fpdf, item T, rutasCampos []string, colAnchos []float64, renderFuncs map[string]func(any) string) ([]string, float64) {
+	tr := pdf.UnicodeTranslatorFromDescriptor("")
 	valores := make([]string, len(rutasCampos))
 	altos := make([]float64, len(rutasCampos))
 	for i, ruta := range rutasCampos {
-		val := ObtenerValorCampo(item, ruta, renderFuncs)
+		val := tr(ObtenerValorCampo(item, ruta, renderFuncs))
 		valores[i] = val
 		if val == "" {
 			altos[i] = altoLineaTexto
@@ -207,12 +213,13 @@ func PrepararFila[T any](pdf *gofpdf.Fpdf, item T, rutasCampos []string, colAnch
 }
 
 func DibujarEncabezados(pdf *gofpdf.Fpdf, encabezados []string, colAnchos []float64, startX float64) {
+	tr := pdf.UnicodeTranslatorFromDescriptor("")
 	pdf.SetX(startX)
 	pdf.SetFillColor(86, 33, 47)
 	pdf.SetTextColor(255, 255, 255)
 	pdf.SetFont(fuenteTabla, fuenteBold, 10)
 	for i, h := range encabezados {
-		pdf.CellFormat(colAnchos[i], alturaEncabezado, h, "1", 0, "C", true, 0, "")
+		pdf.CellFormat(colAnchos[i], alturaEncabezado, tr(h), "1", 0, "C", true, 0, "")
 	}
 	pdf.Ln(-1)
 	pdf.SetFont(fuenteTabla, fuenteRegular, 9)

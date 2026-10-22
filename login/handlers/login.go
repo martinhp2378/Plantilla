@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 
+	"PlantillaInstitucional/login"
 	"PlantillaInstitucional/login/views"
 	"PlantillaInstitucional/login/views/layouts"
 	errores "PlantillaInstitucional/shared/errores"
@@ -18,7 +19,7 @@ import (
 )
 
 func (h *HandlerLogin) RegisterRoutes(r chi.Router) {
-	rutas := pagina.GlobalRutas.Login
+	rutas := login.Rutas
 	r.Route(rutas.Prefix, func(r chi.Router) {
 		r.Get("/", h.HandlePaginaIngresar)
 		r.Post("/", h.HandlePostIngresar)

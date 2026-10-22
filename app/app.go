@@ -5,8 +5,6 @@ import (
 	"PlantillaInstitucional/configuracion/policy"
 	policy_repo "PlantillaInstitucional/configuracion/policy/repository"
 	persona_service "PlantillaInstitucional/institucion/service"
-	login_repo "PlantillaInstitucional/login/db"
-	login_handler "PlantillaInstitucional/login/handlers"
 	"PlantillaInstitucional/pagination"
 	"PlantillaInstitucional/shared/email"
 	"PlantillaInstitucional/shared/entorno"
@@ -41,17 +39,12 @@ type App struct {
 	ServicioEmail        *email.EmailService
 	EventDispatcher      *sharedEvents.Dispatcher
 
-	Handlers     Handlers
 	Services     Services
 	Repositories Repositories
 	TenantPolicy securitypolicy.TenantPolicy
 
 	tenants   map[string]string
 	tenantsMu sync.RWMutex
-}
-
-type Handlers struct {
-	Login *login_handler.HandlerLogin
 }
 
 type PolicyResolver interface {
@@ -73,7 +66,6 @@ type Services struct {
 type Repositories struct {
 	Tenants tenants.Repository
 	Policy  *policy_repo.PolicyRepository
-	Login   *login_repo.RepositorioPsql
 }
 
 func NewApp(ctx context.Context, env *entorno.Env,

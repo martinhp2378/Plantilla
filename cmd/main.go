@@ -12,6 +12,7 @@ import (
 	dashboard_handler "PlantillaInstitucional/dashboard/handler"
 	"PlantillaInstitucional/institucion"
 	persona_handler "PlantillaInstitucional/institucion/handler"
+	login_handler "PlantillaInstitucional/login/handlers"
 	miperfil_handler "PlantillaInstitucional/miperfil/handler"
 	parametros_handler "PlantillaInstitucional/parametros/handler"
 	"PlantillaInstitucional/shared/email"
@@ -182,15 +183,13 @@ func main() {
 
 	config.InitRepositories(a)
 	config.InitServices(a)
-	config.WireResolvers(a)
-	config.InitHandlers(a)
 
 	r := chi.NewRouter()
 
 	app_middleware.RegistrarMiddlewaresApp(r, a)
 	r.Use(reportLifecycle.Middleware)
 
-	a.Handlers.Login.RegisterRoutes(r)
+	login_handler.Register(a, r)
 
 	if env.Ambiente == entorno.AmbienteLocal {
 		publicDir := filepath.Join(env.DirArchivosLocal, "public")

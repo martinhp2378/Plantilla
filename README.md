@@ -74,3 +74,31 @@ Las migraciones se ejecutan automáticamente al iniciar la aplicación. Para cre
 ```bash
 migrate create -ext sql -dir sql/migrations -seq nombre_de_la_migración
 ```
+
+---
+
+## ⚡ Generación de Módulos (Scaffolding)
+
+Para crear un nuevo módulo CRUD completo y desacoplado (entidad, repositorio, servicio, handlers, vistas Templ v2, migraciones SQL con ABAC y auto-montaje en `cmd/main.go`):
+
+```bash
+make new-module NAME=proveedor
+```
+
+Parámetros opcionales:
+- `SCHEMA`: esquema de base de datos (por defecto `institucion`).
+- `TITLE`: título legible para la vista (por defecto capitalizado en plural).
+
+Ejemplo:
+```bash
+make new-module NAME=articulo SCHEMA=inventario TITLE="Artículos de Almacén"
+```
+
+El generador crea:
+1. `/<nombre>`: Entidad y rutas canónicas (`types.go`, `rutas.go`).
+2. `/<nombre>/repository`: Consultas tipadas con paginación, filtros dinámicos y ordenamiento seguro.
+3. `/<nombre>/service`: Reglas de negocio y validación de datos.
+4. `/<nombre>/handler`: Handlers HTTP REST/HTMX y función autónoma `Register(a *app.App, r chi.Router)`.
+5. `/<nombre>/view`: Componentes Templ v2 (tabla con filtros/búsqueda, modales de alta/edición y layout base).
+6. `/sql/migrations`: Migración `.up.sql` y `.down.sql` con auditoría, aislamiento multi-tenant y políticas ABAC.
+7. Auto-montaje de una sola línea en `cmd/main.go`.

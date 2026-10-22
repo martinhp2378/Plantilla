@@ -19,5 +19,9 @@ lint:
 test:
 	go test ./...
 
+# Generate a new CRUD module: make new-module NAME=proveedor [SCHEMA=institucion] [TITLE="Proveedores"]
+new-module:
+	@go run cmd/tools/scaffold/main.go -name="$(NAME)" $(if $(SCHEMA),-schema="$(SCHEMA)",) $(if $(TITLE),-title="$(TITLE)",)
+
 # Full verification: Templ check, Go linter, and unit tests
 check: templ-check lint test

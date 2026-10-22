@@ -111,7 +111,7 @@ func (h *MiPerfilHandler) HandleCambiarImagen(w http.ResponseWriter, r *http.Req
 
 	// Límite de 5MB
 	r.Body = http.MaxBytesReader(w, r.Body, 5<<20)
-	if err := r.ParseMultipartForm(5 << 20); err != nil {
+	if err := r.ParseMultipartForm(5 << 20); err != nil { // #nosec G120 -- body is bounded by http.MaxBytesReader
 		utils.RenderIgnore(ctx, w, components.AvatarContainer(imagenURLActual, miperfil.MensajeFeedback{
 			Tipo:    "error",
 			Mensaje: "El archivo es demasiado grande (Máximo 5MB).",

@@ -289,7 +289,11 @@ templ DataRowV2(props DataRowV2Props) {
 				if props.EditURL != "" {
 					<button
 						hx-get={ props.EditURL }
-						hx-target={ props.ModalTarget }
+						if props.ModalTarget != "" {
+							hx-target={ props.ModalTarget }
+						} else {
+							hx-target="#modal"
+						}
 						hx-swap="innerHTML"
 						title="Editar"
 						class="text-[var(--color-guinda)] hover:scale-125 transition-transform"
@@ -300,7 +304,9 @@ templ DataRowV2(props DataRowV2Props) {
 				if props.DeleteURL != "" {
 					<button
 						hx-delete={ props.DeleteURL }
-						hx-target={ props.Target }
+						if props.Target != "" {
+							hx-target={ props.Target }
+						}
 						hx-swap="outerHTML"
 						hx-confirm="¿Está seguro de eliminar este registro?"
 						title="Eliminar"

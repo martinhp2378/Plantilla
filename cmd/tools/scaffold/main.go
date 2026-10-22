@@ -1070,8 +1070,10 @@ templ TableV2(criterios pagination.CriteriosPagina[<<.Name>>.<<.NameUpper>>], ba
 					item.Descripcion,
 					convertidores.Traducir(item.IsActive),
 				},
-				EditURL:   rutas.GetEditar(item.ID),
-				DeleteURL: rutas.GetBorrar(item.ID),
+				EditURL:     rutas.GetEditar(item.ID),
+				DeleteURL:   rutas.GetBorrar(item.ID),
+				Target:      tableProps.Target,
+				ModalTarget: tableProps.ModalTarget,
 			})
 		}
 	}

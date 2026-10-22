@@ -3,6 +3,7 @@
 DELETE FROM sesion.politica 
 WHERE nombre IN (
     'policy-superadmin-all-routes',
+    'policy-superadmin-landing-menu',
     'policy-admin-dashboard',
     'policy-admin-configuracion',
     'policy-admin-institucion',

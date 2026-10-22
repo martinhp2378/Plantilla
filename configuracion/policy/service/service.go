@@ -13,6 +13,18 @@ func NewService(repo PolicyRepository) *Service {
 }
 
 func (s *Service) IsRouteAllowed(ctx context.Context, profile string, path string) (bool, error) {
+	return s.IsRouteAllowedWithMethod(ctx, profile, "*", path)
+}
+
+func (s *Service) IsRouteAllowedWithMethod(ctx context.Context, profile string, method string, path string) (bool, error) {
+	if method == "" {
+		method = "*"
+	}
+	if withMethod, ok := s.repo.(interface {
+		RouteAllowedWithMethod(ctx context.Context, profile string, method string, path string) (bool, error)
+	}); ok {
+		return withMethod.RouteAllowedWithMethod(ctx, profile, method, path)
+	}
 	return s.repo.RouteAllowed(ctx, profile, path)
 }
 

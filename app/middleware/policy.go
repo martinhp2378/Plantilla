@@ -3,8 +3,10 @@ package middleware
 import (
 	"PlantillaInstitucional/app"
 	"PlantillaInstitucional/shared/pagina"
+	"PlantillaInstitucional/shared/sesionutil"
 	"PlantillaInstitucional/shared/utils"
 	"PlantillaInstitucional/shared/views/layouts"
+	"context"
 	"net/http"
 	"strings"
 
@@ -44,12 +46,23 @@ func PolicyMiddleware(a *app.App) func(http.Handler) http.Handler {
 			}
 
 			// 3. Validar Política
-			perfil := string(ses.Perfil)
+			u := sesionutil.UsuarioDeContexto(r.Context())
+			perfil := u.Perfil
+			if perfil == "" {
+				perfil = string(ses.Perfil)
+			}
 
-			// Si es superadmin y no queremos ser tan estrictos con cada sub-ruta, podríamos dejarlo pasar,
-			// pero lo ideal es que TODO esté en la tabla de políticas.
-
-			permitido, err := a.Services.Policy.IsRouteAllowed(r.Context(), perfil, path)
+			var (
+				permitido bool
+				err       error
+			)
+			if withMethod, ok := a.Services.Policy.(interface {
+				IsRouteAllowedWithMethod(ctx context.Context, profile string, method string, path string) (bool, error)
+			}); ok {
+				permitido, err = withMethod.IsRouteAllowedWithMethod(r.Context(), perfil, r.Method, path)
+			} else {
+				permitido, err = a.Services.Policy.IsRouteAllowed(r.Context(), perfil, path)
+			}
 			if err != nil {
 				a.Logger.ErrorContext(r.Context(), "error al validar política de acceso", err, "path", path, "perfil", perfil)
 				http.Error(w, "Error interno de seguridad", http.StatusInternalServerError)

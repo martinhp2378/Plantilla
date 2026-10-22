@@ -59,6 +59,11 @@ SET reglas = jsonb_build_object(
             'method', '*',
             'prefix', COALESCE(reglas->>'path_prefix', '/'),
             'accion', accion
+        ),
+        jsonb_build_object(
+            'method', 'GET',
+            'path', COALESCE(reglas->>'path_prefix', '/'),
+            'accion', 'consultar'
         )
     )
 )
@@ -67,6 +72,7 @@ WHERE NOT (reglas ? 'routes') AND reglas ? 'path_prefix';
 -- 6. Seed / Upsert granular policies for canonical profiles
 INSERT INTO sesion.politica (nombre, descripcion, perfil, recurso, accion, reglas, razon_i) VALUES 
 ('policy-superadmin-all-routes', 'Acceso global superadmin a todas las rutas', 'superadmin', 'todas_las_rutas', 'consultar', '{"path_prefix":"/","routes":[{"method":"*","prefix":"/","accion":"consultar"}]}'::jsonb, 'ABAC Granular'),
+('policy-superadmin-landing-menu', 'Acceso a rutas de navegación superadmin', 'superadmin', 'todas_las_rutas', 'consultar', '{"path_prefix":"/","routes":[{"method":"GET","path":"/dashboard","accion":"consultar"},{"method":"GET","path":"/institucion/personas","accion":"consultar"},{"method":"GET","path":"/configuracion/usuarios","accion":"consultar"},{"method":"GET","path":"/configuracion/perfiles","accion":"consultar"},{"method":"GET","path":"/configuracion/politicas","accion":"consultar"},{"method":"GET","path":"/parametros","accion":"consultar"},{"method":"GET","path":"/crud","accion":"consultar"}]}'::jsonb, 'ABAC Granular'),
 
 ('policy-admin-dashboard', 'Acceso admin al dashboard', 'admin', 'dashboard', 'consultar', '{"path_prefix":"/dashboard","routes":[{"method":"*","prefix":"/dashboard","accion":"consultar"},{"method":"GET","path":"/dashboard","accion":"consultar"}]}'::jsonb, 'ABAC Granular'),
 ('policy-admin-configuracion', 'Acceso admin a configuración', 'admin', 'configuracion', 'consultar', '{"path_prefix":"/configuracion","routes":[{"method":"*","prefix":"/configuracion","accion":"consultar"}]}'::jsonb, 'ABAC Granular'),

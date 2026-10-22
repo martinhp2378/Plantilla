@@ -173,6 +173,7 @@ func main() {
 	r.Group(func(r chi.Router) {
 		r.Use(app_middleware.MiddlewareRequiereLogin)
 		r.Use(app_middleware.PolicyMiddleware(a))
+		r.Use(app_middleware.NavigationMiddleware(a))
 
 		a.Handlers.Usuario.RegisterRoutes(r)
 		a.Handlers.Perfil.RegisterRoutes(r)

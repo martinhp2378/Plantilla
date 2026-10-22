@@ -1,7 +1,9 @@
 package v2
 
 import (
+	"PlantillaInstitucional/shared/navigation"
 	"PlantillaInstitucional/shared/pagina"
+	"PlantillaInstitucional/shared/sesionutil"
 )
 
 templ SidebarV2(pag pagina.Pagina) {
@@ -69,27 +71,29 @@ templ SidebarV2(pag pagina.Pagina) {
 }
 
 templ SidebarItem(target, active pagina.Pagina, icon, label string) {
-	<li>
-		<a
-			href={ templ.SafeURL(target.URL()) }
-			class={ "flex items-center gap-4 py-1 transition-all group",
-				templ.KV("text-[var(--color-guinda)]", target == active),
-				templ.KV("text-gray-500 hover:text-[var(--color-guinda)]", target != active) }
-		>
-			<div class={ "w-10 h-10 flex items-center justify-center rounded-xl transition-all shadow-sm",
-				templ.KV("bg-[var(--surface-arena-30)] border border-[var(--color-arena)]", target == active),
-				templ.KV("bg-transparent border border-transparent group-hover:bg-[var(--surface-arena-20)]", target != active) }>
-				<span class={ "material-icons text-2xl",
+	if sesionutil.UsuarioDeContexto(ctx).Perfil == sesionutil.PerfilSuperAdmin || navigation.Allowed(ctx, target.URL()) {
+		<li>
+			<a
+				href={ templ.SafeURL(target.URL()) }
+				class={ "flex items-center gap-4 py-1 transition-all group",
 					templ.KV("text-[var(--color-guinda)]", target == active),
-					templ.KV("text-gray-400 group-hover:text-[var(--color-guinda)]", target != active) }>
-					{ icon }
-				</span>
-			</div>
-			<span class={ "text-xs uppercase tracking-widest transition-all text-left",
-				templ.KV("font-black", target == active),
-				templ.KV("font-bold", target != active) }>{ label }</span>
-		</a>
-	</li>
+					templ.KV("text-gray-500 hover:text-[var(--color-guinda)]", target != active) }
+			>
+				<div class={ "w-10 h-10 flex items-center justify-center rounded-xl transition-all shadow-sm",
+					templ.KV("bg-[var(--surface-arena-30)] border border-[var(--color-arena)]", target == active),
+					templ.KV("bg-transparent border border-transparent group-hover:bg-[var(--surface-arena-20)]", target != active) }>
+					<span class={ "material-icons text-2xl",
+						templ.KV("text-[var(--color-guinda)]", target == active),
+						templ.KV("text-gray-400 group-hover:text-[var(--color-guinda)]", target != active) }>
+						{ icon }
+					</span>
+				</div>
+				<span class={ "text-xs uppercase tracking-widest transition-all text-left",
+					templ.KV("font-black", target == active),
+					templ.KV("font-bold", target != active) }>{ label }</span>
+			</a>
+		</li>
+	}
 }
 
 templ TopbarV2() {

@@ -1,0 +1,99 @@
+package components
+
+import (
+	"PlantillaInstitucional/proveedor"
+	"PlantillaInstitucional/shared/convertidores"
+	"PlantillaInstitucional/shared/views/components/v2"
+)
+
+templ FormCreateProveedorV2(item proveedor.Proveedor, errors map[string]string) {
+	@v2.ModalV2("Nuevo Proveedor") {
+		<form hx-post={ proveedor.Rutas.Crear } hx-target="#modal" hx-swap="innerHTML" class="space-y-6">
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:       "Nombre",
+					Name:        "nombre",
+					Placeholder: "Ingrese nombre",
+					Value:       item.Nombre,
+					Required:    true,
+					Errors:      errors,
+				})
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:       "Codigo",
+					Name:        "codigo",
+					Placeholder: "Ej. COD-001",
+					Value:       item.Codigo,
+					Required:    true,
+					Errors:      errors,
+				})
+				@v2.SelectFieldV2(v2.SelectProps{
+					Label:         "Estatus",
+					Name:          "activo",
+					Options:       convertidores.OptionFromEstatusGenerico(),
+					SelectedValue: convertidores.Traducir(item.IsActive),
+					Required:      true,
+					Errors:        errors,
+				})
+				<div class="md:col-span-2">
+					@v2.TextAreaFieldV2(v2.TextAreaPropsV2{
+						Label:       "Descripcion",
+						Name:        "descripcion",
+						Placeholder: "Detalles adicionales",
+						Value:       item.Descripcion,
+						Errors:      errors,
+					})
+				</div>
+			</div>
+			<div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+				<button type="button" @click="open = false" class="px-4 py-2 text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg uppercase tracking-wider">Cancelar</button>
+				<button type="submit" class="px-6 py-2 text-xs font-bold text-white bg-[var(--color-guinda)] hover:bg-[#521426] rounded-lg uppercase tracking-wider">Guardar</button>
+			</div>
+		</form>
+	}
+}
+
+templ FormUpdateProveedorV2(item *proveedor.Proveedor, errors map[string]string) {
+	@v2.ModalV2("Editar Proveedor") {
+		<form hx-put={ proveedor.Rutas.GetUpdate(item.ID) } hx-target="#modal" hx-swap="innerHTML" class="space-y-6">
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:       "Nombre",
+					Name:        "nombre",
+					Placeholder: "Ingrese nombre",
+					Value:       item.Nombre,
+					Required:    true,
+					Errors:      errors,
+				})
+				@v2.InputFieldV2(v2.InputPropsV2{
+					Label:       "Codigo",
+					Name:        "codigo",
+					Placeholder: "Ej. COD-001",
+					Value:       item.Codigo,
+					Required:    true,
+					Errors:      errors,
+				})
+				@v2.SelectFieldV2(v2.SelectProps{
+					Label:         "Estatus",
+					Name:          "activo",
+					Options:       convertidores.OptionFromEstatusGenerico(),
+					SelectedValue: convertidores.Traducir(item.IsActive),
+					Required:      true,
+					Errors:        errors,
+				})
+				<div class="md:col-span-2">
+					@v2.TextAreaFieldV2(v2.TextAreaPropsV2{
+						Label:       "Descripcion",
+						Name:        "descripcion",
+						Placeholder: "Detalles adicionales",
+						Value:       item.Descripcion,
+						Errors:      errors,
+					})
+				</div>
+			</div>
+			<div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+				<button type="button" @click="open = false" class="px-4 py-2 text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg uppercase tracking-wider">Cancelar</button>
+				<button type="submit" class="px-6 py-2 text-xs font-bold text-white bg-[var(--color-guinda)] hover:bg-[#521426] rounded-lg uppercase tracking-wider">Actualizar</button>
+			</div>
+		</form>
+	}
+}

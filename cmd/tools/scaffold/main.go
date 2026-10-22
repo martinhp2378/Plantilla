@@ -358,7 +358,7 @@ const (
 
 	Insert<<.NameUpper>> = ` + "`" + `
 		INSERT INTO <<.Table>> (nombre, codigo, descripcion, is_active, tenant_id, razon_i)
-		VALUES ($1, $2, $3, $4, current_setting('app.tenant_id', true)::uuid, 'Creacion')
+		VALUES ($1, $2, $3, $4, NULLIF(current_setting('app.tenant_id', true), '')::uuid, 'Creacion')
 		RETURNING id
 	` + "`" + `
 
@@ -806,6 +806,7 @@ const tmplHandlerCRUD = `package handler
 import (
 	"PlantillaInstitucional/<<.Name>>"
 	"PlantillaInstitucional/shared/errores"
+	"PlantillaInstitucional/shared/validacion"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -816,12 +817,13 @@ func (h *<<.NameUpper>>Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	item, err := h.parseForm(r)
 	if err != nil {
-		h.MandarErrorModal(ctx, w, "Datos invalidos", err)
+		h.MandarErrorModalCreate(ctx, w, "Datos invalidos", nil, item)
 		return
 	}
 
 	if err := h.svc.Crear(ctx, item); err != nil {
-		h.MandarErrorModal(ctx, w, "Error al guardar registro", err)
+		valErrs := validacion.ValidationErrorsMap(err)
+		h.MandarErrorModalCreate(ctx, w, "Error al guardar registro", valErrs, item)
 		return
 	}
 
@@ -833,19 +835,20 @@ func (h *<<.NameUpper>>Handler) Update(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.FromString(idStr)
 	if err != nil {
-		h.MandarErrorModal(ctx, w, "ID invalido", err)
+		h.MandarErrorGeneric(w, r, "ID invalido")
 		return
 	}
 
 	item, err := h.parseForm(r)
 	if err != nil {
-		h.MandarErrorModal(ctx, w, "Datos invalidos", err)
+		h.MandarErrorModalUpdate(ctx, w, "Datos invalidos", nil, &item)
 		return
 	}
 	item.ID = id
 
 	if err := h.svc.Actualizar(ctx, item); err != nil {
-		h.MandarErrorModal(ctx, w, "Error al actualizar registro", err)
+		valErrs := validacion.ValidationErrorsMap(err)
+		h.MandarErrorModalUpdate(ctx, w, "Error al actualizar registro", valErrs, &item)
 		return
 	}
 
@@ -857,16 +860,16 @@ func (h *<<.NameUpper>>Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.FromString(idStr)
 	if err != nil {
-		http.Error(w, "ID invalido", http.StatusBadRequest)
+		h.MandarErrorGeneric(w, r, "ID invalido")
 		return
 	}
 
 	if err := h.svc.Eliminar(ctx, id); err != nil {
-		http.Error(w, "Error al eliminar registro", http.StatusInternalServerError)
+		h.MandarErrorGeneric(w, r, "Error al eliminar registro")
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	h.MandarSuccess(ctx, w, errores.MensajeOperacionExitosaRegistroEliminado, <<.Name>>.Rutas.Tabla)
 }
 `
 
@@ -878,6 +881,7 @@ import (
 	"PlantillaInstitucional/<<.Name>>/view/layouts"
 	"PlantillaInstitucional/pagination"
 	"PlantillaInstitucional/shared/utils"
+	"PlantillaInstitucional/shared/views/components/compartidos"
 	"context"
 	"net/http"
 	"strings"
@@ -934,18 +938,44 @@ func (h *<<.NameUpper>>Handler) ModalUpdate(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *<<.NameUpper>>Handler) MandarSuccess(ctx context.Context, w http.ResponseWriter, msg string, targetTable string) {
-	w.Header().Set("HX-Trigger", "cerrarModal")
+	var sb strings.Builder
+	sb.WriteString("<div id=\"modal\" hx-swap-oob=\"true\"></div>")
 	criterios := pagination.CriteriosPagina[<<.Name>>.<<.NameUpper>>]{Size: 10}
 	data, _ := h.svc.Listar(ctx, criterios)
-	var sb strings.Builder
 	utils.RenderIgnore(ctx, &sb, components.TableV2(data, targetTable, true))
+	w.Header().Set("Content-Type", "text/html")
+	utils.RenderIgnore(ctx, &sb, compartidos.Mensaje("success", msg))
 	_, _ = w.Write([]byte(sb.String()))
 }
 
-func (h *<<.NameUpper>>Handler) MandarErrorModal(ctx context.Context, w http.ResponseWriter, msg string, err error) {
+func (h *<<.NameUpper>>Handler) MandarErrorModalCreate(ctx context.Context, w http.ResponseWriter, msg string, errs map[string]string, item <<.Name>>.<<.NameUpper>>) {
+	var sb strings.Builder
+	utils.RenderIgnore(ctx, &sb, compartidos.Mensaje("error", msg))
+	utils.RenderIgnore(ctx, &sb, components.FormCreate<<.NameUpper>>V2(item, errs))
+	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusUnprocessableEntity)
-	errMap := map[string]string{"general": err.Error()}
-	utils.RenderIgnore(ctx, w, components.FormCreate<<.NameUpper>>V2(<<.Name>>.<<.NameUpper>>{}, errMap))
+	_, _ = w.Write([]byte(sb.String()))
+}
+
+func (h *<<.NameUpper>>Handler) MandarErrorModalUpdate(ctx context.Context, w http.ResponseWriter, msg string, errs map[string]string, item *<<.Name>>.<<.NameUpper>>) {
+	var sb strings.Builder
+	utils.RenderIgnore(ctx, &sb, compartidos.Mensaje("error", msg))
+	utils.RenderIgnore(ctx, &sb, components.FormUpdate<<.NameUpper>>V2(item, errs))
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusUnprocessableEntity)
+	_, _ = w.Write([]byte(sb.String()))
+}
+
+func (h *<<.NameUpper>>Handler) MandarErrorGeneric(w http.ResponseWriter, r *http.Request, msg string) {
+	ctx := r.Context()
+	var sb strings.Builder
+	criterios := pagination.CriteriosPagina[<<.Name>>.<<.NameUpper>>]{Size: 10}
+	data, _ := h.svc.Listar(ctx, criterios)
+	utils.RenderIgnore(ctx, &sb, components.TableV2(data, <<.Name>>.Rutas.Tabla, true))
+	utils.RenderIgnore(ctx, &sb, compartidos.Mensaje("error", msg))
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusBadRequest)
+	_, _ = w.Write([]byte(sb.String()))
 }
 `
 
@@ -1094,10 +1124,7 @@ templ FormCreate<<.NameUpper>>V2(item <<.Name>>.<<.NameUpper>>, errors map[strin
 					})
 				</div>
 			</div>
-			<div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
-				<button type="button" @click="open = false" class="px-4 py-2 text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg uppercase tracking-wider">Cancelar</button>
-				<button type="submit" class="px-6 py-2 text-xs font-bold text-white bg-[var(--color-guinda)] hover:bg-[#521426] rounded-lg uppercase tracking-wider">Guardar</button>
-			</div>
+			@v2.ModalFooterV2("Guardar")
 		</form>
 	}
 }
@@ -1140,10 +1167,7 @@ templ FormUpdate<<.NameUpper>>V2(item *<<.Name>>.<<.NameUpper>>, errors map[stri
 					})
 				</div>
 			</div>
-			<div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
-				<button type="button" @click="open = false" class="px-4 py-2 text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg uppercase tracking-wider">Cancelar</button>
-				<button type="submit" class="px-6 py-2 text-xs font-bold text-white bg-[var(--color-guinda)] hover:bg-[#521426] rounded-lg uppercase tracking-wider">Actualizar</button>
-			</div>
+			@v2.ModalFooterV2("Actualizar")
 		</form>
 	}
 }

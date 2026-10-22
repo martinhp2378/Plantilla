@@ -77,11 +77,21 @@ type Usuario struct {
 }
 
 func ImagenPerfilValida(nombreImagenPerfil string) string {
-	nombre := SinImagenPerfil
-	if nombreImagenPerfil != ".png" && strings.HasSuffix(nombreImagenPerfil, ".png") {
-		nombre = nombreImagenPerfil
+	nombreImagenPerfil = strings.TrimSpace(nombreImagenPerfil)
+	if nombreImagenPerfil == "" || nombreImagenPerfil == SinImagenPerfil {
+		return SinImagenPerfil
 	}
-	return nombre
+	base := strings.TrimSuffix(nombreImagenPerfil, filepath.Ext(nombreImagenPerfil))
+	if base == "" {
+		return SinImagenPerfil
+	}
+	ext := strings.ToLower(filepath.Ext(nombreImagenPerfil))
+	switch ext {
+	case ".png", ".jpg", ".jpeg", ".webp":
+		return nombreImagenPerfil
+	default:
+		return SinImagenPerfil
+	}
 }
 
 func (u *Usuario) UrlImagenPerfil(ctx context.Context) string {

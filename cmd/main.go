@@ -117,11 +117,34 @@ func main() {
 			}
 		}
 
+		var (
+			nombre, apellido1, apellido2, curp, claveIssemym, imagenPerfil string
+		)
+		if pqWrite != nil {
+			_ = pqWrite.QueryRow(context.Background(), `
+				SELECT 
+					COALESCE(nombre, ''), 
+					COALESCE(apellido1, ''), 
+					COALESCE(apellido2, ''), 
+					COALESCE(curp, ''), 
+					COALESCE(clave_issemym, ''), 
+					COALESCE(imagen_perfil, 'placeholder.png')
+				FROM institucion.persona
+				WHERE uuid_persona = $1
+			`, uuidPersona).Scan(&nombre, &apellido1, &apellido2, &curp, &claveIssemym, &imagenPerfil)
+		}
+
 		datos = append(datos, sesionutil.Usuario{
-			UuidPersona:  uuidPersona.String(),
-			Email:        email,
-			Perfil:       perfilAplicacion,
-			TenantSchema: tenantSchema,
+			UuidPersona:         uuidPersona.String(),
+			Nombre:              nombre,
+			Apellido1:           apellido1,
+			Apellido2:           apellido2,
+			Curp:                curp,
+			ClaveIssemym:        claveIssemym,
+			ArchivoImagenPerfil: imagenPerfil,
+			Email:               email,
+			Perfil:              perfilAplicacion,
+			TenantSchema:        tenantSchema,
 		})
 
 		return datos

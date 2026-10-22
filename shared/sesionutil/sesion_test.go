@@ -74,7 +74,8 @@ func TestImagenPerfilValida(t *testing.T) {
 		{name: "usa placeholder cuando viene vacia", input: "", want: SinImagenPerfil},
 		{name: "usa placeholder cuando solo viene extension", input: ".png", want: SinImagenPerfil},
 		{name: "acepta imagen png valida", input: "avatar.png", want: "avatar.png"},
-		{name: "rechaza extension distinta a png", input: "avatar.jpg", want: SinImagenPerfil},
+		{name: "acepta imagen jpg valida", input: "avatar.jpg", want: "avatar.jpg"},
+		{name: "rechaza extension no permitida", input: "avatar.gif", want: SinImagenPerfil},
 	}
 
 	for _, tt := range tests {

@@ -37,7 +37,7 @@ func (h *MiPerfilHandler) HandleVerPerfil(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	imagenURL := sesionutil.UrlImagenPerfil(ctx)
+	imagenURL := archivos.Asset(ctx, filepath.Join("img", "perfil", sesionutil.ImagenPerfilValida(perfil.ImagenPerfil)))
 
 	if r.Header.Get("HX-Request") == "true" {
 		utils.RenderIgnore(ctx, w, layouts.MiPerfilContent(perfil, imagenURL))

@@ -606,6 +606,7 @@ func (h *<<.NameUpper>>Handler) RegisterRoutes(r chi.Router) {
 	rutas := <<.Name>>.Rutas
 	r.Route(rutas.Prefix, func(r chi.Router) {
 		r.Get("/", h.Index)
+		r.Get("", h.Index)
 		r.Get("/tabla", h.SearchTable)
 		r.Get("/modales/nuevo", h.ModalCreate)
 		r.Post("/", h.Create)
@@ -633,6 +634,8 @@ const tmplHandlerRegister = `package handler
 
 import (
 	"PlantillaInstitucional/app"
+	"PlantillaInstitucional/shared/navigation"
+	"PlantillaInstitucional/<<.Name>>"
 	"PlantillaInstitucional/<<.Name>>/repository"
 	"PlantillaInstitucional/<<.Name>>/service"
 
@@ -647,6 +650,13 @@ func Register(a *app.App, r chi.Router) {
 	svc := service.New<<.NameUpper>>Service(repo, validate, a.Logger)
 	h := New<<.NameUpper>>Handler(svc, a.Logger, validate)
 	h.RegisterRoutes(r)
+
+	navigation.RegistrarItemMenu(navigation.ItemMenu{
+		Label:  "<<.PluralUpper>>",
+		URL:    <<.Name>>.Rutas.Prefix,
+		Icon:   "folder",
+		Codigo: "<<.Name>>",
+	})
 }
 `
 
@@ -1030,9 +1040,9 @@ INSERT INTO sesion.recurso (nombre, descripcion, razon_i) VALUES
 ON CONFLICT (nombre) DO NOTHING;
 
 INSERT INTO sesion.politica (nombre, descripcion, perfil, recurso, accion, reglas, razon_i) VALUES
-('Acceso <<.NameUpper>> Superadmin', 'Acceso al modulo <<.Name>>', 'superadmin', '<<.Name>>', 'consultar', '{"path_prefix": "<<.Prefix>>", "routes": [{"method": "*", "prefix": "<<.Prefix>>"}]}', 'Carga Inicial'),
-('Acceso <<.NameUpper>> Admin', 'Acceso al modulo <<.Name>>', 'admin', '<<.Name>>', 'consultar', '{"path_prefix": "<<.Prefix>>", "routes": [{"method": "*", "prefix": "<<.Prefix>>"}]}', 'Carga Inicial'),
-('Acceso <<.NameUpper>> Operador', 'Acceso al modulo <<.Name>>', 'operador', '<<.Name>>', 'consultar', '{"path_prefix": "<<.Prefix>>", "routes": [{"method": "*", "prefix": "<<.Prefix>>"}]}', 'Carga Inicial')
+('Acceso <<.NameUpper>> Superadmin', 'Acceso al modulo <<.Name>>', 'superadmin', '<<.Name>>', 'consultar', '{"path_prefix": "<<.Prefix>>", "routes": [{"method": "*", "prefix": "<<.Prefix>>"}, {"method": "GET", "path": "<<.Prefix>>", "accion": "consultar"}]}', 'Carga Inicial'),
+('Acceso <<.NameUpper>> Admin', 'Acceso al modulo <<.Name>>', 'admin', '<<.Name>>', 'consultar', '{"path_prefix": "<<.Prefix>>", "routes": [{"method": "*", "prefix": "<<.Prefix>>"}, {"method": "GET", "path": "<<.Prefix>>", "accion": "consultar"}]}', 'Carga Inicial'),
+('Acceso <<.NameUpper>> Operador', 'Acceso al modulo <<.Name>>', 'operador', '<<.Name>>', 'consultar', '{"path_prefix": "<<.Prefix>>", "routes": [{"method": "*", "prefix": "<<.Prefix>>"}, {"method": "GET", "path": "<<.Prefix>>", "accion": "consultar"}]}', 'Carga Inicial')
 ON CONFLICT (nombre) DO NOTHING;
 `
 

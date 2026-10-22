@@ -45,6 +45,9 @@ templ SidebarV2(pag pagina.Pagina) {
 						@SidebarItem(pagina.Politicas, pag, "policy", "Políticas")
 						@SidebarItem(pagina.Parametros, pag, "settings", "Parámetros")
 						@SidebarItem(pagina.Crud, pag, "dataset", "Ejemplo CRUD")
+						for _, item := range navigation.ObtenerItemsMenu() {
+							@SidebarItemDinamico(item, pag)
+						}
 					</ul>
 				</div>
 			</nav>
@@ -94,6 +97,38 @@ templ SidebarItem(target, active pagina.Pagina, icon, label string) {
 					templ.KV("font-black", target == active),
 					templ.KV("font-bold", target != active) }
 				>{ label }</span>
+			</a>
+		</li>
+	}
+}
+
+templ SidebarItemDinamico(item navigation.ItemMenu, active pagina.Pagina) {
+	if sesionutil.UsuarioDeContexto(ctx).Perfil == sesionutil.PerfilSuperAdmin || navigation.Allowed(ctx, item.URL) {
+		<li>
+			<a
+				href={ templ.SafeURL(item.URL) }
+				class={ "flex items-center gap-4 py-1 transition-all group",
+					templ.KV("text-[var(--color-guinda)]", string(active) == item.Codigo),
+					templ.KV("text-gray-500 hover:text-[var(--color-guinda)]", string(active) != item.Codigo) }
+			>
+				<div
+					class={ "w-10 h-10 flex items-center justify-center rounded-xl transition-all shadow-sm",
+					templ.KV("bg-[var(--surface-arena-30)] border border-[var(--color-arena)]", string(active) == item.Codigo),
+					templ.KV("bg-transparent border border-transparent group-hover:bg-[var(--surface-arena-20)]", string(active) != item.Codigo) }
+				>
+					<span
+						class={ "material-icons text-2xl",
+						templ.KV("text-[var(--color-guinda)]", string(active) == item.Codigo),
+						templ.KV("text-gray-400 group-hover:text-[var(--color-guinda)]", string(active) != item.Codigo) }
+					>
+						{ item.Icon }
+					</span>
+				</div>
+				<span
+					class={ "text-xs uppercase tracking-widest transition-all text-left",
+					templ.KV("font-black", string(active) == item.Codigo),
+					templ.KV("font-bold", string(active) != item.Codigo) }
+				>{ item.Label }</span>
 			</a>
 		</li>
 	}

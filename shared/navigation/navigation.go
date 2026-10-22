@@ -5,7 +5,42 @@ package navigation
 import (
 	"context"
 	"strings"
+	"sync"
 )
+
+// ItemMenu representa un elemento de menú dinámico para la navegación lateral.
+type ItemMenu struct {
+	Label  string
+	URL    string
+	Icon   string
+	Codigo string
+}
+
+var (
+	itemsMenuMu sync.RWMutex
+	itemsMenu   []ItemMenu
+)
+
+// RegistrarItemMenu agrega un módulo de forma idempotente a la lista de navegación lateral.
+func RegistrarItemMenu(item ItemMenu) {
+	itemsMenuMu.Lock()
+	defer itemsMenuMu.Unlock()
+	for _, existente := range itemsMenu {
+		if existente.URL == item.URL {
+			return
+		}
+	}
+	itemsMenu = append(itemsMenu, item)
+}
+
+// ObtenerItemsMenu retorna una copia de todos los elementos registrados dinámicamente.
+func ObtenerItemsMenu() []ItemMenu {
+	itemsMenuMu.RLock()
+	defer itemsMenuMu.RUnlock()
+	copia := make([]ItemMenu, len(itemsMenu))
+	copy(copia, itemsMenu)
+	return copia
+}
 
 type contextKey struct{}
 

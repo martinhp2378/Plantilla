@@ -2,7 +2,6 @@ package config
 
 import (
 	"PlantillaInstitucional/app"
-	perfil_service "PlantillaInstitucional/configuracion/perfil/service"
 	policy_service "PlantillaInstitucional/configuracion/policy/service"
 	persona_repo "PlantillaInstitucional/institucion/repository"
 	persona_service "PlantillaInstitucional/institucion/service"
@@ -19,7 +18,6 @@ func InitServices(a *app.App) {
 	a.EventDispatcher = dispatcher
 
 	// 2. Core Services
-	a.Services.Perfil = perfil_service.NewPerfilService(a.Repositories.Perfil, validate, a.Logger, a.ManejadorArchivos)
 	a.Services.Policy = policy_service.NewService(a.Repositories.Policy)
 	personaRepo := persona_repo.NewPersonaRepository(a.Pools)
 	a.Services.Persona = *persona_service.NewPersonaService(personaRepo, validate, a.Logger, a.ManejadorArchivos)

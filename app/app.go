@@ -2,9 +2,6 @@ package app
 
 import (
 	bd "PlantillaInstitucional/app/db"
-	perfil_handler "PlantillaInstitucional/configuracion/perfil/handler"
-	perfil_repo "PlantillaInstitucional/configuracion/perfil/repository"
-	perfil_service "PlantillaInstitucional/configuracion/perfil/service"
 	"PlantillaInstitucional/configuracion/policy"
 	policy_handler "PlantillaInstitucional/configuracion/policy/handler"
 	policy_repo "PlantillaInstitucional/configuracion/policy/repository"
@@ -55,7 +52,6 @@ type App struct {
 }
 
 type Handlers struct {
-	Perfil *perfil_handler.PerfilHandler
 	Policy *policy_handler.PolicyHandler
 	Login  *login_handler.HandlerLogin
 }
@@ -72,14 +68,12 @@ type PolicyResolver interface {
 }
 
 type Services struct {
-	Perfil  perfil_service.PerfilServiceProvider
 	Policy  PolicyResolver
 	Persona persona_service.PersonaService
 }
 
 type Repositories struct {
 	Tenants tenants.Repository
-	Perfil  *perfil_repo.PerfilRepository
 	Policy  *policy_repo.PolicyRepository
 	Login   *login_repo.RepositorioPsql
 }

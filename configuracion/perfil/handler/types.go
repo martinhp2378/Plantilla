@@ -6,7 +6,6 @@ import (
 	"PlantillaInstitucional/configuracion/perfil"
 	"PlantillaInstitucional/pagination"
 	shared "PlantillaInstitucional/shared/errores"
-	"PlantillaInstitucional/shared/pagina"
 	"fmt"
 	"net/http"
 
@@ -48,7 +47,7 @@ func NewPerfilHandler(svc PerfilServiceProvider, logger *logs.Logger, validate *
 // --- Helpers de Parseo de Requests (Privados) ---
 
 func (h *PerfilHandler) RegisterRoutes(r chi.Router) {
-	rutas := pagina.GlobalRutas.Perfiles
+	rutas := perfil.Rutas
 	r.Route(rutas.Prefix, func(r chi.Router) {
 		r.Get("/", h.Index)
 		r.Get("/tabla", h.SearchTable)

@@ -1,15 +1,13 @@
 package app
 
 import (
+	bd "PlantillaInstitucional/app/db"
 	perfil_handler "PlantillaInstitucional/configuracion/perfil/handler"
 	perfil_repo "PlantillaInstitucional/configuracion/perfil/repository"
 	perfil_service "PlantillaInstitucional/configuracion/perfil/service"
 	"PlantillaInstitucional/configuracion/policy"
 	policy_handler "PlantillaInstitucional/configuracion/policy/handler"
 	policy_repo "PlantillaInstitucional/configuracion/policy/repository"
-	crud_handler "PlantillaInstitucional/crud/handler"
-	crud_repo "PlantillaInstitucional/crud/repository"
-	crud_service "PlantillaInstitucional/crud/service"
 	dashboard_handler "PlantillaInstitucional/dashboard/handler"
 	usuario_handler "PlantillaInstitucional/configuracion/usuario/handler"
 	usuario_repo "PlantillaInstitucional/configuracion/usuario/repository"
@@ -51,6 +49,7 @@ type App struct {
 	ConexionRedis   *redis.Client
 	PqWrite         *pgxpool.Pool
 	PqRead          *pgxpool.Pool
+	Pools           *bd.AppPools
 
 	ConstructorSesion    *sesiones.ConstructorSesion
 	ConstructorSesionJWT *sesiones.ConstructorSesionJWT
@@ -74,7 +73,6 @@ type Handlers struct {
 	Persona   persona_handler.PersonaHandler
 	Login     *login_handler.HandlerLogin
 	Parametro *parametros_handler.Handler
-	Crud      crud_handler.CrudHandler
 	Dashboard *dashboard_handler.DashboardHandler
 	MiPerfil  *miperfil_handler.MiPerfilHandler
 }
@@ -96,7 +94,6 @@ type Services struct {
 	Policy    PolicyResolver
 	Persona   persona_service.PersonaService
 	Parametro parametros_service.ParametrosServiceProvider
-	Crud      crud_service.CrudService
 	MiPerfil  miperfil_service.ServiceProvider
 }
 
@@ -108,7 +105,6 @@ type Repositories struct {
 	Persona   *persona_repo.PersonaRepository
 	Login     *login_repo.RepositorioPsql
 	Parametro *parametros_repo.ParametrosRepository
-	Crud      *crud_repo.CrudRepository
 	MiPerfil  *miperfil_repo.MiPerfilRepository
 }
 
@@ -133,8 +129,9 @@ func NewAppWithTenantPolicy(ctx context.Context, env *entorno.Env,
 	if err := tenantPolicy.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid tenant policy: %w", err)
 	}
+	pools := bd.NewAppPools(pqRead, pqWrite)
 	return &App{Env: env, Logger: logger, Instrumentacion: instrumentacion, ConexionRedis: conexionRedis,
-		PqWrite: pqWrite, PqRead: pqRead, ConstructorSesion: constructorSesion,
+		PqWrite: pqWrite, PqRead: pqRead, Pools: pools, ConstructorSesion: constructorSesion,
 		ConstructorSesionJWT: constructorSesionJWT, ManejadorArchivos: manejadorArchivos,
 		ServicioEmail: servicioEmail, TenantPolicy: tenantPolicy, tenants: make(map[string]string)}, nil
 }

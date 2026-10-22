@@ -42,18 +42,19 @@ var GlobalRutas = struct {
 	Crud       Rutas
 	MiPerfil   Rutas
 }{
-	Login:      nuevaRuta("/login"),
-	Dashboard:  nuevaRuta("/dashboard"),
-	Usuarios:   nuevaRuta("/configuracion/usuarios"),
-	Perfiles:   nuevaRuta("/configuracion/perfiles"),
-	Politicas:  nuevaRuta("/configuracion/politicas"),
-	Parametros: nuevaRuta("/configuracion/parametros"),
-	Personas:   nuevaRuta("/institucion/personas"),
-	Crud:       nuevaRuta("/crud"),
-	MiPerfil:   nuevaRuta("/perfil"),
+	Login:      NuevaRuta("/login"),
+	Dashboard:  NuevaRuta("/dashboard"),
+	Usuarios:   NuevaRuta("/configuracion/usuarios"),
+	Perfiles:   NuevaRuta("/configuracion/perfiles"),
+	Politicas:  NuevaRuta("/configuracion/politicas"),
+	Parametros: NuevaRuta("/configuracion/parametros"),
+	Personas:   NuevaRuta("/institucion/personas"),
+	Crud:       NuevaRuta("/crud"),
+	MiPerfil:   NuevaRuta("/perfil"),
 }
 
-func nuevaRuta(base string) Rutas {
+// NuevaRuta genera la estructura estándar de rutas para un módulo a partir de su path base.
+func NuevaRuta(base string) Rutas {
 	// Limpieza para asegurar consistencia
 	if base == "" || base == "/" {
 		return Rutas{Prefix: "/", Base: "/"}

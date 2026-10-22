@@ -5,7 +5,6 @@ import (
 	"PlantillaInstitucional/pagination"
 	"PlantillaInstitucional/shared/cargamasiva"
 	errores "PlantillaInstitucional/shared/errores"
-	"PlantillaInstitucional/shared/pagina"
 	"context"
 	"fmt"
 	"io"
@@ -69,7 +68,7 @@ func NewCrudHandler(service CrudServiceProvider, logger *logs.Logger, validate *
 }
 
 func (h *crudHandler) RegisterRoutes(r chi.Router) {
-	rutas := pagina.GlobalRutas.Crud
+	rutas := crud.Rutas
 	r.Route(rutas.Prefix, func(r chi.Router) {
 		r.Get("/", h.Index)
 		r.Get("/tabla", h.SearchTable)

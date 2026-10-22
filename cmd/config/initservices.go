@@ -8,7 +8,6 @@ import (
 	usuario_listeners "PlantillaInstitucional/configuracion/usuario/listeners"
 	usuario_service "PlantillaInstitucional/configuracion/usuario/service"
 	persona_service "PlantillaInstitucional/institucion/service"
-	crud_service "PlantillaInstitucional/crud/service"
 	miperfil_service "PlantillaInstitucional/miperfil/service"
 	parametros_service "PlantillaInstitucional/parametros/service"
 	sharedEvents "PlantillaInstitucional/shared/events"
@@ -33,7 +32,6 @@ func InitServices(a *app.App) {
 	a.Services.Perfil = perfil_service.NewPerfilService(a.Repositories.Perfil, validate, a.Logger, a.ManejadorArchivos)
 	a.Services.Policy = policy_service.NewService(a.Repositories.Policy)
 	a.Services.Persona = *persona_service.NewPersonaService(a.Repositories.Persona, validate, a.Logger, a.ManejadorArchivos)
-	a.Services.Crud = *crud_service.NewCrudService(a.Repositories.Crud, validate, a.Logger, a.ManejadorArchivos)
 	a.Services.MiPerfil = miperfil_service.NewMiPerfilService(a.Repositories.MiPerfil, a.ManejadorArchivos, a.Logger)
 
 	// 3. Listeners

@@ -2,12 +2,10 @@ package config
 
 import (
 	"PlantillaInstitucional/app"
-	bd "PlantillaInstitucional/app/db"
 	perfil_repo "PlantillaInstitucional/configuracion/perfil/repository"
 	policy_repo "PlantillaInstitucional/configuracion/policy/repository"
 	usuario_repo "PlantillaInstitucional/configuracion/usuario/repository"
 	persona_repo "PlantillaInstitucional/institucion/repository"
-	crud_repo "PlantillaInstitucional/crud/repository"
 	login_repo "PlantillaInstitucional/login/db"
 	miperfil_repo "PlantillaInstitucional/miperfil/repository"
 	parametros_repo "PlantillaInstitucional/parametros/repository"
@@ -15,8 +13,7 @@ import (
 )
 
 func InitRepositories(a *app.App) {
-	// Pools
-	pools := bd.NewAppPools(a.PqRead, a.PqWrite)
+	pools := a.Pools
 
 	a.Repositories.Tenants = tenants.NewStaticRepository()
 	a.Repositories.Usuario = usuario_repo.NewUsuarioRepository(pools)
@@ -25,7 +22,6 @@ func InitRepositories(a *app.App) {
 	a.Repositories.Persona = persona_repo.NewPersonaRepository(pools)
 	a.Repositories.Login = login_repo.NewRepositorioPsql(pools)
 	a.Repositories.Parametro = parametros_repo.NewRepository(pools)
-	a.Repositories.Crud = crud_repo.NewCrudRepository(pools)
 	a.Repositories.MiPerfil = miperfil_repo.NewMiPerfilRepository(pools)
 }
 

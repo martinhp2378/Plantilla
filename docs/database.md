@@ -23,7 +23,7 @@ Las migraciones se encuentran en `sql/migrations/`.
 Al iniciar la aplicación (`cmd/main.go`), el sistema intenta ejecutar todas las migraciones pendientes automáticamente usando la URL de conexión de escritura (`PQ_WRITE_HOST`).
 
 *   **Entornos de Producción / Serverless**: En entornos como **Google Cloud Run** donde el servidor escala horizontalmente a múltiples instancias concurrentes, la ejecución automática simultánea al bootear puede generar bloqueos competitivos (`locks`) y latencias innecesarias (Cold Start).
-*   **SKIP_MIGRATIONS**: Podés setear `SKIP_MIGRATIONS=true` en tu consola de Cloud Run para desactivar este comportamiento. De esta forma, las migraciones se deben correr de forma controlada y secuencial mediante un paso previo en tu pipeline de **Google Cloud Build** o utilizando un **Cloud Run Job** aislado.
+*   **SKIP_MIGRATIONS**: Puedes configurar `SKIP_MIGRATIONS=true` en tu consola de Cloud Run para desactivar este comportamiento. De esta forma, las migraciones se deben correr de forma controlada y secuencial mediante un paso previo en tu pipeline de **Google Cloud Build** o utilizando un **Cloud Run Job** aislado.
 
 ### Crear Nueva Migración
 ```bash

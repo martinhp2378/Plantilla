@@ -25,20 +25,38 @@ Ubicada en `repository/`.
 *   **Responsabilidad**: Ejecutar queries SQL mediante `Pgxpool`.
 *   **Aislamiento**: Solo esta capa conoce los detalles de la base de datos. Se debe evitar el uso de prefijos de esquema explícitos (`sistema.`, `institucion.`) para permitir la flexibilidad del `search_path` en entornos multi-tenant.
 
-## 🔗 Gestión de Rutas (`GlobalRutas`)
+## 🔗 Gestión Descentralizada de Rutas (`pagina.NuevaRuta`)
 
-Para asegurar la consistencia entre el ruteador del servidor (Chi) y las URLs en las vistas (HTMX/Templ), el proyecto utiliza un sistema centralizado en `shared/pagina/rutas.go`.
+Para asegurar la consistencia entre el ruteador del servidor (Chi) y las URLs en las vistas (HTMX/Templ) sin acoplar todos los módulos en un único archivo global, cada módulo declara su propia instancia en `<modulo>/rutas.go` usando el constructor `pagina.NuevaRuta`:
 
-*   **Prefix**: Ruta base sin slash final (ej. `/configuracion/usuarios`), ideal para `r.Route()`.
-*   **Base**: Ruta base con slash final (ej. `/configuracion/usuarios/`), ideal para enlaces de navegación.
-*   **Helpers**: Métodos como `GetEditar(id)` o `GetBorrar(id)` generan automáticamente URLs consistentes.
+```go
+package proveedor
 
-## 💉 Inyección de Dependencias (DI)
+import "PlantillaInstitucional/shared/pagina"
 
-La DI se realiza de forma manual en la carpeta `cmd/config/`. Esto proporciona control total sobre el ciclo de vida de los objetos.
-*   `initrepository.go`: Instancia los repositorios.
-*   `initservices.go`: Instancia los servicios pasando los repositorios requeridos.
-*   `inithandlers.go`: Instancia los handlers pasando los servicios requeridos.
+var Rutas = pagina.NuevaRuta("/institucion/proveedores")
+```
+
+*   **`Prefix`**: Ruta base sin slash final (ej. `/institucion/proveedores`), ideal para `r.Route()`.
+*   **`Base`**: Ruta base con slash final (ej. `/institucion/proveedores/`), ideal para enlaces y formularios `POST`.
+*   **Helpers Tipados**: Métodos como `GetModalEditar(id)`, `GetEditar(id)`, `GetBorrar(id)`, `GetReportePDF()` o `GetReporteExcel()` generan automáticamente URLs consistentes para HTMX y acciones de exportación.
+
+## 💉 Inyección de Dependencias y Registro Modular (`app.App`)
+
+El ensamblaje de dependencias está descentralizado por módulo mediante el contenedor de infraestructura `app.App` (`app/app.go`). Cada módulo expone una función autónoma `Register(a *app.App, r chi.Router)` en `<modulo>/handler/register.go`:
+
+1.  **Instanciación Local**: El módulo construye su propio repositorio (`a.Pools`), servicio (`a.Logger`, `a.ManejadorArchivos`) y handler.
+2.  **Montaje de Rutas**: El handler registra sus subrutas directamente sobre el router `chi.Router`.
+3.  **Registro en Menú Lateral**: El módulo se registra dinámicamente en el menú de navegación mediante `navigation.RegistrarItemMenu(...)`.
+4.  **Punto Único en `cmd/main.go`**: Agregar un módulo requiere únicamente una línea `<modulo>_handler.Register(a, r)` (automatizada por `make new-module`).
+
+## 📊 Ciclo de Vida y Retención de Reportes Privados
+
+Los reportes generados (PDF y Excel) nunca se exponen en directorios públicos:
+1.  **Generación en Memoria**: `GenerarReportePDF` (con traducción automática UTF-8 a CP1252 para acentos) y `GenerarReporteExcel` construyen el archivo validando límites de filas (`10,000`) y tamaño (`50 MiB`).
+2.  **Registro Transaccional (`shared/reportes/lifecycle.go`)**: Antes de escribir el archivo, `StorePrivateReport` registra el metadato en `sistema.reportes_generados` en estado `pending` y luego lo activa (`active`) con expiración a 24 horas. En entorno `LOCAL`, resuelve automáticamente el UUID del tenant semilla si el contexto usa `"local"`.
+3.  **Descarga Autenticada**: El endpoint `/private-reports/*` verifica que el usuario tenga sesión activa y que el segmento de esquema coincida con el `TenantContext` antes de transmitir el archivo con `Cache-Control: no-store`.
+4.  **Barrido Automático (Sweep)**: Un worker en segundo plano reclama y elimina periódicamente los reportes expirados tanto del almacenamiento como de PostgreSQL.
 
 ## 🏢 Multi-tenancy y Aislamiento de Datos
 

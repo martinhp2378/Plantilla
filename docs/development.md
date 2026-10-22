@@ -18,31 +18,43 @@ Si vas a usar esta plantilla para un proyecto nuevo, sigue estos pasos iniciales
 
 ## 🛠️ Herramientas Recomendadas
 
-*   **Go**: Versión 1.22+.
+*   **Go**: Versión 1.25+.
 *   **Templ CLI**: Para generar código Go a partir de archivos `.templ`.
-*   **Docker Desktop/OrbStack**: Para gestionar el entorno completo.
-*   **VS Code / GoLand**: Con plugins de Go y Templ activados.
+*   **GolangCI-Lint**: Para análisis estático de código.
+*   **Docker Desktop / OrbStack**: Para gestionar el entorno completo.
+*   **VS Code / GoLand / Neovim**: Con plugins de Go y Templ activados.
 
 ## 🏃 Flujo de Trabajo Local
 
 ### 1. Entorno Docker (Base de Datos y Servicios)
-Para levantar el sistema con todos sus servicios (incluyendo generadores de PDF y PostgreSQL):
+Para levantar el sistema con todos sus servicios (incluyendo la aplicación y PostgreSQL):
 ```bash
-docker-compose -f docker-compose.local.yml up --build -d
+docker compose -f docker-compose.local.yml up --build -d
 ```
 
-### 2. Live Reload y Generación
-Ejecuta la app usando [Air](https://github.com/cosmtrek/air) para recompilación automática:
+### 2. Comandos `Makefile` de Uso Diario
+
+| Comando | Acción |
+| :--- | :--- |
+| `make new-module NAME=x [SCHEMA=y] [TITLE="Z"]` | Genera un módulo CRUD completo con vistas Templ v2, reportes PDF/Excel, migraciones SQL y registro en menú. |
+| `make templ-fmt` | Formatea todos los archivos `.templ`. |
+| `make templ-check` | Verifica formato de `.templ` y ejecuta `templ generate`. |
+| `make lint` | Ejecuta `golangci-lint run ./...`. |
+| `make test` | Ejecuta todas las pruebas unitarias (`go test ./...`). |
+| `make check` | Ejecuta la validación completa (`templ-check` + `lint` + `test`). |
+
+### 3. Live Reload y Generación
+Ejecuta la app usando [Air](https://github.com/air-verse/air) para recompilación automática:
 ```bash
 air
 ```
-Si modificas archivos `.templ`, asegúrate de correr `templ generate` o configúralo en tu proceso de build.
+Si modificas archivos `.templ`, asegúrate de correr `templ generate` (o `make templ-check`).
 
-## 📊 Reportes PDF y Assets
+## 📊 Reportes PDF, Excel y Assets
 
-El sistema de reportes utiliza la librería de archivos interna para localizar recursos.
-*   **Fuentes**: Se encuentran en `static/public/font/Gotham`.
-    *   *Nota*: Se requiere formato **.ttf** para soporte UTF-8 completo en PDF.
+El sistema de reportes (`shared/reportes`) genera y almacena archivos privados con control de retención:
+*   **PDF (`generarReportePDF.go`)**: Utiliza `gofpdf` con traducción automática de caracteres UTF-8 a CP1252 (`UnicodeTranslatorFromDescriptor`), soportando acentos, diéresis y eñes en títulos, encabezados y celdas sin configuración adicional.
+*   **Excel (`generarReporteExcel.go`)**: Utiliza `excelize/v2` con formato institucional, autoajuste de columnas y encabezados con estilo.
 *   **Imágenes**: Logos institucionales en `static/public/img/`.
 
 ## 🧪 Pruebas (Testing)
@@ -54,7 +66,7 @@ go test -count=1 ./...
 
 ## 📦 Gestión de Dependencias
 
-El proyecto utiliza el directorio `vendor/` para garantizar compilaciones consistentes.
+El proyecto utiliza el directorio `vendor/` para garantizar compilaciones reproducibles dentro y fuera de Docker:
 ```bash
 go mod tidy
 go mod vendor
@@ -64,7 +76,7 @@ go mod vendor
 
 ## 📝 Convenciones Críticas
 
-1.  **Transacciones Multi-tenant Obligatorias**: NUNCA accedas directamente a un pool de base de datos. Todos los repositorios DEBEN recibir el contexto e inyectar operaciones a través del closure `r.Tenant.Read(ctx, func(tx pgx.Tx) error)` o `r.Tenant.Write(...)`.
-2.  **Cero prefijos de esquema**: NUNCA uses prefijos de esquema explícitos (ej. `institucion.persona`) en las consultas de los repositorios a tablas de negocio. RLS y `search_path` se encargan del aislamiento.
-3.  **Rutas**: NUNCA hardcodear rutas como strings manuales. Usa siempre los helpers de `pagina.GlobalRutas`.
-4.  **Naming**: PascalCase para campos exportados, camelCase para privados.
+1.  **Transacciones Multi-tenant Obligatorias**: NUNCA accedas directamente a un pool de base de datos en repositorios de dominio. Todos los repositorios DEBEN ejecutar operaciones a través de `r.db.Tenant.Read(ctx, func(tx pgx.Tx) error)` o `r.db.Tenant.Write(...)`.
+2.  **Cero prefijos de esquema en queries de negocio**: Evita acoplar queries al esquema salvo cuando sea requerido explícitamente; `TenantTxRunner` y `search_path` gestionan la resolución junto con `FORCE ROW LEVEL SECURITY`.
+3.  **Rutas Descentralizadas**: NUNCA hardcodees rutas como strings manuales en vistas o handlers. Declara `var Rutas = pagina.NuevaRuta(...)` en el paquete raíz de cada módulo (consulta la [Guía de Scaffolding](./scaffolding.md)).
+4.  **Naming**: Normaliza nombres de paquetes, tablas y rutas en `snake_case`, y structs o componentes exportados en `PascalCase`.

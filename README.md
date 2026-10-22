@@ -61,7 +61,7 @@ El sistema incluye una capa de hardenización por defecto:
     ```
 
 3.  **Generar Código Templ (Manual)**:
-    Si no usas Docker para el desarrollo, recordá generar los componentes:
+    Si no usas Docker para el desarrollo, recuerda generar los componentes:
     ```bash
     templ generate
     ```
@@ -79,26 +79,32 @@ migrate create -ext sql -dir sql/migrations -seq nombre_de_la_migración
 
 ## ⚡ Generación de Módulos (Scaffolding)
 
-Para crear un nuevo módulo CRUD completo y desacoplado (entidad, repositorio, servicio, handlers, vistas Templ v2, migraciones SQL con ABAC y auto-montaje en `cmd/main.go`):
+Para crear un nuevo módulo CRUD vertical completo y autónomo (entidad, repositorio multi-tenant, servicio, reportes PDF/Excel, handlers, vistas Templ v2, migraciones SQL con RLS/ABAC, registro en el menú lateral y auto-montaje en `cmd/main.go`):
 
 ```bash
 make new-module NAME=proveedor
 ```
 
-Parámetros opcionales:
-- `SCHEMA`: esquema de base de datos (por defecto `sistema`).
-- `TITLE`: título legible para la vista (por defecto capitalizado en plural).
+### Parámetros Disponibles
 
-Ejemplo:
+| Parámetro | Obligatorio | Por defecto | Descripción |
+| :--- | :---: | :--- | :--- |
+| `NAME` | Sí | — | Nombre del módulo en singular (normaliza automáticamente guiones o espacios a `snake_case` y `PascalCase`). |
+| `SCHEMA` | No | `sistema` | Esquema de base de datos en PostgreSQL (`sistema`, `institucion`, etc.). |
+| `TITLE` | No | Plural de `NAME` | Título legible para la interfaz, menú de navegación y encabezados de reportes. |
+
+Ejemplo personalizado:
 ```bash
-make new-module NAME=articulo SCHEMA=inventario TITLE="Artículos de Almacén"
+make new-module NAME=orden-compra SCHEMA=institucion TITLE="Órdenes de Compra"
 ```
 
-El generador crea:
-1. `/<nombre>`: Entidad y rutas canónicas (`types.go`, `rutas.go`).
-2. `/<nombre>/repository`: Consultas tipadas con paginación, filtros dinámicos y ordenamiento seguro.
-3. `/<nombre>/service`: Reglas de negocio y validación de datos.
-4. `/<nombre>/handler`: Handlers HTTP REST/HTMX y función autónoma `Register(a *app.App, r chi.Router)`.
-5. `/<nombre>/view`: Componentes Templ v2 (tabla con filtros/búsqueda, modales de alta/edición y layout base).
-6. `/sql/migrations`: Migración `.up.sql` y `.down.sql` con auditoría, aislamiento multi-tenant y políticas ABAC.
-7. Auto-montaje de una sola línea en `cmd/main.go`.
+### Qué Incluye el Módulo Generado
+1. **`/<modulo>`**: Entidad de dominio y rutas canónicas descentralizadas (`types.go`, `rutas.go`).
+2. **`/<modulo>/repository`**: Consultas tipadas sobre `TenantTxRunner` con paginación, filtros dinámicos, ordenamiento seguro y soporte transparente para desarrollo local.
+3. **`/<modulo>/service`**: Reglas de negocio, validación con `validator/v10` y exportación nativa a **PDF** (con soporte de acentos/UTF-8) y **Excel** (`reportes.go`).
+4. **`/<modulo>/handler`**: Handlers HTTP/HTMX, descarga privada de reportes y función `Register(a *app.App, r chi.Router)` que monta rutas y registra el módulo en el menú lateral.
+5. **`/<modulo>/view`**: Componentes Templ v2 (tabla dinámica con búsqueda/filtros, botones de exportación, modales de alta/edición apuntando a `#modal` y layout institucional).
+6. **`/sql/migrations`**: Migraciones `.up.sql` y `.down.sql` secuenciales con triggers de auditoría, `FORCE ROW LEVEL SECURITY` y políticas ABAC para `superadmin` y `admin`.
+7. **Auto-montaje en `cmd/main.go`**: Inyección automática del import y registro en una sola línea.
+
+📖 Consulta la [Guía Completa de Scaffolding](./docs/scaffolding.md) y el [Índice de Documentación](./docs/index.md) para más detalles.

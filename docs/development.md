@@ -41,10 +41,11 @@ Para levantar el sistema con todos sus servicios (incluyendo la aplicación con 
 jrmp up
 ```
 
-### 2. Comandos `jrmp` de Uso Diario (Mac, Linux y Windows)
+### 2. Interfaz TUI y Comandos Directos `jrmp` (Mac, Linux y Windows)
 
 | Comando | Acción |
 | :--- | :--- |
+| `jrmp` / `jrmp tui` | Abre la interfaz interactiva en terminal (TUI estilo `gentle-ai`) con menús y formularios paso a paso. |
 | `jrmp create [NombreProyecto]` | Clona la plantilla desde cero, desvincula Git, renombra el proyecto y configura `.env`. |
 | `jrmp init [NombreProyecto]` | Renombra el módulo Go en un repositorio ya clonado, desvincula `origin` y genera `.env`. |
 | `jrmp new-module [nombre] [-schema y] [-title "Z"]` | Genera un módulo CRUD completo con vistas Templ v2, reportes PDF/Excel, pruebas unitarias, migraciones SQL y registro en menú. |

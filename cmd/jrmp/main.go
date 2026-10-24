@@ -37,6 +37,11 @@ type Config struct {
 
 func main() {
 	args := os.Args[1:]
+	isTTY := isTerminalFile(os.Stdin) && isTerminalFile(os.Stdout) && os.Getenv("JRMP_NO_TUI") != "1"
+	if shouldLaunchTUI(args, isTTY) {
+		runTUI()
+		return
+	}
 	if len(args) == 0 {
 		printHelp()
 		return
@@ -59,11 +64,13 @@ func main() {
 	subcmd := strings.ToLower(strings.TrimSpace(args[0]))
 	subArgs := args[1:]
 
-	if subcmd != "create" && subcmd != "new-project" && subcmd != "help" && subcmd != "version" {
+	if subcmd != "create" && subcmd != "new-project" && subcmd != "help" && subcmd != "version" && subcmd != "tui" && subcmd != "ui" {
 		ensureProjectRoot()
 	}
 
 	switch subcmd {
+	case "tui", "ui":
+		runTUI()
 	case "create", "new-project":
 		runCreateProject(subArgs, os.Stdin)
 	case "init", "init-project":
@@ -106,7 +113,9 @@ func printHelp() {
 	fmt.Println(`🏛️  JRMP CLI — Herramienta Oficial de la Plantilla Institucional (` + jrmpVersion + `)
 
 Uso:
-  jrmp <comando> [argumentos]
+  jrmp                                  Abre la interfaz interactiva TUI (estilo gentle-ai)
+  jrmp tui                              Abre la interfaz interactiva TUI explícitamente
+  jrmp <comando> [argumentos]           Ejecuta un comando directo sin abrir la TUI
 
 🌱 Creación e Inicialización de Proyectos:
   jrmp create [NombreProyecto]          Clona la plantilla desde cero, desvincula Git, renombra el proyecto y crea el .env (interactivo)
@@ -220,20 +229,44 @@ func runCreateProject(args []string, in io.Reader) {
 		}
 	}
 
+	if err := createProjectCore(*repoFlag, projectName, serviceName, dbPass, newRemote, startDocker); err != nil {
+		fmt.Printf("❌ %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func createProjectCore(repoURL, projectName, serviceName, dbPass, newRemote string, startDocker bool) error {
+	projectName = strings.ReplaceAll(strings.TrimSpace(projectName), " ", "")
+	if projectName == "" {
+		return fmt.Errorf("el nombre del proyecto es obligatorio")
+	}
+	if repoURL == "" {
+		repoURL = defaultTemplateRepo
+	}
+	if serviceName == "" {
+		serviceName = toSnakeCase(projectName)
+	}
+	if dbPass == "" {
+		dbPass = "postgres"
+	}
+
 	fmt.Printf("\n📥 1/4 Clonando Plantilla Institucional en ./%s...\n", projectName)
-	mustRunCmd(".", "git", "clone", *repoFlag, projectName)
+	if err := runCmdInDir(".", "git", "clone", repoURL, projectName); err != nil {
+		return fmt.Errorf("error clonando repositorio: %w", err)
+	}
 
 	fmt.Println("🔗 2/4 Desvinculando repositorio de la plantilla original...")
 	_ = runCmdInDir(projectName, "git", "remote", "remove", "origin")
 	if newRemote != "" {
-		mustRunCmd(projectName, "git", "remote", "add", "origin", newRemote)
+		if err := runCmdInDir(projectName, "git", "remote", "add", "origin", newRemote); err != nil {
+			return fmt.Errorf("error agregando remote origin: %w", err)
+		}
 		fmt.Printf("✅ Conectado al nuevo repositorio: %s\n", newRemote)
 	}
 
 	fmt.Printf("🏷️  3/4 Renombrando módulo Go a '%s' y configurando .env...\n", projectName)
 	if err := renameProjectModule(projectName, projectName); err != nil {
-		fmt.Printf("❌ Error renombrando proyecto: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("error renombrando proyecto: %w", err)
 	}
 	if err := ensureEnvFile(projectName, serviceName, "postgres", dbPass); err != nil {
 		fmt.Printf("⚠️ No se pudo generar .env automaticamente: %v\n", err)
@@ -247,11 +280,14 @@ func runCreateProject(args []string, in io.Reader) {
 
 	if startDocker {
 		fmt.Println("\n🐳 Construyendo y encendiendo contenedores con Docker...")
-		mustRunCmd(projectName, "docker", "compose", "-f", "docker-compose.local.yml", "up", "--build", "-d")
+		if err := runCmdInDir(projectName, "docker", "compose", "-f", "docker-compose.local.yml", "up", "--build", "-d"); err != nil {
+			return fmt.Errorf("error encendiendo Docker: %w", err)
+		}
 		fmt.Println("🌐 Listo en: http://localhost:8080/login (admin@issemym.gob.mx / admin123)")
 	} else {
 		fmt.Printf("\n👉 Siguientes pasos:\n   cd %s\n   jrmp up\n", projectName)
 	}
+	return nil
 }
 
 func runInitProject(args []string, in io.Reader) {
@@ -279,6 +315,18 @@ func runInitProject(args []string, in io.Reader) {
 		os.Exit(1)
 	}
 
+	if err := initProjectCore(newMod, strings.TrimSpace(*serviceFlag), *dbPassFlag); err != nil {
+		fmt.Printf("❌ %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func initProjectCore(newMod, svc, dbPass string) error {
+	newMod = strings.ReplaceAll(strings.TrimSpace(newMod), " ", "")
+	if newMod == "" {
+		return fmt.Errorf("el nombre del proyecto es obligatorio")
+	}
+
 	// Si el remote origin sigue apuntando a PlantillaInstitucional, desvincularlo por seguridad
 	if out, err := exec.Command("git", "remote", "get-url", "origin").Output(); err == nil {
 		if strings.Contains(string(out), "PlantillaInstitucional") {
@@ -288,21 +336,23 @@ func runInitProject(args []string, in io.Reader) {
 	}
 
 	if err := renameProjectModule(".", newMod); err != nil {
-		fmt.Printf("❌ Error renombrando proyecto: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("error renombrando proyecto: %w", err)
 	}
 
-	svc := strings.TrimSpace(*serviceFlag)
 	if svc == "" {
 		svc = toSnakeCase(newMod)
 	}
-	if err := ensureEnvFile(".", svc, "postgres", *dbPassFlag); err != nil {
+	if dbPass == "" {
+		dbPass = "postgres"
+	}
+	if err := ensureEnvFile(".", svc, "postgres", dbPass); err != nil {
 		fmt.Printf("⚠️ Advertencia al preparar .env: %v\n", err)
 	}
 
 	fmt.Println("⚙️ Ejecutando templ generate...")
 	_ = exec.Command("templ", "generate").Run()
 	fmt.Printf("✨ Proyecto inicializado exitosamente como '%s'\n", newMod)
+	return nil
 }
 
 func runNewModule(args []string, in io.Reader) {
@@ -384,26 +434,31 @@ func runLegacyFlags(args []string) {
 }
 
 func executeScaffold(rawName, schemaRaw, titleRaw, pluralRaw string, noMount, isRemove bool) {
-	if rawName == "" {
-		fmt.Println("❌ Error: el nombre del módulo es obligatorio. Ej: jrmp new-module proveedor")
+	summary, err := scaffoldModuleCore(rawName, schemaRaw, titleRaw, pluralRaw, noMount, isRemove)
+	if err != nil {
+		fmt.Printf("❌ Error: %v\n", err)
 		os.Exit(1)
+	}
+	fmt.Println(summary)
+}
+
+func scaffoldModuleCore(rawName, schemaRaw, titleRaw, pluralRaw string, noMount, isRemove bool) (string, error) {
+	if strings.TrimSpace(rawName) == "" {
+		return "", fmt.Errorf("el nombre del módulo es obligatorio (ej. proveedor)")
 	}
 
 	name := toSnakeCase(rawName)
 	if name == "" || !regexp.MustCompile(`^[a-z][a-z0-9_]*$`).MatchString(name) {
-		fmt.Printf("❌ Error: el nombre '%s' no produce un identificador válido para Go (resultado: '%s'). Debe comenzar con una letra.\n", rawName, name)
-		os.Exit(1)
+		return "", fmt.Errorf("el nombre '%s' no produce un identificador válido para Go (resultado: '%s')", rawName, name)
 	}
 
 	moduleName := getModuleName("go.mod")
 
 	if isRemove {
 		if err := removeModule(".", name, moduleName); err != nil {
-			fmt.Printf("❌ Error eliminando modulo '%s': %v\n", name, err)
-			os.Exit(1)
+			return "", fmt.Errorf("eliminando modulo '%s': %w", name, err)
 		}
-		fmt.Printf("🧹 Modulo '%s' eliminado exitosamente (carpeta, migraciones y registro en cmd/main.go).\n", name)
-		return
+		return fmt.Sprintf("🧹 Módulo '%s' eliminado exitosamente (carpeta, migraciones, cmd/main.go y PostgreSQL).", name), nil
 	}
 
 	schema := toSnakeCase(schemaRaw)
@@ -440,52 +495,65 @@ func executeScaffold(rawName, schemaRaw, titleRaw, pluralRaw string, noMount, is
 		MigrNum:     migrNum,
 	}
 
-	fmt.Printf("\n🚀 Generando modulo institucional: %s (%s)...\n", cfg.NameUpper, cfg.Prefix)
-
 	if err := generateModuleFiles(cfg); err != nil {
-		fmt.Printf("❌ Error generando archivos: %v\n", err)
-		os.Exit(1)
+		return "", fmt.Errorf("generando archivos: %w", err)
 	}
 
 	if err := generateMigrations(cfg); err != nil {
-		fmt.Printf("❌ Error generando migraciones: %v\n", err)
-		os.Exit(1)
+		return "", fmt.Errorf("generando migraciones: %w", err)
 	}
 
 	if !noMount {
 		if err := mountInMain(cfg); err != nil {
 			fmt.Printf("⚠️ No se pudo auto-montar en cmd/main.go: %v (podes agregarlo manualmente)\n", err)
-		} else {
-			fmt.Printf("✅ Montado automaticamente en cmd/main.go: %s_handler.Register(a, r)\n", cfg.Name)
 		}
 	}
 
-	fmt.Println("⚙️ Ejecutando templ generate y templ fmt...")
 	_ = exec.Command("templ", "generate").Run()
 	_ = exec.Command("templ", "fmt", ".").Run()
 
-	fmt.Printf("\n✨ Modulo '%s' generado exitosamente!\n", cfg.NameUpper)
-	fmt.Printf("📁 Carpeta: ./%s\n", cfg.Name)
-	fmt.Printf("📜 Migracion: ./sql/migrations/%s_create_%s_table.up.sql\n", cfg.MigrNum, cfg.Name)
-	fmt.Printf("🌐 Endpoint: http://localhost:8080%s\n\n", cfg.Prefix)
+	return fmt.Sprintf(
+		"✨ Módulo '%s' generado exitosamente!\n📁 Carpeta: ./%s\n📜 Migración: ./sql/migrations/%s_create_%s_table.up.sql\n🌐 Endpoint: http://localhost:8080%s",
+		cfg.NameUpper, cfg.Name, cfg.MigrNum, cfg.Name, cfg.Prefix,
+	), nil
 }
 
 func runCheck() {
-	fmt.Println("🔍 [1/4] Verificando formato de archivos .templ...")
-	mustRunCmd(".", "templ", "fmt", "-fail", ".")
-	fmt.Println("⚙️  [2/4] Generando código Go desde .templ...")
-	mustRunCmd(".", "templ", "generate")
-	fmt.Println("🧹 [3/4] Ejecutando golangci-lint...")
-	mustRunCmd(".", "golangci-lint", "run", "./...")
-	if _, err := os.Stat(filepath.Join("cmd", "jrmp", "go.mod")); err == nil {
-		mustRunCmd(filepath.Join("cmd", "jrmp"), "golangci-lint", "run", "-c", "../../.golangci.yml", "./...")
-	}
-	fmt.Println("🧪 [4/4] Ejecutando pruebas unitarias...")
-	mustRunCmd(".", "go", "test", "./...")
-	if _, err := os.Stat(filepath.Join("cmd", "jrmp", "go.mod")); err == nil {
-		mustRunCmd(filepath.Join("cmd", "jrmp"), "go", "test", "./...")
+	if err := checkProjectCore(); err != nil {
+		fmt.Printf("❌ %v\n", err)
+		os.Exit(1)
 	}
 	fmt.Println("✅ ¡Validación completa exitosa!")
+}
+
+func checkProjectCore() error {
+	fmt.Println("🔍 [1/4] Verificando formato de archivos .templ...")
+	if err := runCmdInDir(".", "templ", "fmt", "-fail", "."); err != nil {
+		return fmt.Errorf("templ fmt falló: %w", err)
+	}
+	fmt.Println("⚙️  [2/4] Generando código Go desde .templ...")
+	if err := runCmdInDir(".", "templ", "generate"); err != nil {
+		return fmt.Errorf("templ generate falló: %w", err)
+	}
+	fmt.Println("🧹 [3/4] Ejecutando golangci-lint...")
+	if err := runCmdInDir(".", "golangci-lint", "run", "./..."); err != nil {
+		return fmt.Errorf("golangci-lint falló en raíz: %w", err)
+	}
+	if _, err := os.Stat(filepath.Join("cmd", "jrmp", "go.mod")); err == nil {
+		if err := runCmdInDir(filepath.Join("cmd", "jrmp"), "golangci-lint", "run", "-c", "../../.golangci.yml", "./..."); err != nil {
+			return fmt.Errorf("golangci-lint falló en cmd/jrmp: %w", err)
+		}
+	}
+	fmt.Println("🧪 [4/4] Ejecutando pruebas unitarias...")
+	if err := runCmdInDir(".", "go", "test", "./..."); err != nil {
+		return fmt.Errorf("go test falló en raíz: %w", err)
+	}
+	if _, err := os.Stat(filepath.Join("cmd", "jrmp", "go.mod")); err == nil {
+		if err := runCmdInDir(filepath.Join("cmd", "jrmp"), "go", "test", "./..."); err != nil {
+			return fmt.Errorf("go test falló en cmd/jrmp: %w", err)
+		}
+	}
+	return nil
 }
 
 func runDev() {

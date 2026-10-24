@@ -48,5 +48,6 @@ docker-compose.override.yml
 .codegraph/
 .pi/
 
-# SDD artifacts (Engram is the active store)
+# SDD / ODD local artifacts (Engram is the active store)
 openspec/
+odd/

@@ -54,21 +54,21 @@ jrmp version
 
 ---
 
-## ⚡ Vía Rápida: Crear tu Proyecto desde Cero con el Asistente `jrmp create`
+## ⚡ Vía Rápida: Panel Interactivo TUI (`jrmp`) o Asistente `jrmp create`
 
-Si ya instalaste `jrmp` en el paso anterior, **puedes hacer las Fases 1, 2, 3 y 4 automáticamente con un solo comando interactivo** (clona la plantilla, desvincula Git, renombra todo el proyecto, configura tu archivo `.env` y opcionalmente lo enciende con Docker):
+Si ya instalaste `jrmp` en el paso anterior, **puedes hacer las Fases 1, 2, 3 y 4 automáticamente desde el panel visual interactivo** (navegable con flechas `↑`/`↓` y `Enter`) o con un solo comando directo:
 
 1. Entra a la carpeta donde guardas tus proyectos (por ejemplo, el Escritorio):
    🟢 **Copiar y pegar tal cual**:
    ```bash
    cd ~/Desktop
    ```
-2. Ejecuta el asistente interactivo:
+2. Abre la interfaz interactiva TUI (o ejecuta `jrmp create` directo):
    🟢 **Copiar y pegar tal cual**:
    ```bash
-   jrmp create
+   jrmp
    ```
-   *(El asistente te preguntará el nombre de tu nuevo proyecto, la contraseña local de PostgreSQL y si deseas encender Docker al terminar. También puedes pasarle el nombre directo: `jrmp create MiNuevoProyecto`).*
+   *(En el menú selecciona **"🌱 Crear proyecto desde cero"**, llena los campos del formulario interactivo y presiona `Enter`. También puedes ejecutar directamente `jrmp create` o `jrmp create MiNuevoProyecto`).*
 
 > 💡 **¿Prefieres clonar el repositorio manualmente paso a paso con Git?** Sigue leyendo la **Fase 1** aquí abajo.
 

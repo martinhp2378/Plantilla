@@ -58,13 +58,13 @@ El sistema incluye una capa de hardenización por defecto:
 - [Air](https://github.com/air-verse/air) (`go install github.com/air-verse/air@latest`)
 - **JRMP CLI** (`go install github.com/issemym-repos/PlantillaInstitucional/cmd/jrmp@latest`)
 
-### Crear un Proyecto Nuevo desde Cero (con Asistente Interactivo)
+### Crear un Proyecto o Gestionar Módulos con la Interfaz Interactiva TUI (`jrmp`)
 
-🟢 *Copiar y pegar tal cual*:
+🟢 *Abre el panel interactivo navegable con flechas (`↑`/`↓`, `Enter`, `Tab`, `Esc`)*:
 ```bash
-jrmp create
+jrmp
 ```
-*(Clona la plantilla, desvincula Git, renombra el proyecto con tus datos, genera el archivo `.env` y opcionalmente levanta Docker).*
+*(También puedes abrirlo con `jrmp tui` o ejecutar directamente `jrmp create` para clonar la plantilla, desvincular Git, renombrar el proyecto con tus datos, generar el archivo `.env` y opcionalmente levantar Docker).*
 
 ### O Levantar un Proyecto Ya Clonado
 

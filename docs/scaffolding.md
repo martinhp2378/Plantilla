@@ -12,12 +12,13 @@ Cada comando tiene un indicador claro para que sepas qué hacer:
 
 Abre la terminal dentro de la carpeta de tu proyecto y elige cualquiera de estas opciones (funcionan igual en **Mac, Linux y Windows**):
 
-### Opción A: Modo Interactivo (El asistente te pregunta paso a paso)
+### Opción A: Interfaz Interactiva TUI (Navegable con teclado)
 
 🟢 **Copiar y pegar tal cual**:
 ```bash
-jrmp new-module
+jrmp
 ```
+*(Selecciona **"⚡ Crear nuevo módulo CRUD"** con las flechas, escribe el nombre, elige el esquema `sistema` o `institucion` con `←`/`→` y presiona `Enter`. También puedes usar `jrmp new-module` en modo asistente clásico).*
 
 ### Opción B: Creación Rápida en 1 línea (Usando los valores por defecto)
 

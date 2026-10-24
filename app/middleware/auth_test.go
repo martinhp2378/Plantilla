@@ -13,14 +13,23 @@ import (
 
 func TestMiddlewareRequiereLogin(t *testing.T) {
 	tests := []struct {
-		name           string
-		signedIn       bool
-		expectedStatus int
+		name               string
+		signedIn           bool
+		isHTMX             bool
+		expectedStatus     int
+		expectedHXRedirect string
 	}{
 		{
 			name:           "Redirects if not signed in",
 			signedIn:       false,
 			expectedStatus: http.StatusFound,
+		},
+		{
+			name:               "Redirects via HX-Redirect if not signed in and request is HTMX",
+			signedIn:           false,
+			isHTMX:             true,
+			expectedStatus:     http.StatusOK,
+			expectedHXRedirect: "/login",
 		},
 		{
 			name:           "Allows if signed in",
@@ -36,6 +45,9 @@ func TestMiddlewareRequiereLogin(t *testing.T) {
 			}))
 
 			req := httptest.NewRequest("GET", "/", nil)
+			if tt.isHTMX {
+				req.Header.Set("HX-Request", "true")
+			}
 
 			// Mock session in context
 			ses := &sesiones.Sesion{}
@@ -56,6 +68,11 @@ func TestMiddlewareRequiereLogin(t *testing.T) {
 
 			if rr.Code != tt.expectedStatus {
 				t.Errorf("expected status %d, got %d", tt.expectedStatus, rr.Code)
+			}
+			if tt.expectedHXRedirect != "" {
+				if got := rr.Header().Get("HX-Redirect"); got != tt.expectedHXRedirect {
+					t.Errorf("expected HX-Redirect %q, got %q", tt.expectedHXRedirect, got)
+				}
 			}
 		})
 	}

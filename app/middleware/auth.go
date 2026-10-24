@@ -6,6 +6,7 @@ import (
 	"PlantillaInstitucional/shared/sesionutil"
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/issemym-repos/sesiones"
 )
@@ -15,6 +16,11 @@ func MiddlewareRequiereLogin(next http.Handler) http.Handler {
 		sesion := sesiones.RecuperarSesion(r.Context())
 
 		if !sesion.EstaFirmado() {
+			if strings.EqualFold(r.Header.Get("HX-Request"), "true") {
+				w.Header().Set("HX-Redirect", pagina.GlobalRutas.Login.Prefix)
+				w.WriteHeader(http.StatusOK)
+				return
+			}
 			http.Redirect(w, r, pagina.GlobalRutas.Login.Prefix, http.StatusFound)
 			return
 		}

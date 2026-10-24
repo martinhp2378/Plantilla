@@ -152,6 +152,11 @@ templ Base(titulo string) {
 						event.detail.isError = false;
 					}
 				});
+				document.addEventListener('htmx:responseError', (event) => {
+					if (event.detail.xhr.status === 401) {
+						window.location.href = '/login';
+					}
+				});
 			</script>
 		</head>
 		<body class="h-full bg-[var(--surface-arena-20)] text-gray-900">

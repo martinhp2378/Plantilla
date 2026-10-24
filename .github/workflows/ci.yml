@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    name: Verify (Templ, Lint, Test)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install Templ CLI
+        run: go install github.com/a-h/templ/cmd/templ@v0.3.1020
+
+      - name: Verify Templ formatting and generation
+        run: |
+          templ fmt -fail .
+          templ generate
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: v2.1.6
+          args: ./...
+
+      - name: Run unit tests
+        run: go test -mod=vendor -short ./...

@@ -1,4 +1,4 @@
-.PHONY: all check templ-fmt templ-check lint test generate
+.PHONY: all check templ-fmt templ-check lint test generate new-module remove-module init-project
 
 all: check
 
@@ -19,9 +19,17 @@ lint:
 test:
 	go test ./...
 
+# Initialize project module name: make init-project MODULE=MiNuevoProyecto
+init-project:
+	@go run cmd/tools/scaffold/main.go -init-project="$(MODULE)"
+
 # Generate a new CRUD module: make new-module NAME=proveedor [SCHEMA=sistema] [TITLE="Proveedores"]
 new-module:
 	@go run cmd/tools/scaffold/main.go -name="$(NAME)" $(if $(SCHEMA),-schema="$(SCHEMA)",) $(if $(TITLE),-title="$(TITLE)",)
+
+# Remove a scaffolded CRUD module: make remove-module NAME=proveedor
+remove-module:
+	@go run cmd/tools/scaffold/main.go -name="$(NAME)" -remove
 
 # Full verification: Templ check, Go linter, and unit tests
 check: templ-check lint test

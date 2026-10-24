@@ -56,34 +56,16 @@ Cuando termine de cargar (tarda unos 20 a 30 segundos):
 
 ## 🧹 ¿Hiciste un Módulo Solo para Probar y Quieres Borrarlo?
 
-Si creaste un módulo de prueba (por ejemplo, llamado `pruebita` o `prueba_borrarlo`) y quieres eliminarlo por completo para no subir basura al repositorio de Git, sigue estos **2 pasos**:
-
-### 1. Limpiar la tabla de prueba en la base de datos local
+Si creaste un módulo de prueba (por ejemplo, llamado `pruebita` o `prueba_borrarlo`) y quieres eliminarlo por completo para no subir basura al repositorio de Git, ejecuta este único comando (que borra la carpeta del módulo, sus migraciones, su registro en `cmd/main.go` y, si tu base de datos local está encendida, revierte también la tabla, las políticas ABAC y `schema_migrations` en PostgreSQL):
 
 🟡 **Modificar antes de ejecutar**:
-En el siguiente bloque, cambia las **3 veces** que aparece la palabra **`prueba_borrarlo`** por el nombre en `snake_case` (con guion bajo) del módulo que creaste, y verifica si el número `11` corresponde a la última migración real antes de tu prueba:
+Cambia **`prueba_borrarlo`** por el nombre de tu módulo de prueba:
 
 ```bash
-docker exec plantillainstitucional-db-1 psql -U postgres -d plantilla -c "
-DELETE FROM sesion.politica WHERE recurso = 'prueba_borrarlo';
-DELETE FROM sesion.recurso WHERE nombre = 'prueba_borrarlo';
-DROP TABLE IF EXISTS sistema.prueba_borrarlo CASCADE;
-UPDATE schema_migrations SET version = 11, dirty = false;
-"
-```
-*(Nota: Si en tu archivo `.env` cambiaste el usuario de base de datos `PQ_WRITE_USER` por otro nombre distinto de `postgres`, reemplaza `-U postgres` por `-U TU_USUARIO`).*
-
-### 2. Borrar la carpeta del módulo y restaurar el archivo principal
-
-🟡 **Modificar antes de ejecutar**:
-Cambia las **2 veces** que aparece **`prueba_borrarlo`** por el nombre de la carpeta de tu módulo de prueba:
-
-```bash
-rm -rf prueba_borrarlo sql/migrations/*_create_prueba_borrarlo_table.*
-git checkout cmd/main.go
+make remove-module NAME=prueba_borrarlo
 ```
 
-Por último, vuelve a actualizar el contenedor para que quede limpio:
+Por último, si tenías el contenedor encendido, actualízalo para que quede limpio:
 🟢 **Copiar y pegar tal cual**:
 ```bash
 docker compose -f docker-compose.local.yml up --build -d app

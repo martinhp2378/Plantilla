@@ -108,18 +108,10 @@ Internamente, todos los archivos del código dicen `PlantillaInstitucional`. Aho
 ### Paso 3.1: Cambiar el nombre interno en todo el código
 
 🟡 **Modificar antes de ejecutar**:
-En el comando correspondiente a tu sistema operativo, cambia únicamente la palabra **`MiNuevoProyecto`** (que aparece 2 veces) por el nombre de tu proyecto (sin espacios ni acentos, igual que en la Fase 1):
+Cambia únicamente la palabra **`MiNuevoProyecto`** por el nombre de tu proyecto (sin espacios ni acentos, igual que en la Fase 1). Este comando funciona igual en Mac, Linux y Windows:
 
-**Si usas Mac (macOS):**
 ```bash
-go mod edit -module MiNuevoProyecto
-find . -type f \( -name "*.go" -o -name "*.templ" \) -not -path "./vendor/*" -not -path "./.git/*" -exec sed -i '' 's/PlantillaInstitucional/MiNuevoProyecto/g' {} +
-```
-
-**Si usas Linux o Windows (Git Bash / WSL):**
-```bash
-go mod edit -module MiNuevoProyecto
-find . -type f \( -name "*.go" -o -name "*.templ" \) -not -path "./vendor/*" -not -path "./.git/*" -exec sed -i 's/PlantillaInstitucional/MiNuevoProyecto/g' {} +
+make init-project MODULE=MiNuevoProyecto
 ```
 
 ### Paso 3.2: Crear tu archivo de configuración (`.env`)

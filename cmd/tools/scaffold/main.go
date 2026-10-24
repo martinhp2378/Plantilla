@@ -1,8 +1,12 @@
 package main
 
 import (
+	bd "PlantillaInstitucional/app/db"
+	"PlantillaInstitucional/shared/entorno"
+	"context"
 	"flag"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -10,9 +14,13 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
+	"time"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type Config struct {
+	Module      string // e.g. PlantillaInstitucional
 	Name        string // e.g. proveedor
 	NameUpper   string // e.g. Proveedor
 	Plural      string // e.g. proveedores
@@ -29,7 +37,21 @@ func main() {
 	titleFlag := flag.String("title", "", "Human readable title (default: auto capitalized)")
 	pluralFlag := flag.String("plural", "", "Plural name (default: auto)")
 	noMountFlag := flag.Bool("no-mount", false, "Do not auto-mount in cmd/main.go")
+	removeFlag := flag.Bool("remove", false, "Remove an existing scaffolded module and its migrations")
+	initProjectFlag := flag.String("init-project", "", "Rename the Go module across go.mod, .go, and .templ files")
 	flag.Parse()
+
+	if strings.TrimSpace(*initProjectFlag) != "" {
+		newMod := strings.TrimSpace(*initProjectFlag)
+		if err := renameProjectModule(".", newMod); err != nil {
+			fmt.Printf("❌ Error renombrando proyecto: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Println("⚙️ Ejecutando templ generate...")
+		_ = exec.Command("templ", "generate").Run()
+		fmt.Printf("✨ Proyecto renombrado exitosamente a '%s'\n", newMod)
+		return
+	}
 
 	rawName := strings.TrimSpace(*nameFlag)
 	if rawName == "" {
@@ -41,6 +63,17 @@ func main() {
 	if name == "" || !regexp.MustCompile(`^[a-z][a-z0-9_]*$`).MatchString(name) {
 		fmt.Printf("Error: el nombre '%s' no produce un identificador válido para Go (resultado: '%s'). Debe comenzar con una letra.\n", rawName, name)
 		os.Exit(1)
+	}
+
+	moduleName := getModuleName("go.mod")
+
+	if *removeFlag {
+		if err := removeModule(".", name, moduleName); err != nil {
+			fmt.Printf("❌ Error eliminando modulo '%s': %v\n", name, err)
+			os.Exit(1)
+		}
+		fmt.Printf("🧹 Modulo '%s' eliminado exitosamente (carpeta, migraciones y registro en cmd/main.go).\n", name)
+		return
 	}
 
 	schema := toSnakeCase(strings.TrimSpace(*schemaFlag))
@@ -66,6 +99,7 @@ func main() {
 	migrNum := getNextMigrationNumber()
 
 	cfg := Config{
+		Module:      moduleName,
 		Name:        name,
 		NameUpper:   nameUpper,
 		Plural:      plural,
@@ -183,6 +217,7 @@ func generateModuleFiles(cfg Config) error {
 		filepath.Join(cfg.Name, "repository", "repository.go"):                tmplRepoMain,
 		filepath.Join(cfg.Name, "service", "types.go"):                        tmplServiceTypes,
 		filepath.Join(cfg.Name, "service", "service.go"):                      tmplServiceMain,
+		filepath.Join(cfg.Name, "service", "service_test.go"):                 tmplServiceTest,
 		filepath.Join(cfg.Name, "service", "reportes.go"):                     tmplServiceReports,
 		filepath.Join(cfg.Name, "handler", "types.go"):                        tmplHandlerTypes,
 		filepath.Join(cfg.Name, "handler", "register.go"):                     tmplHandlerRegister,
@@ -245,14 +280,42 @@ func generateMigrations(cfg Config) error {
 
 const mainFile = "cmd/main.go"
 
+func getModuleName(goModPath string) string {
+	// #nosec G304 -- goModPath is controlled by internal callers
+	data, err := os.ReadFile(filepath.Clean(goModPath))
+	if err != nil {
+		return "PlantillaInstitucional"
+	}
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "module ") {
+			mod := strings.TrimSpace(strings.TrimPrefix(line, "module "))
+			if mod != "" {
+				return mod
+			}
+		}
+	}
+	return "PlantillaInstitucional"
+}
+
 func mountInMain(cfg Config) error {
-	content, err := os.ReadFile(mainFile)
+	return mountInMainFile(mainFile, cfg)
+}
+
+func mountInMainFile(targetFile string, cfg Config) error {
+	// #nosec G304 -- targetFile is a controlled path to cmd/main.go
+	content, err := os.ReadFile(filepath.Clean(targetFile))
 	if err != nil {
 		return err
 	}
 	s := string(content)
 
-	importTarget := fmt.Sprintf("%s_handler \"PlantillaInstitucional/%s/handler\"", cfg.Name, cfg.Name)
+	mod := cfg.Module
+	if mod == "" {
+		mod = getModuleName("go.mod")
+	}
+
+	importTarget := fmt.Sprintf("%s_handler \"%s/%s/handler\"", cfg.Name, mod, cfg.Name)
 	if strings.Contains(s, importTarget) {
 		return nil // Ya montado
 	}
@@ -261,24 +324,223 @@ func mountInMain(cfg Config) error {
 	importMarker := "import ("
 	idx := strings.Index(s, importMarker)
 	if idx == -1 {
-		return fmt.Errorf("no se encontro bloque import en cmd/main.go")
+		return fmt.Errorf("no se encontro bloque import en %s", targetFile)
 	}
 	insertImportPos := idx + len(importMarker)
 	s = s[:insertImportPos] + "\n\t" + importTarget + s[insertImportPos:]
 
-	// Inyectar llamada de Register en el grupo protegido
-	registerLine := fmt.Sprintf("\t\t%s_handler.Register(a, r)\n", cfg.Name)
+	// Inyectar llamada de Register en el grupo protegido respetando la indentación
+	registerCall := fmt.Sprintf("%s_handler.Register(a, r)", cfg.Name)
 	groupMarker := "miperfil_handler.Register(a, r)"
 	if strings.Contains(s, groupMarker) {
-		s = strings.Replace(s, groupMarker, groupMarker+"\n"+registerLine, 1)
+		indent := "\t\t\t"
+		for _, line := range strings.Split(s, "\n") {
+			if strings.Contains(line, groupMarker) {
+				indent = line[:strings.Index(line, groupMarker)]
+				break
+			}
+		}
+		s = strings.Replace(s, groupMarker, groupMarker+"\n"+indent+registerCall, 1)
 	} else {
-		// Fallback: antes de la llave de cierre de NavigationMiddleware
 		navMarker := "r.Use(app_middleware.NavigationMiddleware(a))"
-		s = strings.Replace(s, navMarker, navMarker+"\n\n"+registerLine, 1)
+		s = strings.Replace(s, navMarker, navMarker+"\n\n\t\t\t"+registerCall, 1)
 	}
 
-	// #nosec G703 -- mainFile is a constant target path in scaffolding CLI
-	return os.WriteFile(mainFile, []byte(s), 0600)
+	// #nosec G703 -- targetFile is validated and cleaned
+	return os.WriteFile(filepath.Clean(targetFile), []byte(s), 0600)
+}
+
+func unmountFromMainFile(targetFile, name, moduleName string) error {
+	// #nosec G304 -- targetFile is a controlled path to cmd/main.go
+	content, err := os.ReadFile(filepath.Clean(targetFile))
+	if err != nil {
+		return err
+	}
+	if moduleName == "" {
+		moduleName = getModuleName("go.mod")
+	}
+
+	importTarget := fmt.Sprintf("%s_handler \"%s/%s/handler\"", name, moduleName, name)
+	registerCall := fmt.Sprintf("%s_handler.Register(a, r)", name)
+
+	var kept []string
+	for _, line := range strings.Split(string(content), "\n") {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == importTarget || trimmed == registerCall {
+			continue
+		}
+		kept = append(kept, line)
+	}
+
+	// #nosec G703 -- targetFile is validated and cleaned
+	return os.WriteFile(filepath.Clean(targetFile), []byte(strings.Join(kept, "\n")), 0600)
+}
+
+func removeModule(rootDir, name, moduleName string) error {
+	protected := map[string]bool{
+		"app": true, "cmd": true, "configuracion": true, "crud": true,
+		"dashboard": true, "docs": true, "institucion": true, "login": true,
+		"miperfil": true, "pagination": true, "parametros": true, "shared": true,
+		"sql": true, "static": true, "vendor": true,
+	}
+	if protected[name] {
+		return fmt.Errorf("el directorio '%s' pertenece al nucleo de la plantilla y no puede eliminarse", name)
+	}
+
+	modDir := filepath.Join(rootDir, name)
+	if err := os.RemoveAll(modDir); err != nil {
+		return fmt.Errorf("error eliminando carpeta %s: %w", modDir, err)
+	}
+
+	pattern := filepath.Join(rootDir, "sql", "migrations", fmt.Sprintf("*_create_%s_table.*.sql", name))
+	matches, err := filepath.Glob(pattern)
+	if err != nil {
+		return err
+	}
+	var downScripts []string
+	for _, m := range matches {
+		if strings.HasSuffix(m, ".down.sql") {
+			// #nosec G304 -- path comes from controlled Glob under rootDir
+			if b, readErr := os.ReadFile(filepath.Clean(m)); readErr == nil {
+				downScripts = append(downScripts, string(b))
+			}
+		}
+		if err := os.Remove(m); err != nil && !os.IsNotExist(err) {
+			return fmt.Errorf("error eliminando migracion %s: %w", m, err)
+		}
+	}
+
+	maxRemaining := getMaxMigrationNumberInDir(filepath.Join(rootDir, "sql", "migrations"))
+	revertModuleDatabase(rootDir, downScripts, maxRemaining)
+
+	mainPath := filepath.Join(rootDir, mainFile)
+	if _, err := os.Stat(mainPath); err == nil {
+		if err := unmountFromMainFile(mainPath, name, moduleName); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func getMaxMigrationNumberInDir(migrationsDir string) int {
+	files, err := filepath.Glob(filepath.Join(migrationsDir, "*.sql"))
+	if err != nil {
+		return 0
+	}
+	re := regexp.MustCompile(`^(\d+)`)
+	maxNum := 0
+	for _, f := range files {
+		matches := re.FindStringSubmatch(filepath.Base(f))
+		if len(matches) > 1 {
+			if n, err := strconv.Atoi(matches[1]); err == nil && n > maxNum {
+				maxNum = n
+			}
+		}
+	}
+	return maxNum
+}
+
+func revertModuleDatabase(rootDir string, downScripts []string, maxRemainingVersion int) {
+	envPath := filepath.Join(rootDir, ".env")
+	if _, err := os.Stat(envPath); err != nil {
+		return
+	}
+	env, err := entorno.GetEnv(envPath)
+	if err != nil {
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	connURL := bd.BuildConnectionURL(env, true)
+	conn, err := pgx.Connect(ctx, connURL)
+	if err != nil && strings.EqualFold(env.PqWriteHost, "db") {
+		envCopy := *env
+		envCopy.PqWriteHost = "127.0.0.1"
+		conn, err = pgx.Connect(ctx, bd.BuildConnectionURL(&envCopy, true))
+	}
+	if err != nil {
+		fmt.Printf("ℹ️ Base de datos no disponible localmente (%v); se omitio limpieza SQL en vivo.\n", err)
+		return
+	}
+	defer func() { _ = conn.Close(ctx) }()
+
+	for _, script := range downScripts {
+		if _, err := conn.Exec(ctx, script); err != nil {
+			fmt.Printf("⚠️ Advertencia ejecutando down.sql en base de datos: %v\n", err)
+		}
+	}
+	if maxRemainingVersion > 0 {
+		_, _ = conn.Exec(ctx, `UPDATE public.schema_migrations SET version = $1, dirty = false WHERE version > $1`, maxRemainingVersion)
+	}
+	fmt.Println("🗄️ Tabla, politicas ABAC y schema_migrations revertidos en PostgreSQL.")
+}
+
+func renameProjectModule(rootDir, newModule string) error {
+	newModule = strings.TrimSpace(newModule)
+	if newModule == "" || strings.ContainsAny(newModule, " \t\n\"'") {
+		return fmt.Errorf("nombre de modulo invalido: %q", newModule)
+	}
+
+	root, err := os.OpenRoot(rootDir)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = root.Close() }()
+
+	goModBytes, err := root.ReadFile("go.mod")
+	if err != nil {
+		return err
+	}
+	oldModule := "PlantillaInstitucional"
+	for _, line := range strings.Split(string(goModBytes), "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "module ") {
+			if mod := strings.TrimSpace(strings.TrimPrefix(line, "module ")); mod != "" {
+				oldModule = mod
+			}
+			break
+		}
+	}
+	if oldModule == "" || oldModule == newModule {
+		return nil
+	}
+
+	updatedGoMod := strings.Replace(string(goModBytes), "module "+oldModule, "module "+newModule, 1)
+	if err := root.WriteFile("go.mod", []byte(updatedGoMod), 0600); err != nil {
+		return err
+	}
+
+	oldPrefix := oldModule + "/"
+	newPrefix := newModule + "/"
+
+	return fs.WalkDir(root.FS(), ".", func(relPath string, d fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if d.IsDir() {
+			switch d.Name() {
+			case ".git", "vendor", "tmp", ".codegraph":
+				return fs.SkipDir
+			}
+			return nil
+		}
+		ext := filepath.Ext(d.Name())
+		if ext != ".go" && ext != ".templ" {
+			return nil
+		}
+		b, err := root.ReadFile(relPath)
+		if err != nil {
+			return err
+		}
+		content := string(b)
+		if !strings.Contains(content, oldPrefix) {
+			return nil
+		}
+		updated := strings.ReplaceAll(content, oldPrefix, newPrefix)
+		return root.WriteFile(relPath, []byte(updated), 0600)
+	})
 }
 
 // =========================================================================
@@ -306,7 +568,7 @@ type <<.NameUpper>> struct {
 
 const tmplRutas = `package <<.Name>>
 
-import "PlantillaInstitucional/shared/pagina"
+import "<<.Module>>/shared/pagina"
 
 // Rutas contiene la configuracion canonica de rutas para el modulo <<.NameUpper>>.
 var Rutas = pagina.NuevaRuta("<<.Prefix>>")
@@ -315,8 +577,8 @@ var Rutas = pagina.NuevaRuta("<<.Prefix>>")
 const tmplRepoTypes = `package repository
 
 import (
-	bd "PlantillaInstitucional/app/db"
-	"PlantillaInstitucional/<<.Name>>"
+	bd "<<.Module>>/app/db"
+	"<<.Module>>/<<.Name>>"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
@@ -405,9 +667,9 @@ const (
 const tmplRepoMain = `package repository
 
 import (
-	"PlantillaInstitucional/<<.Name>>"
-	"PlantillaInstitucional/pagination"
-	shared "PlantillaInstitucional/shared/db"
+	"<<.Module>>/<<.Name>>"
+	"<<.Module>>/pagination"
+	shared "<<.Module>>/shared/db"
 	"context"
 	"fmt"
 	"strings"
@@ -546,8 +808,8 @@ func (r *<<.NameUpper>>Repository) Eliminar(ctx context.Context, id uuid.UUID) e
 const tmplServiceTypes = `package service
 
 import (
-	"PlantillaInstitucional/<<.Name>>"
-	"PlantillaInstitucional/pagination"
+	"<<.Module>>/<<.Name>>"
+	"<<.Module>>/pagination"
 	"context"
 
 	"github.com/go-playground/validator/v10"
@@ -595,8 +857,8 @@ func New<<.NameUpper>>Service(repo <<.NameUpper>>RepositoryProvider, validate *v
 const tmplServiceMain = `package service
 
 import (
-	"PlantillaInstitucional/<<.Name>>"
-	"PlantillaInstitucional/pagination"
+	"<<.Module>>/<<.Name>>"
+	"<<.Module>>/pagination"
 	"context"
 	"fmt"
 
@@ -638,11 +900,117 @@ func (s *<<.NameUpper>>Service) Eliminar(ctx context.Context, id uuid.UUID) erro
 }
 `
 
+const tmplServiceTest = `package service
+
+import (
+	"<<.Module>>/<<.Name>>"
+	"<<.Module>>/pagination"
+	"context"
+	"errors"
+	"testing"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/gofrs/uuid/v5"
+)
+
+type mock<<.NameUpper>>Repo struct {
+	consultarFn    func(ctx context.Context, criterios pagination.CriteriosPagina[<<.Name>>.<<.NameUpper>>]) ([]<<.Name>>.<<.NameUpper>>, int, error)
+	obtenerPorIDFn func(ctx context.Context, id uuid.UUID) (<<.Name>>.<<.NameUpper>>, error)
+	obtenerTodosFn func(ctx context.Context) ([]<<.Name>>.<<.NameUpper>>, error)
+	crearFn        func(ctx context.Context, item <<.Name>>.<<.NameUpper>>) error
+	actualizarFn   func(ctx context.Context, item <<.Name>>.<<.NameUpper>>) error
+	eliminarFn     func(ctx context.Context, id uuid.UUID) error
+}
+
+func (m *mock<<.NameUpper>>Repo) Consultar(ctx context.Context, criterios pagination.CriteriosPagina[<<.Name>>.<<.NameUpper>>]) ([]<<.Name>>.<<.NameUpper>>, int, error) {
+	if m.consultarFn != nil {
+		return m.consultarFn(ctx, criterios)
+	}
+	return nil, 0, nil
+}
+
+func (m *mock<<.NameUpper>>Repo) ObtenerPorID(ctx context.Context, id uuid.UUID) (<<.Name>>.<<.NameUpper>>, error) {
+	if m.obtenerPorIDFn != nil {
+		return m.obtenerPorIDFn(ctx, id)
+	}
+	return <<.Name>>.<<.NameUpper>>{}, nil
+}
+
+func (m *mock<<.NameUpper>>Repo) ObtenerTodos(ctx context.Context) ([]<<.Name>>.<<.NameUpper>>, error) {
+	if m.obtenerTodosFn != nil {
+		return m.obtenerTodosFn(ctx)
+	}
+	return nil, nil
+}
+
+func (m *mock<<.NameUpper>>Repo) Crear(ctx context.Context, item <<.Name>>.<<.NameUpper>>) error {
+	if m.crearFn != nil {
+		return m.crearFn(ctx, item)
+	}
+	return nil
+}
+
+func (m *mock<<.NameUpper>>Repo) Actualizar(ctx context.Context, item <<.Name>>.<<.NameUpper>>) error {
+	if m.actualizarFn != nil {
+		return m.actualizarFn(ctx, item)
+	}
+	return nil
+}
+
+func (m *mock<<.NameUpper>>Repo) Eliminar(ctx context.Context, id uuid.UUID) error {
+	if m.eliminarFn != nil {
+		return m.eliminarFn(ctx, id)
+	}
+	return nil
+}
+
+func Test<<.NameUpper>>Service_Crear(t *testing.T) {
+	tests := []struct {
+		name    string
+		item    <<.Name>>.<<.NameUpper>>
+		repoErr error
+		wantErr bool
+	}{
+		{
+			name:    "creates valid record",
+			item:    <<.Name>>.<<.NameUpper>>{Nombre: "Registro Uno", Codigo: "REG-01", IsActive: true},
+			wantErr: false,
+		},
+		{
+			name:    "rejects record with empty nombre",
+			item:    <<.Name>>.<<.NameUpper>>{Nombre: "", Codigo: "REG-01"},
+			wantErr: true,
+		},
+		{
+			name:    "propagates repository error",
+			item:    <<.Name>>.<<.NameUpper>>{Nombre: "Registro Dos", Codigo: "REG-02"},
+			repoErr: errors.New("db error"),
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &mock<<.NameUpper>>Repo{
+				crearFn: func(context.Context, <<.Name>>.<<.NameUpper>>) error {
+					return tt.repoErr
+				},
+			}
+			svc := New<<.NameUpper>>Service(repo, validator.New(), nil, nil)
+			err := svc.Crear(context.Background(), tt.item)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("Crear() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+`
+
 const tmplServiceReports = `package service
 
 import (
-	"PlantillaInstitucional/<<.Name>>"
-	reporte "PlantillaInstitucional/shared/reportes"
+	"<<.Module>>/<<.Name>>"
+	reporte "<<.Module>>/shared/reportes"
 	"context"
 	"fmt"
 )
@@ -738,9 +1106,9 @@ func (s *<<.NameUpper>>Service) ReporteExcel(ctx context.Context) (string, error
 const tmplHandlerTypes = `package handler
 
 import (
-	"PlantillaInstitucional/<<.Name>>"
-	"PlantillaInstitucional/<<.Name>>/service"
-	"PlantillaInstitucional/shared/errores"
+	"<<.Module>>/<<.Name>>"
+	"<<.Module>>/<<.Name>>/service"
+	"<<.Module>>/shared/errores"
 	"fmt"
 	"net/http"
 
@@ -801,11 +1169,11 @@ func (h *<<.NameUpper>>Handler) parseForm(r *http.Request) (<<.Name>>.<<.NameUpp
 const tmplHandlerRegister = `package handler
 
 import (
-	"PlantillaInstitucional/app"
-	"PlantillaInstitucional/shared/navigation"
-	"PlantillaInstitucional/<<.Name>>"
-	"PlantillaInstitucional/<<.Name>>/repository"
-	"PlantillaInstitucional/<<.Name>>/service"
+	"<<.Module>>/app"
+	"<<.Module>>/shared/navigation"
+	"<<.Module>>/<<.Name>>"
+	"<<.Module>>/<<.Name>>/repository"
+	"<<.Module>>/<<.Name>>/service"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
@@ -831,9 +1199,9 @@ func Register(a *app.App, r chi.Router) {
 const tmplHandlerCRUD = `package handler
 
 import (
-	"PlantillaInstitucional/<<.Name>>"
-	"PlantillaInstitucional/shared/errores"
-	"PlantillaInstitucional/shared/validacion"
+	"<<.Module>>/<<.Name>>"
+	"<<.Module>>/shared/errores"
+	"<<.Module>>/shared/validacion"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -903,12 +1271,12 @@ func (h *<<.NameUpper>>Handler) Delete(w http.ResponseWriter, r *http.Request) {
 const tmplHandlerViews = `package handler
 
 import (
-	"PlantillaInstitucional/<<.Name>>"
-	"PlantillaInstitucional/<<.Name>>/view/components"
-	"PlantillaInstitucional/<<.Name>>/view/layouts"
-	"PlantillaInstitucional/pagination"
-	"PlantillaInstitucional/shared/utils"
-	"PlantillaInstitucional/shared/views/components/compartidos"
+	"<<.Module>>/<<.Name>>"
+	"<<.Module>>/<<.Name>>/view/components"
+	"<<.Module>>/<<.Name>>/view/layouts"
+	"<<.Module>>/pagination"
+	"<<.Module>>/shared/utils"
+	"<<.Module>>/shared/views/components/compartidos"
 	"context"
 	"net/http"
 	"strings"
@@ -1009,9 +1377,9 @@ func (h *<<.NameUpper>>Handler) MandarErrorGeneric(w http.ResponseWriter, r *htt
 const tmplHandlerFiles = `package handler
 
 import (
-	shared "PlantillaInstitucional/shared/errores"
-	"PlantillaInstitucional/shared/utils"
-	"PlantillaInstitucional/shared/views/components/compartidos"
+	shared "<<.Module>>/shared/errores"
+	"<<.Module>>/shared/utils"
+	"<<.Module>>/shared/views/components/compartidos"
 	"net/http"
 )
 
@@ -1049,10 +1417,10 @@ func (h *<<.NameUpper>>Handler) SuccessFileMessage(w http.ResponseWriter, r *htt
 const tmplViewTable = `package components
 
 import (
-	"PlantillaInstitucional/<<.Name>>"
-	"PlantillaInstitucional/pagination"
-	"PlantillaInstitucional/shared/convertidores"
-	"PlantillaInstitucional/shared/views/components/v2"
+	"<<.Module>>/<<.Name>>"
+	"<<.Module>>/pagination"
+	"<<.Module>>/shared/convertidores"
+	"<<.Module>>/shared/views/components/v2"
 )
 
 templ TableV2(criterios pagination.CriteriosPagina[<<.Name>>.<<.NameUpper>>], baseURL string, oob bool) {
@@ -1110,9 +1478,9 @@ templ TableV2(criterios pagination.CriteriosPagina[<<.Name>>.<<.NameUpper>>], ba
 const tmplViewForm = `package components
 
 import (
-	"PlantillaInstitucional/<<.Name>>"
-	"PlantillaInstitucional/shared/convertidores"
-	"PlantillaInstitucional/shared/views/components/v2"
+	"<<.Module>>/<<.Name>>"
+	"<<.Module>>/shared/convertidores"
+	"<<.Module>>/shared/views/components/v2"
 )
 
 templ FormCreate<<.NameUpper>>V2(item <<.Name>>.<<.NameUpper>>, errors map[string]string) {
@@ -1205,11 +1573,11 @@ templ FormUpdate<<.NameUpper>>V2(item *<<.Name>>.<<.NameUpper>>, errors map[stri
 const tmplViewLayout = `package layouts
 
 import (
-	"PlantillaInstitucional/<<.Name>>"
-	"PlantillaInstitucional/<<.Name>>/view/components"
-	"PlantillaInstitucional/pagination"
-	"PlantillaInstitucional/shared/pagina"
-	"PlantillaInstitucional/shared/views/layouts"
+	"<<.Module>>/<<.Name>>"
+	"<<.Module>>/<<.Name>>/view/components"
+	"<<.Module>>/pagination"
+	"<<.Module>>/shared/pagina"
+	"<<.Module>>/shared/views/layouts"
 )
 
 templ View<<.NameUpper>>V2(titulo string, data pagination.CriteriosPagina[<<.Name>>.<<.NameUpper>>], baseURL string) {

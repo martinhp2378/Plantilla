@@ -171,6 +171,17 @@ func ensureProjectRoot() {
 	}
 }
 
+func requireProjectRoot() error {
+	ensureProjectRoot()
+	if _, err := os.Stat("go.mod"); err != nil {
+		return fmt.Errorf("no se detectó un proyecto válido en la carpeta actual (falta go.mod); entrá a la carpeta de tu proyecto o creá uno con 'jrmp create'")
+	}
+	if _, err := os.Stat(filepath.Join("cmd", "main.go")); err != nil {
+		return fmt.Errorf("no se detectó cmd/main.go en la carpeta actual; ejecutá este comando desde la raíz de tu proyecto")
+	}
+	return nil
+}
+
 func runCreateProject(args []string, in io.Reader) {
 	posName, flagArgs := extractLeadingPositional(args)
 	fsFlags := flag.NewFlagSet("create", flag.ExitOnError)
@@ -322,6 +333,9 @@ func runInitProject(args []string, in io.Reader) {
 }
 
 func initProjectCore(newMod, svc, dbPass string) error {
+	if err := requireProjectRoot(); err != nil {
+		return err
+	}
 	newMod = strings.ReplaceAll(strings.TrimSpace(newMod), " ", "")
 	if newMod == "" {
 		return fmt.Errorf("el nombre del proyecto es obligatorio")
@@ -443,6 +457,9 @@ func executeScaffold(rawName, schemaRaw, titleRaw, pluralRaw string, noMount, is
 }
 
 func scaffoldModuleCore(rawName, schemaRaw, titleRaw, pluralRaw string, noMount, isRemove bool) (string, error) {
+	if err := requireProjectRoot(); err != nil {
+		return "", err
+	}
 	if strings.TrimSpace(rawName) == "" {
 		return "", fmt.Errorf("el nombre del módulo es obligatorio (ej. proveedor)")
 	}
@@ -527,6 +544,9 @@ func runCheck() {
 }
 
 func checkProjectCore() error {
+	if err := requireProjectRoot(); err != nil {
+		return err
+	}
 	fmt.Println("🔍 [1/4] Verificando formato de archivos .templ...")
 	if err := runCmdInDir(".", "templ", "fmt", "-fail", "."); err != nil {
 		return fmt.Errorf("templ fmt falló: %w", err)

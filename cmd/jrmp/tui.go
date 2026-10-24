@@ -230,7 +230,8 @@ func defaultTUIRunner(action tuiActionID, values map[string]string) (string, err
 		if err := createProjectCore(defaultTemplateRepo, projectName, serviceName, dbPass, remoteURL, startDocker); err != nil {
 			return "", err
 		}
-		return fmt.Sprintf("✨ Proyecto '%s' creado en ./%s", projectName, projectName), nil
+		_ = os.Chdir(projectName)
+		return fmt.Sprintf("✨ Proyecto '%s' creado y activado en ./%s (ya podés crearle módulos desde este menú)", projectName, projectName), nil
 
 	case actionInit:
 		newMod := strings.TrimSpace(values["module_name"])
@@ -262,12 +263,18 @@ func defaultTUIRunner(action tuiActionID, values map[string]string) (string, err
 		)
 
 	case actionUp:
+		if err := requireProjectRoot(); err != nil {
+			return "", err
+		}
 		if err := runCmdInDir(".", "docker", "compose", "-f", "docker-compose.local.yml", "up", "--build", "-d"); err != nil {
 			return "", err
 		}
 		return "🐳 Contenedores Docker iniciados en http://localhost:8080/login", nil
 
 	case actionDown:
+		if err := requireProjectRoot(); err != nil {
+			return "", err
+		}
 		if err := runCmdInDir(".", "docker", "compose", "-f", "docker-compose.local.yml", "down"); err != nil {
 			return "", err
 		}
@@ -552,8 +559,13 @@ func (m tuiModel) dispatchAction(action tuiActionID, values map[string]string) t
 	return func() tea.Msg {
 		summary, err := runner(action, values)
 		updatedMod := ""
-		if err == nil && action == actionInit {
-			updatedMod = strings.TrimSpace(values["module_name"])
+		if err == nil {
+			switch action {
+			case actionCreate:
+				updatedMod = strings.TrimSpace(values["project_name"])
+			case actionInit:
+				updatedMod = strings.TrimSpace(values["module_name"])
+			}
 		}
 		return tuiActionResultMsg{
 			action:        action,

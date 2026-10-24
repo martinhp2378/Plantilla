@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"strings"
 	"testing"
 
@@ -239,6 +240,33 @@ func TestShouldLaunchTUI(t *testing.T) {
 		})
 	}
 }
+
+func TestRequireProjectRoot_BlocksOutsideProject(t *testing.T) {
+	origDir, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(origDir) })
+
+	emptyDir := t.TempDir()
+	if err := os.Chdir(emptyDir); err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = scaffoldModuleCore("proveedor", "sistema", "", "", false, false)
+	if err == nil {
+		t.Fatalf("expected error when running scaffoldModuleCore outside project root, got nil")
+	}
+
+	entries, err := os.ReadDir(emptyDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 0 {
+		t.Fatalf("expected 0 files created in non-project directory, got %d", len(entries))
+	}
+}
+
 
 
 

@@ -54,7 +54,8 @@ El sistema incluye una capa de hardenización por defecto:
 ### Prerrequisitos
 - Go 1.25 o superior
 - Docker Desktop / OrbStack (debe estar abierto y en ejecución)
-- [Templ CLI](https://templ.guide/quick-start/installation)
+- [Templ CLI](https://templ.guide/quick-start/installation) (`go install github.com/a-h/templ/cmd/templ@latest`)
+- [Air](https://github.com/air-verse/air) (`go install github.com/air-verse/air@latest`)
 
 ### Levantar el Proyecto en tu Computadora
 

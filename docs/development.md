@@ -15,16 +15,9 @@ Resumen rápido de comandos para inicializar un nuevo sistema a partir de esta p
     git remote remove origin
     ```
 2.  **Renombrar el módulo Go en todo el código** (🟡 *Cambia `MiNuevoProyecto` por el nombre de tu sistema*):
-    - **En Mac (macOS)**:
-      ```bash
-      go mod edit -module MiNuevoProyecto
-      find . -type f \( -name "*.go" -o -name "*.templ" \) -not -path "./vendor/*" -not -path "./.git/*" -exec sed -i '' 's/PlantillaInstitucional/MiNuevoProyecto/g' {} +
-      ```
-    - **En Linux / Windows (Git Bash / WSL)**:
-      ```bash
-      go mod edit -module MiNuevoProyecto
-      find . -type f \( -name "*.go" -o -name "*.templ" \) -not -path "./vendor/*" -not -path "./.git/*" -exec sed -i 's/PlantillaInstitucional/MiNuevoProyecto/g' {} +
-      ```
+    ```bash
+    make init-project MODULE=MiNuevoProyecto
+    ```
 3.  **Configurar tu entorno local** (🟢 *Copiar y pegar tal cual*):
     ```bash
     cp .env.example .env
@@ -38,7 +31,8 @@ Resumen rápido de comandos para inicializar un nuevo sistema a partir de esta p
 ## 🛠️ Herramientas Recomendadas
 
 *   **Go**: Versión 1.25+.
-*   **Templ CLI**: Para generar código Go a partir de archivos `.templ`.
+*   **Templ CLI**: Para generar código Go a partir de archivos `.templ` (`go install github.com/a-h/templ/cmd/templ@latest`).
+*   **Air**: Para recarga en vivo del servidor en desarrollo (`go install github.com/air-verse/air@latest`).
 *   **GolangCI-Lint**: Para análisis estático de código.
 *   **Docker Desktop / OrbStack**: Para gestionar el entorno completo.
 *   **VS Code / GoLand / Neovim**: Con plugins de Go y Templ activados.
@@ -46,7 +40,7 @@ Resumen rápido de comandos para inicializar un nuevo sistema a partir de esta p
 ## 🏃 Flujo de Trabajo Local
 
 ### 1. Entorno Docker (Base de Datos y Servicios)
-Para levantar el sistema con todos sus servicios (incluyendo la aplicación y PostgreSQL):
+Para levantar el sistema con todos sus servicios (incluyendo la aplicación con recarga en vivo Air y PostgreSQL):
 ```bash
 docker compose -f docker-compose.local.yml up --build -d
 ```
@@ -55,7 +49,9 @@ docker compose -f docker-compose.local.yml up --build -d
 
 | Comando | Acción |
 | :--- | :--- |
-| `make new-module NAME=x [SCHEMA=y] [TITLE="Z"]` | Genera un módulo CRUD completo con vistas Templ v2, reportes PDF/Excel, migraciones SQL y registro en menú. |
+| `make init-project MODULE=MiNuevoProyecto` | Renombra el módulo Go del proyecto en `go.mod` y en todos los archivos `.go` y `.templ`. |
+| `make new-module NAME=x [SCHEMA=y] [TITLE="Z"]` | Genera un módulo CRUD completo con vistas Templ v2, reportes PDF/Excel, pruebas unitarias, migraciones SQL y registro en menú. |
+| `make remove-module NAME=x` | Elimina un módulo generado, sus migraciones, su registro en `cmd/main.go` y revierte su tabla/políticas en PostgreSQL local. |
 | `make templ-fmt` | Formatea todos los archivos `.templ`. |
 | `make templ-check` | Verifica formato de `.templ` y ejecuta `templ generate`. |
 | `make lint` | Ejecuta `golangci-lint run ./...`. |

@@ -10,7 +10,7 @@ Para que sea muy fácil de seguir, cada comando tiene una etiqueta:
 
 ## 🛠️ Fase 0: Programas que necesitas instalar (solo la primera vez)
 
-Antes de empezar, asegúrate de tener instalados estos 5 programas en tu computadora:
+Antes de empezar, asegúrate de tener instalados estos 6 programas en tu computadora:
 
 | Programa | Para qué sirve | Enlace o Comando de instalación |
 | :--- | :--- | :--- |
@@ -19,17 +19,19 @@ Antes de empezar, asegúrate de tener instalados estos 5 programas en tu computa
 | **3. Go (1.25+)** | El lenguaje de programación del sistema (necesario para el generador de módulos). | [Descargar Go](https://go.dev/dl/) |
 | **4. Visual Studio Code** | El editor de código recomendado para ver y modificar tus archivos. | [Descargar VS Code](https://code.visualstudio.com/) |
 | **5. Templ CLI** | Compila las vistas HTML (`.templ`) en código Go cuando creas o editas pantallas. | Ver comando abajo 👇 |
+| **6. Air** | Recarga la aplicación en vivo automáticamente cada vez que guardas un cambio en tu código. | Ver comando abajo 👇 |
 
-### Cómo instalar Templ CLI (una vez que ya instalaste Go)
+### Cómo instalar Templ CLI y Air (una vez que ya instalaste Go)
 
-Abre tu terminal y ejecuta este comando:
+Abre tu terminal y ejecuta estos comandos para instalar ambas herramientas:
 
 🟢 **Copiar y pegar tal cual**:
 ```bash
 go install github.com/a-h/templ/cmd/templ@latest
+go install github.com/air-verse/air@latest
 ```
 
-Si usas **Mac (macOS)** o **Linux**, asegúrate de que tu terminal encuentre el comando `templ` ejecutando también esta línea (solo necesitas hacerlo una vez):
+Si usas **Mac (macOS)** o **Linux**, asegúrate de que tu terminal encuentre los comandos `templ` y `air` ejecutando también esta línea (solo necesitas hacerlo una vez):
 
 🟢 **Copiar y pegar tal cual**:
 ```bash
@@ -37,10 +39,11 @@ export PATH="$PATH:$(go env GOPATH)/bin"
 grep -qxF 'export PATH="$PATH:$(go env GOPATH)/bin"' ~/.zshrc 2>/dev/null || echo 'export PATH="$PATH:$(go env GOPATH)/bin"' >> ~/.zshrc
 ```
 
-Para comprobar que quedó bien instalado, escribe:
+Para comprobar que ambos quedaron bien instalados, escribe:
 🟢 **Copiar y pegar tal cual**:
 ```bash
 templ version
+air -v
 ```
 
 > [!IMPORTANT]

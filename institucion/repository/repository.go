@@ -211,6 +211,34 @@ func (r *PersonaRepository) ObtenerTodasCorto(ctx context.Context) ([]*instituci
 	return personas, nil
 }
 
+// ConsultarPersonaSesionPorID obtiene los campos básicos de una persona para hidratar la sesión de usuario.
+func (r *PersonaRepository) ConsultarPersonaSesionPorID(ctx context.Context, uuidPersona uuid.UUID) (institucion.Persona, error) {
+	if r == nil || r.db == nil || r.db.ReadPool() == nil {
+		return institucion.Persona{
+			UuidPersona:  uuidPersona,
+			ImagenPerfil: "placeholder.png",
+		}, nil
+	}
+
+	var p institucion.Persona
+	p.UuidPersona = uuidPersona
+	err := r.db.ReadPool().QueryRow(ctx, SelectPersonaResumenSesionPorID, uuidPersona).Scan(
+		&p.Nombre,
+		&p.Apellido1,
+		&p.Apellido2,
+		&p.Curp,
+		&p.ClaveIssemym,
+		&p.ImagenPerfil,
+	)
+	if err != nil {
+		return institucion.Persona{
+			UuidPersona:  uuidPersona,
+			ImagenPerfil: "placeholder.png",
+		}, fmt.Errorf("ConsultarPersonaSesionPorID: %w", err)
+	}
+	return p, nil
+}
+
 // --- Helpers Privados ---
 
 // Conversión segura de tipos

@@ -11,6 +11,7 @@ import (
 	dashboard_handler "PlantillaInstitucional/dashboard/handler"
 	"PlantillaInstitucional/institucion"
 	persona_handler "PlantillaInstitucional/institucion/handler"
+	persona_repo "PlantillaInstitucional/institucion/repository"
 	login_handler "PlantillaInstitucional/login/handlers"
 	miperfil_handler "PlantillaInstitucional/miperfil/handler"
 	parametros_handler "PlantillaInstitucional/parametros/handler"
@@ -108,57 +109,14 @@ func main() {
 	_, _ = regTipos.RegistrarTipo(institucion.Persona{})
 	_, _ = regTipos.RegistrarTipo(sesionutil.Usuario{})
 
-	fnObtenerDatos := func(uuidPersona uuid.UUID, perfil sesiones.Perfil, datosExtra ...map[string]any) []any {
-		datos := make([]any, 0)
-		email := ""
-		perfilAplicacion := sesionutil.PerfilAplicacionDesdeSesion(perfil)
-		tenantSchema := "public"
-		if len(datosExtra) > 0 {
-			if emailExtra, ok := datosExtra[0]["email"].(string); ok {
-				email = emailExtra
-			}
-			if perfilExtra, ok := datosExtra[0][sesionutil.DatoExtraPerfilAplicacion].(string); ok && perfilExtra != "" {
-				perfilAplicacion = perfilExtra
-			}
-			if tenantExtra, ok := datosExtra[0][sesionutil.DatoExtraTenantSchema].(string); ok && tenantExtra != "" {
-				tenantSchema = tenantExtra
-			}
-		}
+	personaRepo := persona_repo.NewPersonaRepository(pools)
+	fnObtenerDatos := buildSessionUserLoader(personaRepo.ConsultarPersonaSesionPorID, logger)
 
-		var (
-			nombre, apellido1, apellido2, curp, claveIssemym, imagenPerfil string
-		)
-		if pqWrite != nil {
-			_ = pqWrite.QueryRow(context.Background(), `
-				SELECT 
-					COALESCE(nombre, ''), 
-					COALESCE(apellido1, ''), 
-					COALESCE(apellido2, ''), 
-					COALESCE(curp, ''), 
-					COALESCE(clave_issemym, ''), 
-					COALESCE(imagen_perfil, 'placeholder.png')
-				FROM institucion.persona
-				WHERE uuid_persona = $1
-			`, uuidPersona).Scan(&nombre, &apellido1, &apellido2, &curp, &claveIssemym, &imagenPerfil)
-		}
-
-		datos = append(datos, sesionutil.Usuario{
-			UuidPersona:         uuidPersona.String(),
-			Nombre:              nombre,
-			Apellido1:           apellido1,
-			Apellido2:           apellido2,
-			Curp:                curp,
-			ClaveIssemym:        claveIssemym,
-			ArchivoImagenPerfil: imagenPerfil,
-			Email:               email,
-			Perfil:              perfilAplicacion,
-			TenantSchema:        tenantSchema,
-		})
-
-		return datos
-	}
 	constructorSesion = sesiones.NuevoConstructor(pqWrite, configSesiones(env), regTipos, fnObtenerDatos)
-	constructorSesionJWT, _ = sesiones.NuevoConstructorJWT(pqWrite, configSesiones(env), configJWT(env), regTipos, fnObtenerDatos)
+	constructorSesionJWT, err = sesiones.NuevoConstructorJWT(pqWrite, configSesiones(env), configJWT(env), regTipos, fnObtenerDatos)
+	if err != nil {
+		logger.Fatal("error al inicializar constructor de sesiones JWT", err)
+	}
 
 	a, err := app.NewApp(
 		context.Background(),
@@ -181,42 +139,44 @@ func main() {
 	reportLifecycle.Start(context.Background())
 
 	r := chi.NewRouter()
-
-	app_middleware.RegistrarMiddlewaresApp(r, a)
-	r.Use(reportLifecycle.Middleware)
-
-	login_handler.Register(a, r)
-
-	if env.Ambiente == entorno.AmbienteLocal {
-		publicDir := filepath.Join(env.DirArchivosLocal, "public")
-		r.Handle("/static/public/*", http.StripPrefix("/static/public", http.FileServer(http.Dir(publicDir))))
-	}
-	r.Group(func(r chi.Router) {
-		r.Use(app_middleware.MiddlewareRequiereLogin)
-		r.Get("/private-reports/*", reportes.PrivateDownloadHandler(manejadorArchivos))
+	registerHealthRoutes(r, func(ctx context.Context) error {
+		return pqWrite.Ping(ctx)
 	})
 
 	r.Group(func(r chi.Router) {
-		r.Use(app_middleware.MiddlewareRequiereLogin)
-		r.Use(app_middleware.PolicyMiddleware(a))
-		r.Use(app_middleware.NavigationMiddleware(a))
+		app_middleware.RegistrarMiddlewaresApp(r, a)
+		r.Use(reportLifecycle.Middleware)
 
-		usuario_handler.Register(a, r)
-		perfil_handler.Register(a, r)
-		policy_handler.Register(a, r)
-		persona_handler.Register(a, r)
-		parametros_handler.Register(a, r)
-		crud_handler.Register(a, r)
-		dashboard_handler.Register(a, r)
-		miperfil_handler.Register(a, r)
+		login_handler.Register(a, r)
+
+		if env.Ambiente == entorno.AmbienteLocal {
+			publicDir := filepath.Join(env.DirArchivosLocal, "public")
+			r.Handle("/static/public/*", http.StripPrefix("/static/public", http.FileServer(http.Dir(publicDir))))
+		}
+		r.Group(func(r chi.Router) {
+			r.Use(app_middleware.MiddlewareRequiereLogin)
+			r.Get("/private-reports/*", reportes.PrivateDownloadHandler(manejadorArchivos))
+		})
+
+		r.Group(func(r chi.Router) {
+			r.Use(app_middleware.MiddlewareRequiereLogin)
+			r.Use(app_middleware.PolicyMiddleware(a))
+			r.Use(app_middleware.NavigationMiddleware(a))
+
+			usuario_handler.Register(a, r)
+			perfil_handler.Register(a, r)
+			policy_handler.Register(a, r)
+			persona_handler.Register(a, r)
+			parametros_handler.Register(a, r)
+			crud_handler.Register(a, r)
+			dashboard_handler.Register(a, r)
+			miperfil_handler.Register(a, r)
+		})
 	})
 
 	app_middleware.RegistrarHandler404(r)
 
-	srv := &http.Server{
-		Addr:    env.ServerListen,
-		Handler: r,
-	}
+	srv := newHTTPServer(env.ServerListen, r)
 
 	go func() {
 		logger.Info("levantando servidor", "puerto", env.ServerListen)
@@ -246,6 +206,105 @@ func main() {
 
 func isMigrationCommand(args []string) bool {
 	return len(args) == 1 && args[0] == "migrate"
+}
+
+func buildSessionUserLoader(
+	lookup func(context.Context, uuid.UUID) (institucion.Persona, error),
+	logger *logs.Logger,
+) func(uuid.UUID, sesiones.Perfil, ...map[string]any) []any {
+	return func(uuidPersona uuid.UUID, perfil sesiones.Perfil, datosExtra ...map[string]any) []any {
+		emailAddr := ""
+		perfilAplicacion := sesionutil.PerfilAplicacionDesdeSesion(perfil)
+		tenantSchema := "public"
+		if len(datosExtra) > 0 {
+			if emailExtra, ok := datosExtra[0]["email"].(string); ok {
+				emailAddr = emailExtra
+			}
+			if perfilExtra, ok := datosExtra[0][sesionutil.DatoExtraPerfilAplicacion].(string); ok && perfilExtra != "" {
+				perfilAplicacion = perfilExtra
+			}
+			if tenantExtra, ok := datosExtra[0][sesionutil.DatoExtraTenantSchema].(string); ok && tenantExtra != "" {
+				tenantSchema = tenantExtra
+			}
+		}
+
+		persona := institucion.Persona{
+			UuidPersona:  uuidPersona,
+			ImagenPerfil: sesionutil.SinImagenPerfil,
+		}
+		if lookup != nil {
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+
+			loaded, err := lookup(ctx, uuidPersona)
+			if err != nil {
+				if logger != nil {
+					logger.WarnContext(ctx, "no se pudo hidratar persona para sesión", "uuid_persona", uuidPersona.String(), "error", err)
+				}
+			} else {
+				persona = loaded
+				if persona.ImagenPerfil == "" {
+					persona.ImagenPerfil = sesionutil.SinImagenPerfil
+				}
+			}
+		}
+
+		return []any{
+			sesionutil.Usuario{
+				UuidPersona:         uuidPersona.String(),
+				Nombre:              persona.Nombre,
+				Apellido1:           persona.Apellido1,
+				Apellido2:           persona.Apellido2,
+				Curp:                persona.Curp,
+				ClaveIssemym:        persona.ClaveIssemym,
+				ArchivoImagenPerfil: persona.ImagenPerfil,
+				Email:               emailAddr,
+				Perfil:              perfilAplicacion,
+				TenantSchema:        tenantSchema,
+			},
+		}
+	}
+}
+
+func newHTTPServer(addr string, handler http.Handler) *http.Server {
+	return &http.Server{
+		Addr:              addr,
+		Handler:           handler,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       60 * time.Second,
+		MaxHeaderBytes:    1 << 20, // 1 MB
+	}
+}
+
+func registerHealthRoutes(r chi.Router, ping func(context.Context) error) {
+	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"status":"ok"}`))
+	})
+
+	r.Get("/readyz", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		if ping == nil {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			_, _ = w.Write([]byte(`{"status":"unavailable"}`))
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+		defer cancel()
+
+		if err := ping(ctx); err != nil {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			_, _ = w.Write([]byte(`{"status":"unavailable"}`))
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"status":"ready"}`))
+	})
 }
 
 func configInstrumentacion(env *entorno.Env) *logs.Config {

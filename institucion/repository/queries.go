@@ -86,3 +86,15 @@ const UpdateImagenPerfil = `
 		imagen_perfil=$1
 	WHERE uuid_persona = $2
 `
+
+const SelectPersonaResumenSesionPorID = `
+	SELECT 
+		COALESCE(nombre, ''), 
+		COALESCE(apellido1, ''), 
+		COALESCE(apellido2, ''), 
+		COALESCE(curp, ''), 
+		COALESCE(clave_issemym, ''), 
+		COALESCE(imagen_perfil, 'placeholder.png')
+	FROM institucion.persona
+	WHERE uuid_persona = $1
+`

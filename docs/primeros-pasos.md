@@ -10,28 +10,30 @@ Para que sea muy fácil de seguir, cada comando tiene una etiqueta:
 
 ## 🛠️ Fase 0: Programas que necesitas instalar (solo la primera vez)
 
-Antes de empezar, asegúrate de tener instalados estos 6 programas en tu computadora:
+Antes de empezar, asegúrate de tener instalados estos programas en tu computadora:
 
 | Programa | Para qué sirve | Enlace o Comando de instalación |
 | :--- | :--- | :--- |
 | **1. Git** | Descargar el código y guardar tu historial de cambios. | [Descargar Git](https://git-scm.com/downloads) |
 | **2. Docker Desktop** | Levantar la base de datos PostgreSQL y la aplicación sin instalar nada extra. | [Descargar Docker Desktop](https://www.docker.com/products/docker-desktop/) |
-| **3. Go (1.25+)** | El lenguaje de programación del sistema (necesario para el generador de módulos). | [Descargar Go](https://go.dev/dl/) |
+| **3. Go (1.25+)** | El lenguaje de programación del sistema (necesario para el CLI y el generador). | [Descargar Go](https://go.dev/dl/) |
 | **4. Visual Studio Code** | El editor de código recomendado para ver y modificar tus archivos. | [Descargar VS Code](https://code.visualstudio.com/) |
 | **5. Templ CLI** | Compila las vistas HTML (`.templ`) en código Go cuando creas o editas pantallas. | Ver comando abajo 👇 |
 | **6. Air** | Recarga la aplicación en vivo automáticamente cada vez que guardas un cambio en tu código. | Ver comando abajo 👇 |
+| **7. JRMP CLI (`jrmp`)** | Herramienta oficial para crear proyectos desde cero, inicializar, generar/limpiar módulos y validar. | Ver comando abajo 👇 |
 
-### Cómo instalar Templ CLI y Air (una vez que ya instalaste Go)
+### Cómo instalar Templ CLI, Air y JRMP CLI (una vez que ya instalaste Go)
 
-Abre tu terminal y ejecuta estos comandos para instalar ambas herramientas:
+Abre tu terminal y ejecuta estos comandos para instalar las tres herramientas:
 
 🟢 **Copiar y pegar tal cual**:
 ```bash
 go install github.com/a-h/templ/cmd/templ@latest
 go install github.com/air-verse/air@latest
+go install github.com/issemym-repos/PlantillaInstitucional/cmd/jrmp@latest
 ```
 
-Si usas **Mac (macOS)** o **Linux**, asegúrate de que tu terminal encuentre los comandos `templ` y `air` ejecutando también esta línea (solo necesitas hacerlo una vez):
+Si usas **Mac (macOS)** o **Linux**, asegúrate de que tu terminal encuentre los comandos `templ`, `air` y `jrmp` ejecutando también esta línea (solo necesitas hacerlo una vez):
 
 🟢 **Copiar y pegar tal cual**:
 ```bash
@@ -39,11 +41,12 @@ export PATH="$PATH:$(go env GOPATH)/bin"
 grep -qxF 'export PATH="$PATH:$(go env GOPATH)/bin"' ~/.zshrc 2>/dev/null || echo 'export PATH="$PATH:$(go env GOPATH)/bin"' >> ~/.zshrc
 ```
 
-Para comprobar que ambos quedaron bien instalados, escribe:
+Para comprobar que quedaron bien instalados, escribe:
 🟢 **Copiar y pegar tal cual**:
 ```bash
 templ version
 air -v
+jrmp version
 ```
 
 > [!IMPORTANT]
@@ -51,7 +54,27 @@ air -v
 
 ---
 
-## 📥 Fase 1: Descargar (Clonar) la Plantilla
+## ⚡ Vía Rápida: Crear tu Proyecto desde Cero con el Asistente `jrmp create`
+
+Si ya instalaste `jrmp` en el paso anterior, **puedes hacer las Fases 1, 2, 3 y 4 automáticamente con un solo comando interactivo** (clona la plantilla, desvincula Git, renombra todo el proyecto, configura tu archivo `.env` y opcionalmente lo enciende con Docker):
+
+1. Entra a la carpeta donde guardas tus proyectos (por ejemplo, el Escritorio):
+   🟢 **Copiar y pegar tal cual**:
+   ```bash
+   cd ~/Desktop
+   ```
+2. Ejecuta el asistente interactivo:
+   🟢 **Copiar y pegar tal cual**:
+   ```bash
+   jrmp create
+   ```
+   *(El asistente te preguntará el nombre de tu nuevo proyecto, la contraseña local de PostgreSQL y si deseas encender Docker al terminar. También puedes pasarle el nombre directo: `jrmp create MiNuevoProyecto`).*
+
+> 💡 **¿Prefieres clonar el repositorio manualmente paso a paso con Git?** Sigue leyendo la **Fase 1** aquí abajo.
+
+---
+
+## 📥 Fase 1 (Alternativa Manual): Descargar (Clonar) la Plantilla
 
 Vamos a descargar una copia de la plantilla dentro de una carpeta nueva que llevará el nombre de tu proyecto.
 
@@ -73,6 +96,7 @@ Cambia la palabra **`MiNuevoProyecto`** (aparece al final del primer comando y e
 git clone https://github.com/issemym-repos/PlantillaInstitucional.git MiNuevoProyecto
 cd MiNuevoProyecto
 ```
+*(Nota: Si aún no habías instalado `jrmp`, puedes instalarlo directamente desde aquí ejecutando `go install ./cmd/jrmp`).*
 
 ---
 
@@ -104,45 +128,34 @@ git push -u origin main
 
 ---
 
-## 🏷️ Fase 3: Renombrar el Proyecto con tus Datos
+## 🏷️ Fase 3: Renombrar el Proyecto y Configurar `.env` con `jrmp init`
 
-Internamente, todos los archivos del código dicen `PlantillaInstitucional`. Ahora vamos a cambiar ese nombre interno por el de tu proyecto y a configurar tus datos básicos.
+Internamente, todos los archivos del código dicen `PlantillaInstitucional`. Con el comando `jrmp init` vamos a cambiar ese nombre interno por el de tu proyecto y a crear tu archivo `.env` listo para usar.
 
-### Paso 3.1: Cambiar el nombre interno en todo el código
+### Paso 3.1: Inicializar el proyecto con tu nombre
 
 🟡 **Modificar antes de ejecutar**:
-Cambia únicamente la palabra **`MiNuevoProyecto`** por el nombre de tu proyecto (sin espacios ni acentos, igual que en la Fase 1). Este comando funciona igual en Mac, Linux y Windows:
+Cambia únicamente la palabra **`MiNuevoProyecto`** por el nombre de tu proyecto (sin espacios ni acentos, igual que en la Fase 1). Este comando funciona igual en Mac, Linux y Windows (y si lo ejecutas solo como `jrmp init`, te preguntará el nombre interactivamente):
 
 ```bash
-make init-project MODULE=MiNuevoProyecto
+jrmp init MiNuevoProyecto
 ```
+*(Este comando renombra `go.mod`, actualiza todos los archivos `.go` y `.templ`, desvincula `origin` si seguía apuntando a la plantilla original y genera automáticamente tu archivo `.env` a partir de `.env.example`).*
 
-### Paso 3.2: Crear tu archivo de configuración (`.env`)
+### Paso 3.2: (Opcional) Revisar los datos de tu proyecto en el archivo `.env`
 
-🟢 **Copiar y pegar tal cual**:
-```bash
-cp .env.example .env
-```
+Si deseas personalizar algún parámetro adicional, abre la carpeta de tu proyecto en **Visual Studio Code** (`code .`) y revisa el archivo **`.env`** en la raíz:
 
-### Paso 3.3: Ajustar los datos de tu proyecto en el archivo `.env`
-
-Abre la carpeta de tu proyecto en **Visual Studio Code** (puedes escribir `code .` en la terminal o abrir la carpeta desde el menú *File -> Open Folder*).
-
-Busca el archivo llamado **`.env`** en la raíz del proyecto y revisa estas líneas al inicio del archivo:
-
-| Línea en `.env` | Qué significa | Qué valor poner |
+| Línea en `.env` | Qué significa | Valor configurado por `jrmp init` |
 | :--- | :--- | :--- |
-| `AMBIENTE=LOCAL` | Indica que estás trabajando en tu computadora. | **Déjalo en `LOCAL`** |
-| `SERVICIO=plantilla` | Nombre corto de tu sistema (para logs y métricas). | Cámbialo por el nombre de tu proyecto en minúsculas, ej.: `SERVICIO=inventario` |
-| ` PQ_WRITE_DB=plantilla` | Nombre de la base de datos local. | Puedes dejarlo en `plantilla` o poner el de tu sistema, ej.: `PQ_WRITE_DB=inventario` |
-| `PQ_WRITE_USER=usuplantilla` | Usuario de la base de datos local. | Puedes dejarlo en `postgres` |
-| `PQ_WRITE_PASSWORD=` | Contraseña de la base de datos local. | Pon una contraseña para tu base local, ej.: `PQ_WRITE_PASSWORD=postgres` |
-| `PQ_READ_DB=plantilla` | Debe coincidir con `PQ_WRITE_DB`. | Pon el mismo valor que pusiste en `PQ_WRITE_DB` |
-| `PQ_READ_USER=usuplantilla` | Debe coincidir con `PQ_WRITE_USER`. | Pon el mismo valor que pusiste en `PQ_WRITE_USER` |
-| `PQ_READ_PASSWORD=` | Debe coincidir con `PQ_WRITE_PASSWORD`. | Pon la misma contraseña que pusiste en `PQ_WRITE_PASSWORD` |
-
-> [!TIP]
-> Guarda el archivo `.env` (`Cmd + S` en Mac o `Ctrl + S` en Windows) después de editarlo.
+| `AMBIENTE=LOCAL` | Indica que estás trabajando en tu computadora. | `LOCAL` |
+| `SERVICIO=...` | Nombre corto de tu sistema (para logs y métricas). | Nombre de tu proyecto en minúsculas |
+| `PQ_WRITE_DB=...` | Nombre de la base de datos local. | Nombre de tu proyecto en minúsculas |
+| `PQ_WRITE_USER=postgres` | Usuario de la base de datos local. | `postgres` |
+| `PQ_WRITE_PASSWORD=postgres` | Contraseña de la base de datos local. | `postgres` |
+| `PQ_READ_DB=...` | Coincide con `PQ_WRITE_DB`. | Nombre de tu proyecto en minúsculas |
+| `PQ_READ_USER=postgres` | Coincide con `PQ_WRITE_USER`. | `postgres` |
+| `PQ_READ_PASSWORD=postgres` | Coincide con `PQ_WRITE_PASSWORD`. | `postgres` |
 
 ---
 
@@ -153,9 +166,9 @@ Ahora que tu proyecto tiene tu propio nombre y configuración, vamos a levantarl
 ### Paso 4.1: Construir y encender el sistema
 🟢 **Copiar y pegar tal cual**:
 ```bash
-docker compose -f docker-compose.local.yml up --build -d
+jrmp up
 ```
-*(La primera vez tardará entre 30 y 60 segundos mientras descarga las herramientas y prepara la base de datos).*
+*(O su equivalente con Docker Compose: `docker compose -f docker-compose.local.yml up --build -d`. La primera vez tardará entre 30 y 60 segundos).*
 
 ### Paso 4.2: Entrar al sistema desde tu navegador
 
@@ -167,16 +180,19 @@ docker compose -f docker-compose.local.yml up --build -d
 
 ---
 
-## 🧰 Fase 5: Comandos Útiles para tu Día a Día
+## 🧰 Fase 5: Comandos `jrmp` para tu Día a Día
 
-Guarda esta tabla a la mano; son los únicos comandos que necesitarás mientras trabajas:
+Guarda esta tabla a la mano; funcionan igual en **Mac, Linux y Windows**:
 
-| ¿Qué quieres hacer? | Comando (🟢 Copiar y pegar tal cual) |
+| ¿Qué quieres hacer? | Comando con `jrmp` (🟢 Copiar y pegar) |
 | :--- | :--- |
-| **Ver si el sistema está encendido** | `docker compose -f docker-compose.local.yml ps` |
-| **Ver los mensajes o errores del servidor en vivo** | `docker compose -f docker-compose.local.yml logs -f app` *(presiona `Ctrl + C` para salir)* |
-| **Actualizar la app después de hacer cambios en el código** | `docker compose -f docker-compose.local.yml up --build -d app` |
-| **Apagar el sistema cuando termines de trabajar** | `docker compose -f docker-compose.local.yml down` |
+| **Ver la lista de todos los comandos disponibles** | `jrmp help` |
+| **Encender o actualizar el sistema en Docker** | `jrmp up` |
+| **Ver los mensajes o errores del servidor en vivo** | `jrmp logs` *(presiona `Ctrl + C` para salir)* |
+| **Apagar el sistema cuando termines de trabajar** | `jrmp down` |
+| **Crear un nuevo módulo CRUD (interactivo o directo)** | `jrmp new-module` *(o `jrmp new-module proveedor`)* |
+| **Eliminar un módulo de prueba (y limpiar la BD)** | `jrmp remove-module proveedor` |
+| **Verificar formato Templ, linter y pruebas unitarias** | `jrmp check` |
 | **Borrar la base de datos local y empezar desde cero** | `docker compose -f docker-compose.local.yml down -v` |
 
 ---

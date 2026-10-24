@@ -10,18 +10,25 @@ Cada comando tiene un indicador claro para que sepas qué hacer:
 
 ## 🚀 Paso 1: Crear tu Nuevo Módulo
 
-Abre la terminal dentro de la carpeta de tu proyecto y elige una de las dos opciones siguientes:
+Abre la terminal dentro de la carpeta de tu proyecto y elige cualquiera de estas opciones (funcionan igual en **Mac, Linux y Windows**):
 
-### Opción A: Creación Rápida (Usando los valores por defecto)
+### Opción A: Modo Interactivo (El asistente te pregunta paso a paso)
+
+🟢 **Copiar y pegar tal cual**:
+```bash
+jrmp new-module
+```
+
+### Opción B: Creación Rápida en 1 línea (Usando los valores por defecto)
 
 🟡 **Modificar antes de ejecutar**:
 Cambia únicamente la palabra **`proveedor`** por el nombre de tu módulo en **singular** (si tiene varias palabras, puedes separarlas con guion medio `-` o guion bajo `_`, por ejemplo: `orden-compra`, `tipo-contrato`, `almacen`).
 
 ```bash
-make new-module NAME=proveedor
+jrmp new-module proveedor
 ```
 
-### Opción B: Creación Personalizada (Eligiendo esquema de BD y título con acentos)
+### Opción C: Creación Personalizada (Eligiendo esquema de BD y título con acentos)
 
 🟡 **Modificar antes de ejecutar**:
 - Cambia **`orden-compra`** por el nombre técnico de tu módulo en singular.
@@ -29,25 +36,19 @@ make new-module NAME=proveedor
 - Cambia **`"Órdenes de Compra"`** por el título exacto (con mayúsculas, espacios y acentos) que quieres que vean los usuarios en la pantalla y en los reportes.
 
 ```bash
-make new-module NAME=orden-compra SCHEMA=institucion TITLE="Órdenes de Compra"
+jrmp new-module orden-compra -schema institucion -title "Órdenes de Compra"
 ```
 
 > [!TIP]
-> **¿Qué pasa si escribes guiones o espacios en `NAME`?**
-> No te preocupes: el sistema convierte automáticamente `orden-compra` en `orden_compra` para las carpetas, paquetes y tablas de base de datos, y en `OrdenCompra` para el código interno de Go y Templ.
+> **¿Qué pasa si escribes guiones o espacios en el nombre?**
+> No te preocupes: `jrmp` convierte automáticamente `orden-compra` en `orden_compra` para las carpetas, paquetes y tablas de base de datos, y en `OrdenCompra` para el código interno de Go y Templ.
 
 ---
 
-## 🔄 Paso 2: Encender o Actualizar el Sistema para Ver tu Módulo
+## 🔄 Paso 2: Ver tu Nuevo Módulo en el Navegador
 
-Una vez que el comando del Paso 1 termine y muestre el mensaje `🎉 Modulo creado exitosamente`, actualiza el contenedor de la aplicación para que cargue tu nuevo módulo y cree su tabla en la base de datos:
+Si ya tienes encendido el sistema con `jrmp up`, gracias a **Air (recarga en vivo)** el contenedor detectará el nuevo módulo, recompilará y ejecutará la migración automáticamente en unos segundos (si estaba apagado, enciéndelo con `jrmp up`).
 
-🟢 **Copiar y pegar tal cual**:
-```bash
-docker compose -f docker-compose.local.yml build --no-cache app && docker compose -f docker-compose.local.yml up -d app
-```
-
-Cuando termine de cargar (tarda unos 20 a 30 segundos):
 1. Entra o recarga tu navegador en **[http://localhost:8080/sistema](http://localhost:8080/sistema)**.
 2. Verás tu nuevo módulo en el **menú lateral izquierdo**.
 3. ¡Ya puedes **crear registros**, **editarlos en su ventana modal**, **buscar/filtrar** y **descargar los reportes en PDF y Excel**!
@@ -62,13 +63,7 @@ Si creaste un módulo de prueba (por ejemplo, llamado `pruebita` o `prueba_borra
 Cambia **`prueba_borrarlo`** por el nombre de tu módulo de prueba:
 
 ```bash
-make remove-module NAME=prueba_borrarlo
-```
-
-Por último, si tenías el contenedor encendido, actualízalo para que quede limpio:
-🟢 **Copiar y pegar tal cual**:
-```bash
-docker compose -f docker-compose.local.yml up --build -d app
+jrmp remove-module prueba_borrarlo
 ```
 
 ---
@@ -107,11 +102,10 @@ Supongamos que creaste el módulo `proveedor` y, además de `Nombre`, `Código` 
    Copia el bloque del input de `codigo` en `form_v2.templ` y cámbialo para `telefono`, y agrega la columna en `table_v2.templ`.
 6. **En los reportes (`<modulo>/service/reportes.go`)**:
    Agrega `"Teléfono"` en `ReportHeaders` y `"Telefono"` en `ReportFields`.
-7. **Regenera las vistas y actualiza tu contenedor**:
+7. **Regenera las vistas y valida tu módulo**:
    🟢 **Copiar y pegar tal cual**:
    ```bash
-   make check
-   docker compose -f docker-compose.local.yml build --no-cache app && docker compose -f docker-compose.local.yml up -d app
+   jrmp check
    ```
 
 ---
@@ -122,7 +116,7 @@ Antes de subir tu nuevo módulo al repositorio del equipo, corre este comando pa
 
 🟢 **Copiar y pegar tal cual**:
 ```bash
-make check
+jrmp check
 ```
 
 Si termina sin errores:

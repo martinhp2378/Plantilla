@@ -56,17 +56,26 @@ El sistema incluye una capa de hardenización por defecto:
 - Docker Desktop / OrbStack (debe estar abierto y en ejecución)
 - [Templ CLI](https://templ.guide/quick-start/installation) (`go install github.com/a-h/templ/cmd/templ@latest`)
 - [Air](https://github.com/air-verse/air) (`go install github.com/air-verse/air@latest`)
+- **JRMP CLI** (`go install github.com/issemym-repos/PlantillaInstitucional/cmd/jrmp@latest`)
 
-### Levantar el Proyecto en tu Computadora
+### Crear un Proyecto Nuevo desde Cero (con Asistente Interactivo)
 
-1.  **Crear el archivo de configuración local** (🟢 *Copiar y pegar tal cual*):
+🟢 *Copiar y pegar tal cual*:
+```bash
+jrmp create
+```
+*(Clona la plantilla, desvincula Git, renombra el proyecto con tus datos, genera el archivo `.env` y opcionalmente levanta Docker).*
+
+### O Levantar un Proyecto Ya Clonado
+
+1.  **Inicializar nombre y `.env`** (🟡 *Cambia `MiNuevoProyecto` por el nombre de tu sistema*):
     ```bash
-    cp .env.example .env
+    jrmp init MiNuevoProyecto
     ```
 
 2.  **Construir y encender con Docker** (🟢 *Copiar y pegar tal cual*):
     ```bash
-    docker compose -f docker-compose.local.yml up --build -d
+    jrmp up
     ```
 
 3.  **Abrir en el navegador e iniciar sesión**:
@@ -76,34 +85,39 @@ El sistema incluye una capa de hardenización por defecto:
 
 ---
 
-## ⚡ Generación de Módulos CRUD (Scaffolding)
+## ⚡ Generación de Módulos CRUD (`jrmp new-module`)
 
-Para crear un módulo CRUD completo (tabla, buscador, modales de alta/edición, exportación a **PDF** y **Excel**, migración SQL con permisos y registro automático en el menú lateral):
+Para crear un módulo CRUD completo (tabla, buscador, modales de alta/edición, exportación a **PDF** y **Excel**, pruebas unitarias, migración SQL con permisos y registro automático en el menú lateral):
 
-### 1. Ejecutar el generador
-🟡 *Modificar antes de ejecutar: cambia **`proveedor`** por el nombre de tu módulo en singular*:
+### 1. Ejecutar el generador (interactivo o directo)
+🟢 *Modo interactivo (te preguntará nombre, esquema y título)*:
 ```bash
-make new-module NAME=proveedor
+jrmp new-module
+```
+
+🟡 *Modo directo (cambia **`proveedor`** por el nombre de tu módulo en singular)*:
+```bash
+jrmp new-module proveedor
 ```
 
 O especificando el esquema de base de datos y el título con acentos:
 🟡 *Modificar antes de ejecutar: cambia **`orden-compra`**, **`institucion`** y **`"Órdenes de Compra"`** por los datos de tu módulo*:
 ```bash
-make new-module NAME=orden-compra SCHEMA=institucion TITLE="Órdenes de Compra"
+jrmp new-module orden-compra -schema institucion -title "Órdenes de Compra"
 ```
 
-### 2. Actualizar el contenedor para ver el nuevo módulo en el navegador
-🟢 *Copiar y pegar tal cual*:
+### 2. Eliminar un módulo de prueba (incluyendo reversión en PostgreSQL)
+🟡 *Cambia **`proveedor`** por el módulo a limpiar*:
 ```bash
-docker compose -f docker-compose.local.yml build --no-cache app && docker compose -f docker-compose.local.yml up -d app
+jrmp remove-module proveedor
 ```
 
 ### Parámetros Disponibles
 
 | Parámetro | Obligatorio | Por defecto | Qué debes poner |
 | :--- | :---: | :--- | :--- |
-| `NAME` | Sí | — | Nombre del módulo en singular (puedes usar guiones como `orden-compra`; se normaliza solo a `snake_case` y `PascalCase`). |
-| `SCHEMA` | No | `sistema` | Esquema de PostgreSQL donde se creará la tabla (`sistema` o `institucion`). |
-| `TITLE` | No | Plural de `NAME` | Título con espacios y acentos para la pantalla, menú lateral y reportes. |
+| `<nombre>` / `-name` | Sí | — | Nombre del módulo en singular (puedes usar guiones como `orden-compra`; se normaliza solo a `snake_case` y `PascalCase`). |
+| `-schema` | No | `sistema` | Esquema de PostgreSQL donde se creará la tabla (`sistema` o `institucion`). |
+| `-title` | No | Plural de `NAME` | Título con espacios y acentos para la pantalla, menú lateral y reportes. |
 
 📖 Consulta la **[Guía Amigable para Crear y Personalizar Módulos](./docs/scaffolding.md)** (incluye cómo agregar campos nuevos y cómo borrar módulos de prueba).

@@ -8,29 +8,25 @@ Esta sección detalla cómo utilizar la plantilla para iniciar tu propio proyect
 
 Resumen rápido de comandos para inicializar un nuevo sistema a partir de esta plantilla:
 
-1.  **Clonar el repositorio con el nombre de tu nuevo proyecto** (🟡 *Cambia `MiNuevoProyecto` por el nombre de tu sistema*):
+*   **Opción A — Automática desde cero con `jrmp create`** (🟢 *Copiar y pegar tal cual*):
+    ```bash
+    jrmp create
+    ```
+    *(Pregunta el nombre del proyecto, clona la plantilla, desvincula `origin`, renombra el módulo Go, genera el archivo `.env` y opcionalmente levanta Docker).*
+
+*   **Opción B — Clonado manual + `jrmp init`** (🟡 *Cambia `MiNuevoProyecto` por el nombre de tu sistema*):
     ```bash
     git clone https://github.com/issemym-repos/PlantillaInstitucional.git MiNuevoProyecto
     cd MiNuevoProyecto
-    git remote remove origin
-    ```
-2.  **Renombrar el módulo Go en todo el código** (🟡 *Cambia `MiNuevoProyecto` por el nombre de tu sistema*):
-    ```bash
-    make init-project MODULE=MiNuevoProyecto
-    ```
-3.  **Configurar tu entorno local** (🟢 *Copiar y pegar tal cual*):
-    ```bash
-    cp .env.example .env
-    ```
-4.  **Levantar con Docker** (🟢 *Copiar y pegar tal cual*):
-    ```bash
-    docker compose -f docker-compose.local.yml up --build -d
+    jrmp init MiNuevoProyecto
+    jrmp up
     ```
     Accede en [http://localhost:8080/login](http://localhost:8080/login) con `admin@issemym.gob.mx` / `admin123`.
 
 ## 🛠️ Herramientas Recomendadas
 
 *   **Go**: Versión 1.25+.
+*   **JRMP CLI (`jrmp`)**: CLI oficial del ecosistema (`go install github.com/issemym-repos/PlantillaInstitucional/cmd/jrmp@latest`).
 *   **Templ CLI**: Para generar código Go a partir de archivos `.templ` (`go install github.com/a-h/templ/cmd/templ@latest`).
 *   **Air**: Para recarga en vivo del servidor en desarrollo (`go install github.com/air-verse/air@latest`).
 *   **GolangCI-Lint**: Para análisis estático de código.
@@ -42,21 +38,24 @@ Resumen rápido de comandos para inicializar un nuevo sistema a partir de esta p
 ### 1. Entorno Docker (Base de Datos y Servicios)
 Para levantar el sistema con todos sus servicios (incluyendo la aplicación con recarga en vivo Air y PostgreSQL):
 ```bash
-docker compose -f docker-compose.local.yml up --build -d
+jrmp up
 ```
 
-### 2. Comandos `Makefile` de Uso Diario
+### 2. Comandos `jrmp` de Uso Diario (Mac, Linux y Windows)
 
 | Comando | Acción |
 | :--- | :--- |
-| `make init-project MODULE=MiNuevoProyecto` | Renombra el módulo Go del proyecto en `go.mod` y en todos los archivos `.go` y `.templ`. |
-| `make new-module NAME=x [SCHEMA=y] [TITLE="Z"]` | Genera un módulo CRUD completo con vistas Templ v2, reportes PDF/Excel, pruebas unitarias, migraciones SQL y registro en menú. |
-| `make remove-module NAME=x` | Elimina un módulo generado, sus migraciones, su registro en `cmd/main.go` y revierte su tabla/políticas en PostgreSQL local. |
-| `make templ-fmt` | Formatea todos los archivos `.templ`. |
-| `make templ-check` | Verifica formato de `.templ` y ejecuta `templ generate`. |
-| `make lint` | Ejecuta `golangci-lint run ./...`. |
-| `make test` | Ejecuta todas las pruebas unitarias (`go test ./...`). |
-| `make check` | Ejecuta la validación completa (`templ-check` + `lint` + `test`). |
+| `jrmp create [NombreProyecto]` | Clona la plantilla desde cero, desvincula Git, renombra el proyecto y configura `.env`. |
+| `jrmp init [NombreProyecto]` | Renombra el módulo Go en un repositorio ya clonado, desvincula `origin` y genera `.env`. |
+| `jrmp new-module [nombre] [-schema y] [-title "Z"]` | Genera un módulo CRUD completo con vistas Templ v2, reportes PDF/Excel, pruebas unitarias, migraciones SQL y registro en menú. |
+| `jrmp remove-module <nombre>` | Elimina un módulo generado, sus migraciones, su registro en `cmd/main.go` y revierte su tabla/políticas en PostgreSQL local. |
+| `jrmp up` / `jrmp down` / `jrmp logs` | Enciende, apaga o muestra logs del entorno local en Docker. |
+| `jrmp dev` | Ejecuta Air fuera de Docker resolviendo automáticamente `.exe` en Windows. |
+| `jrmp templ-fmt` | Formatea todos los archivos `.templ`. |
+| `jrmp templ-check` | Verifica formato de `.templ` y ejecuta `templ generate`. |
+| `jrmp lint` | Ejecuta `golangci-lint run ./...`. |
+| `jrmp test` | Ejecuta todas las pruebas unitarias (`go test ./...`). |
+| `jrmp check` | Ejecuta la validación completa (`templ-check` + `lint` + `test`). |
 
 ### 3. Live Reload y Generación
 Ejecuta la app usando [Air](https://github.com/air-verse/air) para recompilación automática:

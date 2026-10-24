@@ -1,22 +1,26 @@
 package main
 
 import (
-	bd "PlantillaInstitucional/app/db"
-	"PlantillaInstitucional/shared/entorno"
+	"bufio"
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 	"text/template"
 	"time"
+)
 
-	"github.com/jackc/pgx/v5"
+const (
+	defaultTemplateRepo = "https://github.com/issemym-repos/PlantillaInstitucional.git"
+	jrmpVersion         = "v1.0.0"
 )
 
 type Config struct {
@@ -32,42 +36,368 @@ type Config struct {
 }
 
 func main() {
-	nameFlag := flag.String("name", "", "Module name in singular (e.g. proveedor, articulo)")
-	schemaFlag := flag.String("schema", "sistema", "Database schema (default: sistema)")
-	titleFlag := flag.String("title", "", "Human readable title (default: auto capitalized)")
-	pluralFlag := flag.String("plural", "", "Plural name (default: auto)")
-	noMountFlag := flag.Bool("no-mount", false, "Do not auto-mount in cmd/main.go")
-	removeFlag := flag.Bool("remove", false, "Remove an existing scaffolded module and its migrations")
-	initProjectFlag := flag.String("init-project", "", "Rename the Go module across go.mod, .go, and .templ files")
-	flag.Parse()
-
-	if strings.TrimSpace(*initProjectFlag) != "" {
-		newMod := strings.TrimSpace(*initProjectFlag)
-		if err := renameProjectModule(".", newMod); err != nil {
-			fmt.Printf("❌ Error renombrando proyecto: %v\n", err)
-			os.Exit(1)
-		}
-		fmt.Println("⚙️ Ejecutando templ generate...")
-		_ = exec.Command("templ", "generate").Run()
-		fmt.Printf("✨ Proyecto renombrado exitosamente a '%s'\n", newMod)
+	args := os.Args[1:]
+	if len(args) == 0 {
+		printHelp()
 		return
 	}
 
+	// Backward compatibility when invoked directly with flags (e.g., -name or -init-project)
+	if strings.HasPrefix(args[0], "-") {
+		if args[0] == "-h" || args[0] == "--help" {
+			printHelp()
+			return
+		}
+		if args[0] == "-v" || args[0] == "--version" {
+			fmt.Printf("jrmp %s\n", jrmpVersion)
+			return
+		}
+		runLegacyFlags(args)
+		return
+	}
+
+	subcmd := strings.ToLower(strings.TrimSpace(args[0]))
+	subArgs := args[1:]
+
+	if subcmd != "create" && subcmd != "new-project" && subcmd != "help" && subcmd != "version" {
+		ensureProjectRoot()
+	}
+
+	switch subcmd {
+	case "create", "new-project":
+		runCreateProject(subArgs, os.Stdin)
+	case "init", "init-project":
+		runInitProject(subArgs, os.Stdin)
+	case "new-module", "add":
+		runNewModule(subArgs, os.Stdin)
+	case "remove-module", "rm":
+		runRemoveModule(subArgs, os.Stdin)
+	case "check":
+		runCheck()
+	case "templ-fmt":
+		mustRunCmd(".", "templ", "fmt", ".")
+	case "templ-check":
+		mustRunCmd(".", "templ", "fmt", "-fail", ".")
+		mustRunCmd(".", "templ", "generate")
+	case "lint":
+		mustRunCmd(".", "golangci-lint", "run", "./...")
+	case "test":
+		mustRunCmd(".", "go", "test", "./...")
+	case "dev":
+		runDev()
+	case "up":
+		mustRunCmd(".", "docker", "compose", "-f", "docker-compose.local.yml", "up", "--build", "-d")
+	case "down":
+		mustRunCmd(".", "docker", "compose", "-f", "docker-compose.local.yml", "down")
+	case "logs":
+		mustRunCmd(".", "docker", "compose", "-f", "docker-compose.local.yml", "logs", "-f", "app")
+	case "version":
+		fmt.Printf("jrmp %s\n", jrmpVersion)
+	case "help":
+		printHelp()
+	default:
+		fmt.Printf("❌ Comando desconocido: '%s'\n\n", subcmd)
+		printHelp()
+		os.Exit(1)
+	}
+}
+
+func printHelp() {
+	fmt.Println(`🏛️  JRMP CLI — Herramienta Oficial de la Plantilla Institucional (` + jrmpVersion + `)
+
+Uso:
+  jrmp <comando> [argumentos]
+
+🌱 Creación e Inicialización de Proyectos:
+  jrmp create [NombreProyecto]          Clona la plantilla desde cero, desvincula Git, renombra el proyecto y crea el .env (interactivo)
+  jrmp init [NombreProyecto]            Inicializa un repositorio ya clonado manualmente (renombra módulo Go, desvincula origin y crea .env)
+
+⚡ Generador de Módulos CRUD (Scaffolding):
+  jrmp new-module [nombre] [opciones]   Crea un módulo CRUD completo (tabla, modales, PDF/Excel, tests, migraciones y menú)
+                                        Opciones: -schema sistema -title "Título con Acentos" -plural "..."
+  jrmp remove-module [nombre]           Elimina un módulo, sus migraciones, su registro en main.go y revierte su tabla en PostgreSQL
+
+🧰 Desarrollo, Calidad y Contenedores (Mac, Linux y Windows):
+  jrmp up                               Enciende la aplicación y PostgreSQL en Docker con recarga en vivo
+  jrmp down                             Apaga los contenedores de Docker
+  jrmp logs                             Muestra los logs del servidor en vivo
+  jrmp dev                              Ejecuta Air localmente fuera de Docker (compatible con Windows .exe, Mac y Linux)
+  jrmp check                            Ejecuta la validación completa (templ-check + lint + test)
+  jrmp templ-fmt                        Formatea todos los archivos .templ
+  jrmp templ-check                      Verifica formato .templ y ejecuta templ generate
+  jrmp lint                             Ejecuta golangci-lint run ./...
+  jrmp test                             Ejecuta go test ./...`)
+}
+
+func promptInput(r *bufio.Reader, label, defaultVal string) string {
+	if defaultVal != "" {
+		fmt.Printf("%s [%s]: ", label, defaultVal)
+	} else {
+		fmt.Printf("%s: ", label)
+	}
+	line, err := r.ReadString('\n')
+	if err != nil && err != io.EOF {
+		return defaultVal
+	}
+	val := strings.TrimSpace(line)
+	if val == "" {
+		return defaultVal
+	}
+	return val
+}
+
+func extractLeadingPositional(args []string) (string, []string) {
+	if len(args) > 0 && !strings.HasPrefix(args[0], "-") {
+		return strings.TrimSpace(args[0]), args[1:]
+	}
+	return "", args
+}
+
+func ensureProjectRoot() {
+	if _, err := os.Stat("cmd/main.go"); err == nil {
+		return
+	}
+	if _, err := os.Stat("../../cmd/main.go"); err == nil {
+		_ = os.Chdir("../..")
+	}
+}
+
+func runCreateProject(args []string, in io.Reader) {
+	posName, flagArgs := extractLeadingPositional(args)
+	fsFlags := flag.NewFlagSet("create", flag.ExitOnError)
+	repoFlag := fsFlags.String("repo", defaultTemplateRepo, "Template repository URL")
+	serviceFlag := fsFlags.String("service", "", "Short service and database name")
+	dbPassFlag := fsFlags.String("db-password", "", "Local PostgreSQL password")
+	remoteFlag := fsFlags.String("remote", "", "New Git origin URL")
+	upFlag := fsFlags.Bool("up", false, "Start Docker containers after creation")
+	nonInteractiveFlag := fsFlags.Bool("y", false, "Use defaults without interactive prompts")
+	_ = fsFlags.Parse(flagArgs)
+
+	reader := bufio.NewReader(in)
+	projectName := posName
+	if projectName == "" && fsFlags.NArg() > 0 {
+		projectName = strings.TrimSpace(fsFlags.Arg(0))
+	}
+	if projectName == "" {
+		projectName = promptInput(reader, "📝 Nombre de tu nuevo proyecto (sin espacios, ej. SistemaInventario)", "")
+	}
+	projectName = strings.ReplaceAll(strings.TrimSpace(projectName), " ", "")
+	if projectName == "" {
+		fmt.Println("❌ Error: el nombre del proyecto es obligatorio.")
+		os.Exit(1)
+	}
+
+	defaultSvc := toSnakeCase(projectName)
+	if defaultSvc == "" {
+		defaultSvc = "sistema"
+	}
+
+	serviceName := strings.TrimSpace(*serviceFlag)
+	dbPass := strings.TrimSpace(*dbPassFlag)
+	newRemote := strings.TrimSpace(*remoteFlag)
+	startDocker := *upFlag
+
+	if !*nonInteractiveFlag {
+		if serviceName == "" {
+			serviceName = toSnakeCase(promptInput(reader, "🗄️  Nombre corto para servicio y base de datos local", defaultSvc))
+		}
+		if dbPass == "" {
+			dbPass = promptInput(reader, "🔑 Contraseña para la base de datos PostgreSQL local", "postgres")
+		}
+		if newRemote == "" {
+			newRemote = promptInput(reader, "🔗 URL de tu nuevo repositorio Git (opcional, Enter para omitir)", "")
+		}
+		if !startDocker {
+			ans := strings.ToLower(promptInput(reader, "🐳 ¿Deseas construir y encender el proyecto con Docker al finalizar? (s/N)", "n"))
+			startDocker = ans == "s" || ans == "si" || ans == "sí" || ans == "y" || ans == "yes"
+		}
+	} else {
+		if serviceName == "" {
+			serviceName = defaultSvc
+		}
+		if dbPass == "" {
+			dbPass = "postgres"
+		}
+	}
+
+	fmt.Printf("\n📥 1/4 Clonando Plantilla Institucional en ./%s...\n", projectName)
+	mustRunCmd(".", "git", "clone", *repoFlag, projectName)
+
+	fmt.Println("🔗 2/4 Desvinculando repositorio de la plantilla original...")
+	_ = runCmdInDir(projectName, "git", "remote", "remove", "origin")
+	if newRemote != "" {
+		mustRunCmd(projectName, "git", "remote", "add", "origin", newRemote)
+		fmt.Printf("✅ Conectado al nuevo repositorio: %s\n", newRemote)
+	}
+
+	fmt.Printf("🏷️  3/4 Renombrando módulo Go a '%s' y configurando .env...\n", projectName)
+	if err := renameProjectModule(projectName, projectName); err != nil {
+		fmt.Printf("❌ Error renombrando proyecto: %v\n", err)
+		os.Exit(1)
+	}
+	if err := ensureEnvFile(projectName, serviceName, "postgres", dbPass); err != nil {
+		fmt.Printf("⚠️ No se pudo generar .env automaticamente: %v\n", err)
+	}
+
+	fmt.Println("⚙️  4/4 Generando componentes Templ...")
+	_ = runCmdInDir(projectName, "templ", "generate")
+
+	fmt.Printf("\n✨ ¡Proyecto '%s' creado y configurado exitosamente!\n", projectName)
+	fmt.Printf("📁 Carpeta: ./%s\n", projectName)
+
+	if startDocker {
+		fmt.Println("\n🐳 Construyendo y encendiendo contenedores con Docker...")
+		mustRunCmd(projectName, "docker", "compose", "-f", "docker-compose.local.yml", "up", "--build", "-d")
+		fmt.Println("🌐 Listo en: http://localhost:8080/login (admin@issemym.gob.mx / admin123)")
+	} else {
+		fmt.Printf("\n👉 Siguientes pasos:\n   cd %s\n   jrmp up\n", projectName)
+	}
+}
+
+func runInitProject(args []string, in io.Reader) {
+	posName, flagArgs := extractLeadingPositional(args)
+	fsFlags := flag.NewFlagSet("init", flag.ExitOnError)
+	modFlag := fsFlags.String("module", "", "New Go module name")
+	serviceFlag := fsFlags.String("service", "", "Short service and database name")
+	dbPassFlag := fsFlags.String("db-password", "postgres", "Local PostgreSQL password")
+	_ = fsFlags.Parse(flagArgs)
+
+	newMod := strings.TrimSpace(*modFlag)
+	if newMod == "" {
+		newMod = posName
+	}
+	if newMod == "" && fsFlags.NArg() > 0 {
+		newMod = strings.TrimSpace(fsFlags.Arg(0))
+	}
+	if newMod == "" {
+		reader := bufio.NewReader(in)
+		newMod = promptInput(reader, "📝 Nombre de tu proyecto (sin espacios, ej. SistemaInventario)", "")
+	}
+	newMod = strings.ReplaceAll(strings.TrimSpace(newMod), " ", "")
+	if newMod == "" {
+		fmt.Println("❌ Error: el nombre del proyecto es obligatorio. Ej: jrmp init MiNuevoProyecto")
+		os.Exit(1)
+	}
+
+	// Si el remote origin sigue apuntando a PlantillaInstitucional, desvincularlo por seguridad
+	if out, err := exec.Command("git", "remote", "get-url", "origin").Output(); err == nil {
+		if strings.Contains(string(out), "PlantillaInstitucional") {
+			_ = exec.Command("git", "remote", "remove", "origin").Run()
+			fmt.Println("🔗 Vínculo con el repositorio original PlantillaInstitucional eliminado por seguridad.")
+		}
+	}
+
+	if err := renameProjectModule(".", newMod); err != nil {
+		fmt.Printf("❌ Error renombrando proyecto: %v\n", err)
+		os.Exit(1)
+	}
+
+	svc := strings.TrimSpace(*serviceFlag)
+	if svc == "" {
+		svc = toSnakeCase(newMod)
+	}
+	if err := ensureEnvFile(".", svc, "postgres", *dbPassFlag); err != nil {
+		fmt.Printf("⚠️ Advertencia al preparar .env: %v\n", err)
+	}
+
+	fmt.Println("⚙️ Ejecutando templ generate...")
+	_ = exec.Command("templ", "generate").Run()
+	fmt.Printf("✨ Proyecto inicializado exitosamente como '%s'\n", newMod)
+}
+
+func runNewModule(args []string, in io.Reader) {
+	posName, flagArgs := extractLeadingPositional(args)
+	fsFlags := flag.NewFlagSet("new-module", flag.ExitOnError)
+	nameFlag := fsFlags.String("name", "", "Module name in singular (e.g. proveedor, articulo)")
+	schemaFlag := fsFlags.String("schema", "", "Database schema (default: sistema)")
+	titleFlag := fsFlags.String("title", "", "Human readable title (default: auto capitalized)")
+	pluralFlag := fsFlags.String("plural", "", "Plural name (default: auto)")
+	noMountFlag := fsFlags.Bool("no-mount", false, "Do not auto-mount in cmd/main.go")
+	_ = fsFlags.Parse(flagArgs)
+
 	rawName := strings.TrimSpace(*nameFlag)
 	if rawName == "" {
-		fmt.Println("Error: el parametro -name es obligatorio. Ej: go run cmd/tools/scaffold/main.go -name proveedor")
+		rawName = posName
+	}
+	if rawName == "" && fsFlags.NArg() > 0 {
+		rawName = strings.TrimSpace(fsFlags.Arg(0))
+	}
+
+	schemaRaw := strings.TrimSpace(*schemaFlag)
+	titleRaw := strings.TrimSpace(*titleFlag)
+
+	if rawName == "" {
+		reader := bufio.NewReader(in)
+		rawName = promptInput(reader, "📦 Nombre del módulo en singular (ej. proveedor, orden-compra)", "")
+		if schemaRaw == "" {
+			schemaRaw = promptInput(reader, "🗂️  Esquema de PostgreSQL (sistema o institucion)", "sistema")
+		}
+		if titleRaw == "" {
+			titleRaw = promptInput(reader, "🏷️  Título en pantalla y menú (Enter para autogenerar)", "")
+		}
+	}
+	if schemaRaw == "" {
+		schemaRaw = "sistema"
+	}
+
+	executeScaffold(rawName, schemaRaw, titleRaw, strings.TrimSpace(*pluralFlag), *noMountFlag, false)
+}
+
+func runRemoveModule(args []string, in io.Reader) {
+	posName, flagArgs := extractLeadingPositional(args)
+	fsFlags := flag.NewFlagSet("remove-module", flag.ExitOnError)
+	nameFlag := fsFlags.String("name", "", "Module name to remove")
+	_ = fsFlags.Parse(flagArgs)
+
+	rawName := strings.TrimSpace(*nameFlag)
+	if rawName == "" {
+		rawName = posName
+	}
+	if rawName == "" && fsFlags.NArg() > 0 {
+		rawName = strings.TrimSpace(fsFlags.Arg(0))
+	}
+	if rawName == "" {
+		reader := bufio.NewReader(in)
+		rawName = promptInput(reader, "🧹 Nombre del módulo a eliminar", "")
+	}
+
+	executeScaffold(rawName, "sistema", "", "", false, true)
+}
+
+func runLegacyFlags(args []string) {
+	ensureProjectRoot()
+	fsFlags := flag.NewFlagSet("jrmp", flag.ExitOnError)
+	nameFlag := fsFlags.String("name", "", "Module name in singular (e.g. proveedor, articulo)")
+	schemaFlag := fsFlags.String("schema", "sistema", "Database schema (default: sistema)")
+	titleFlag := fsFlags.String("title", "", "Human readable title (default: auto capitalized)")
+	pluralFlag := fsFlags.String("plural", "", "Plural name (default: auto)")
+	noMountFlag := fsFlags.Bool("no-mount", false, "Do not auto-mount in cmd/main.go")
+	removeFlag := fsFlags.Bool("remove", false, "Remove an existing scaffolded module and its migrations")
+	initProjectFlag := fsFlags.String("init-project", "", "Rename the Go module across go.mod, .go, and .templ files")
+	_ = fsFlags.Parse(args)
+
+	if strings.TrimSpace(*initProjectFlag) != "" {
+		runInitProject([]string{"-module", strings.TrimSpace(*initProjectFlag)}, os.Stdin)
+		return
+	}
+	executeScaffold(strings.TrimSpace(*nameFlag), strings.TrimSpace(*schemaFlag), strings.TrimSpace(*titleFlag), strings.TrimSpace(*pluralFlag), *noMountFlag, *removeFlag)
+}
+
+func executeScaffold(rawName, schemaRaw, titleRaw, pluralRaw string, noMount, isRemove bool) {
+	if rawName == "" {
+		fmt.Println("❌ Error: el nombre del módulo es obligatorio. Ej: jrmp new-module proveedor")
 		os.Exit(1)
 	}
 
 	name := toSnakeCase(rawName)
 	if name == "" || !regexp.MustCompile(`^[a-z][a-z0-9_]*$`).MatchString(name) {
-		fmt.Printf("Error: el nombre '%s' no produce un identificador válido para Go (resultado: '%s'). Debe comenzar con una letra.\n", rawName, name)
+		fmt.Printf("❌ Error: el nombre '%s' no produce un identificador válido para Go (resultado: '%s'). Debe comenzar con una letra.\n", rawName, name)
 		os.Exit(1)
 	}
 
 	moduleName := getModuleName("go.mod")
 
-	if *removeFlag {
+	if isRemove {
 		if err := removeModule(".", name, moduleName); err != nil {
 			fmt.Printf("❌ Error eliminando modulo '%s': %v\n", name, err)
 			os.Exit(1)
@@ -76,12 +406,12 @@ func main() {
 		return
 	}
 
-	schema := toSnakeCase(strings.TrimSpace(*schemaFlag))
+	schema := toSnakeCase(schemaRaw)
 	if schema == "" {
 		schema = "sistema"
 	}
 
-	plural := strings.TrimSpace(*pluralFlag)
+	plural := pluralRaw
 	if plural == "" {
 		plural = autoPlural(name)
 	} else {
@@ -90,8 +420,8 @@ func main() {
 
 	nameUpper := toPascalCase(name)
 	pluralUpper := toPascalCase(plural)
-	if *titleFlag != "" {
-		pluralUpper = *titleFlag
+	if titleRaw != "" {
+		pluralUpper = titleRaw
 	}
 
 	prefix := fmt.Sprintf("/%s/%s", schema, plural)
@@ -122,7 +452,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if !*noMountFlag {
+	if !noMount {
 		if err := mountInMain(cfg); err != nil {
 			fmt.Printf("⚠️ No se pudo auto-montar en cmd/main.go: %v (podes agregarlo manualmente)\n", err)
 		} else {
@@ -138,6 +468,103 @@ func main() {
 	fmt.Printf("📁 Carpeta: ./%s\n", cfg.Name)
 	fmt.Printf("📜 Migracion: ./sql/migrations/%s_create_%s_table.up.sql\n", cfg.MigrNum, cfg.Name)
 	fmt.Printf("🌐 Endpoint: http://localhost:8080%s\n\n", cfg.Prefix)
+}
+
+func runCheck() {
+	fmt.Println("🔍 [1/4] Verificando formato de archivos .templ...")
+	mustRunCmd(".", "templ", "fmt", "-fail", ".")
+	fmt.Println("⚙️  [2/4] Generando código Go desde .templ...")
+	mustRunCmd(".", "templ", "generate")
+	fmt.Println("🧹 [3/4] Ejecutando golangci-lint...")
+	mustRunCmd(".", "golangci-lint", "run", "./...")
+	if _, err := os.Stat(filepath.Join("cmd", "jrmp", "go.mod")); err == nil {
+		mustRunCmd(filepath.Join("cmd", "jrmp"), "golangci-lint", "run", "-c", "../../.golangci.yml", "./...")
+	}
+	fmt.Println("🧪 [4/4] Ejecutando pruebas unitarias...")
+	mustRunCmd(".", "go", "test", "./...")
+	if _, err := os.Stat(filepath.Join("cmd", "jrmp", "go.mod")); err == nil {
+		mustRunCmd(filepath.Join("cmd", "jrmp"), "go", "test", "./...")
+	}
+	fmt.Println("✅ ¡Validación completa exitosa!")
+}
+
+func runDev() {
+	if runtime.GOOS == "windows" {
+		mustRunCmd(".", "air", "-c", ".air.toml", "--build.bin", `.\\tmp\\main.exe`, "--build.cmd", `go build -mod=vendor -o .\\tmp\\main.exe .\\cmd\\.`)
+		return
+	}
+	mustRunCmd(".", "air", "-c", ".air.toml")
+}
+
+func runCmdInDir(dir, name string, args ...string) error {
+	// #nosec G204,G702 -- CLI wrapper deliberately runs developer toolchain commands
+	cmd := exec.Command(name, args...)
+	cmd.Dir = dir
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+	return cmd.Run()
+}
+
+func mustRunCmd(dir, name string, args ...string) {
+	if err := runCmdInDir(dir, name, args...); err != nil {
+		fmt.Printf("❌ Error ejecutando '%s %s': %v\n", name, strings.Join(args, " "), err)
+		os.Exit(1)
+	}
+}
+
+func ensureEnvFile(rootDir, serviceName, dbUser, dbPass string) error {
+	root, err := os.OpenRoot(rootDir)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = root.Close() }()
+
+	if _, err := root.Stat(".env"); err == nil {
+		return nil // .env ya existe; respetamos la configuración actual
+	}
+
+	exampleBytes, err := root.ReadFile(".env.example")
+	if err != nil {
+		return err
+	}
+
+	if serviceName == "" {
+		serviceName = "plantilla"
+	}
+	if dbUser == "" {
+		dbUser = "postgres"
+	}
+	if dbPass == "" {
+		dbPass = "postgres"
+	}
+
+	var lines []string
+	for _, line := range strings.Split(string(exampleBytes), "\n") {
+		trimmed := strings.TrimSpace(line)
+		switch {
+		case strings.HasPrefix(trimmed, "SERVICIO="):
+			lines = append(lines, "SERVICIO="+serviceName)
+		case strings.HasPrefix(trimmed, "PQ_WRITE_DB="):
+			lines = append(lines, "PQ_WRITE_DB="+serviceName)
+		case strings.HasPrefix(trimmed, "PQ_READ_DB="):
+			lines = append(lines, "PQ_READ_DB="+serviceName)
+		case strings.HasPrefix(trimmed, "PQ_WRITE_USER="):
+			lines = append(lines, "PQ_WRITE_USER="+dbUser)
+		case strings.HasPrefix(trimmed, "PQ_READ_USER="):
+			lines = append(lines, "PQ_READ_USER="+dbUser)
+		case strings.HasPrefix(trimmed, "PQ_WRITE_PASSWORD="):
+			lines = append(lines, "PQ_WRITE_PASSWORD="+dbPass)
+		case strings.HasPrefix(trimmed, "PQ_READ_PASSWORD="):
+			lines = append(lines, "PQ_READ_PASSWORD="+dbPass)
+		case strings.HasPrefix(trimmed, "COOKIE_NOMBRE="):
+			lines = append(lines, "COOKIE_NOMBRE="+serviceName+"_v2")
+		default:
+			lines = append(lines, line)
+		}
+	}
+
+	return root.WriteFile(".env", []byte(strings.Join(lines, "\n")), 0600)
 }
 
 func autoPlural(s string) string {
@@ -387,9 +814,14 @@ func removeModule(rootDir, name, moduleName string) error {
 		return fmt.Errorf("el directorio '%s' pertenece al nucleo de la plantilla y no puede eliminarse", name)
 	}
 
-	modDir := filepath.Join(rootDir, name)
-	if err := os.RemoveAll(modDir); err != nil {
-		return fmt.Errorf("error eliminando carpeta %s: %w", modDir, err)
+	root, err := os.OpenRoot(rootDir)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = root.Close() }()
+
+	if err := root.RemoveAll(name); err != nil {
+		return fmt.Errorf("error eliminando carpeta %s: %w", name, err)
 	}
 
 	pattern := filepath.Join(rootDir, "sql", "migrations", fmt.Sprintf("*_create_%s_table.*.sql", name))
@@ -399,14 +831,14 @@ func removeModule(rootDir, name, moduleName string) error {
 	}
 	var downScripts []string
 	for _, m := range matches {
+		relMigr := filepath.Join("sql", "migrations", filepath.Base(m))
 		if strings.HasSuffix(m, ".down.sql") {
-			// #nosec G304 -- path comes from controlled Glob under rootDir
-			if b, readErr := os.ReadFile(filepath.Clean(m)); readErr == nil {
+			if b, readErr := root.ReadFile(relMigr); readErr == nil {
 				downScripts = append(downScripts, string(b))
 			}
 		}
-		if err := os.Remove(m); err != nil && !os.IsNotExist(err) {
-			return fmt.Errorf("error eliminando migracion %s: %w", m, err)
+		if err := root.Remove(relMigr); err != nil && !os.IsNotExist(err) {
+			return fmt.Errorf("error eliminando migracion %s: %w", relMigr, err)
 		}
 	}
 
@@ -441,38 +873,34 @@ func getMaxMigrationNumberInDir(migrationsDir string) int {
 }
 
 func revertModuleDatabase(rootDir string, downScripts []string, maxRemainingVersion int) {
-	envPath := filepath.Join(rootDir, ".env")
-	if _, err := os.Stat(envPath); err != nil {
-		return
-	}
-	env, err := entorno.GetEnv(envPath)
-	if err != nil {
+	if len(downScripts) == 0 && maxRemainingVersion <= 0 {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
-	connURL := bd.BuildConnectionURL(env, true)
-	conn, err := pgx.Connect(ctx, connURL)
-	if err != nil && strings.EqualFold(env.PqWriteHost, "db") {
-		envCopy := *env
-		envCopy.PqWriteHost = "127.0.0.1"
-		conn, err = pgx.Connect(ctx, bd.BuildConnectionURL(&envCopy, true))
-	}
-	if err != nil {
-		fmt.Printf("ℹ️ Base de datos no disponible localmente (%v); se omitio limpieza SQL en vivo.\n", err)
-		return
-	}
-	defer func() { _ = conn.Close(ctx) }()
-
+	var sb strings.Builder
 	for _, script := range downScripts {
-		if _, err := conn.Exec(ctx, script); err != nil {
-			fmt.Printf("⚠️ Advertencia ejecutando down.sql en base de datos: %v\n", err)
-		}
+		sb.WriteString(script)
+		sb.WriteString("\n")
 	}
 	if maxRemainingVersion > 0 {
-		_, _ = conn.Exec(ctx, `UPDATE public.schema_migrations SET version = $1, dirty = false WHERE version > $1`, maxRemainingVersion)
+		fmt.Fprintf(&sb, "UPDATE public.schema_migrations SET version = %d, dirty = false WHERE version > %d;\n", maxRemainingVersion, maxRemainingVersion)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(
+		ctx,
+		"docker", "compose", "-f", "docker-compose.local.yml",
+		"exec", "-T", "db",
+		"sh", "-c", `psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" >/dev/null 2>&1`,
+	)
+	cmd.Dir = rootDir
+	cmd.Stdin = strings.NewReader(sb.String())
+
+	if err := cmd.Run(); err != nil {
+		fmt.Println("ℹ️ Contenedor de base de datos no activo; se omitio limpieza SQL en vivo.")
+		return
 	}
 	fmt.Println("🗄️ Tabla, politicas ABAC y schema_migrations revertidos en PostgreSQL.")
 }

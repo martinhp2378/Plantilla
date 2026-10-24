@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"os"
 	"path/filepath"
 	"strings"
@@ -184,5 +185,64 @@ func TestRenameProjectModule(t *testing.T) {
 	}
 	if !strings.Contains(string(updatedGo), `"ControlVehicular/shared/entorno"`) {
 		t.Errorf("expected updated import path, got:\n%s", string(updatedGo))
+	}
+}
+
+func TestEnsureEnvFile(t *testing.T) {
+	tmp := t.TempDir()
+	envExample := `AMBIENTE=LOCAL
+SERVICIO=plantilla
+PQ_WRITE_DB=plantilla
+PQ_WRITE_USER=usuplantilla
+PQ_WRITE_PASSWORD=
+PQ_READ_DB=plantilla
+PQ_READ_USER=usuplantilla
+PQ_READ_PASSWORD=
+COOKIE_NOMBRE=plantilla_v2
+`
+	if err := os.WriteFile(filepath.Join(tmp, ".env.example"), []byte(envExample), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := ensureEnvFile(tmp, "inventario", "postgres", "secreto123"); err != nil {
+		t.Fatalf("ensureEnvFile failed: %v", err)
+	}
+
+	// #nosec G304 -- test path inside t.TempDir
+	envBytes, err := os.ReadFile(filepath.Join(tmp, ".env"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	envContent := string(envBytes)
+
+	for _, expected := range []string{
+		"SERVICIO=inventario",
+		"PQ_WRITE_DB=inventario",
+		"PQ_READ_DB=inventario",
+		"PQ_WRITE_USER=postgres",
+		"PQ_WRITE_PASSWORD=secreto123",
+		"COOKIE_NOMBRE=inventario_v2",
+	} {
+		if !strings.Contains(envContent, expected) {
+			t.Errorf("expected .env to contain %q, got:\n%s", expected, envContent)
+		}
+	}
+}
+
+func TestPromptInputAndExtractLeadingPositional(t *testing.T) {
+	reader := bufio.NewReader(strings.NewReader("MiSistema\n\n"))
+	got := promptInput(reader, "Proyecto", "DefaultMod")
+	if got != "MiSistema" {
+		t.Errorf("promptInput() = %q, want %q", got, "MiSistema")
+	}
+
+	gotDefault := promptInput(reader, "Servicio", "sistema")
+	if gotDefault != "sistema" {
+		t.Errorf("promptInput() with empty line = %q, want %q", gotDefault, "sistema")
+	}
+
+	pos, rest := extractLeadingPositional([]string{"orden-compra", "-schema", "institucion"})
+	if pos != "orden-compra" || len(rest) != 2 {
+		t.Errorf("extractLeadingPositional() = (%q, %v), want ('orden-compra', ['-schema', 'institucion'])", pos, rest)
 	}
 }

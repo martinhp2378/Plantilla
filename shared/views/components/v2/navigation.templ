@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"fmt"
 	"PlantillaInstitucional/shared/navigation"
 	"PlantillaInstitucional/shared/pagina"
 	"PlantillaInstitucional/shared/sesionutil"
@@ -34,16 +35,26 @@ templ SidebarV2(pag pagina.Pagina) {
 				<span class="text-2xl font-black text-gray-800 uppercase tracking-tighter leading-none">Plantilla<br/>Inst.</span>
 			</a>
 			<nav class="flex-1 space-y-12 pb-12">
+				{{
+					menuAdmin := navigation.ItemMenu{
+						Label:  "Administración",
+						Icon:   "admin_panel_settings",
+						Codigo: "administracion",
+						SubItems: []navigation.ItemMenu{
+							{Label: "Usuarios", URL: pagina.Usuarios.URL(), Icon: "manage_accounts", Codigo: string(pagina.Usuarios)},
+							{Label: "Perfiles", URL: pagina.Perfil.URL(), Icon: "badge", Codigo: string(pagina.Perfil)},
+							{Label: "Políticas", URL: pagina.Politicas.URL(), Icon: "policy", Codigo: string(pagina.Politicas)},
+							{Label: "Parámetros", URL: pagina.Parametros.URL(), Icon: "settings", Codigo: string(pagina.Parametros)},
+						},
+					}
+				}}
 				<div>
 					<h3 class="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] mb-8 px-2 border-l-4 border-transparent">Módulos</h3>
 					<ul class="space-y-6">
 						@SidebarItem(pagina.Inicio, pag, "home", "Inicio")
 						@SidebarItem(pagina.Dashboard, pag, "dashboard", "Dashboard")
 						@SidebarItem(pagina.Personas, pag, "people", "Personas")
-						@SidebarItem(pagina.Usuarios, pag, "admin_panel_settings", "Usuarios")
-						@SidebarItem(pagina.Perfil, pag, "badge", "Perfiles")
-						@SidebarItem(pagina.Politicas, pag, "policy", "Políticas")
-						@SidebarItem(pagina.Parametros, pag, "settings", "Parámetros")
+						@SidebarDropdown(menuAdmin, pag)
 						@SidebarItem(pagina.Crud, pag, "dataset", "Ejemplo CRUD")
 						for _, item := range navigation.ObtenerItemsMenu() {
 							@SidebarItemDinamico(item, pag)
@@ -103,33 +114,120 @@ templ SidebarItem(target, active pagina.Pagina, icon, label string) {
 }
 
 templ SidebarItemDinamico(item navigation.ItemMenu, active pagina.Pagina) {
+	if item.TieneSubItems() {
+		@SidebarDropdown(item, active)
+	} else {
+		@SidebarItemSimple(item, active)
+	}
+}
+
+templ SidebarItemSimple(item navigation.ItemMenu, active pagina.Pagina) {
 	if sesionutil.UsuarioDeContexto(ctx).Perfil == sesionutil.PerfilSuperAdmin || navigation.Allowed(ctx, item.URL) {
 		<li>
 			<a
 				href={ templ.SafeURL(item.URL) }
 				class={ "flex items-center gap-4 py-1 transition-all group",
-					templ.KV("text-[var(--color-guinda)]", string(active) == item.Codigo),
-					templ.KV("text-gray-500 hover:text-[var(--color-guinda)]", string(active) != item.Codigo) }
+					templ.KV("text-[var(--color-guinda)]", item.EsActivo(string(active), active.URL())),
+					templ.KV("text-gray-500 hover:text-[var(--color-guinda)]", !item.EsActivo(string(active), active.URL())) }
 			>
 				<div
-					class={ "w-10 h-10 flex items-center justify-center rounded-xl transition-all shadow-sm",
-					templ.KV("bg-[var(--surface-arena-30)] border border-[var(--color-arena)]", string(active) == item.Codigo),
-					templ.KV("bg-transparent border border-transparent group-hover:bg-[var(--surface-arena-20)]", string(active) != item.Codigo) }
+					class={ "w-10 h-10 flex items-center justify-center rounded-xl transition-all shadow-sm shrink-0",
+						templ.KV("bg-[var(--surface-arena-30)] border border-[var(--color-arena)]", item.EsActivo(string(active), active.URL())),
+						templ.KV("bg-transparent border border-transparent group-hover:bg-[var(--surface-arena-20)]", !item.EsActivo(string(active), active.URL())) }
 				>
 					<span
 						class={ "material-icons text-2xl",
-						templ.KV("text-[var(--color-guinda)]", string(active) == item.Codigo),
-						templ.KV("text-gray-400 group-hover:text-[var(--color-guinda)]", string(active) != item.Codigo) }
+							templ.KV("text-[var(--color-guinda)]", item.EsActivo(string(active), active.URL())),
+							templ.KV("text-gray-400 group-hover:text-[var(--color-guinda)]", !item.EsActivo(string(active), active.URL())) }
 					>
 						{ item.Icon }
 					</span>
 				</div>
 				<span
-					class={ "text-xs uppercase tracking-widest transition-all text-left",
-					templ.KV("font-black", string(active) == item.Codigo),
-					templ.KV("font-bold", string(active) != item.Codigo) }
+					class={ "text-xs uppercase tracking-widest transition-all text-left truncate",
+						templ.KV("font-black", item.EsActivo(string(active), active.URL())),
+						templ.KV("font-bold", !item.EsActivo(string(active), active.URL())) }
 				>{ item.Label }</span>
 			</a>
+		</li>
+	}
+}
+
+templ SidebarDropdown(item navigation.ItemMenu, active pagina.Pagina) {
+	{{
+		hijoActivo := item.TieneHijoActivo(string(active), active.URL())
+		padreActivo := item.EsActivo(string(active), active.URL())
+		destacado := hijoActivo || padreActivo
+	}}
+	if item.TieneAcceso(ctx, sesionutil.UsuarioDeContexto(ctx).Perfil == sesionutil.PerfilSuperAdmin) {
+		<li x-data={ fmt.Sprintf("{ abierto: %t }", hijoActivo) } class="space-y-1">
+			<button
+				type="button"
+				@click="abierto = !abierto"
+				class={ "w-full flex items-center justify-between py-1 transition-all group text-left cursor-pointer select-none focus:outline-none",
+					templ.KV("text-[var(--color-guinda)]", destacado),
+					templ.KV("text-gray-500 hover:text-[var(--color-guinda)]", !destacado) }
+			>
+				<div class="flex items-center gap-4 min-w-0">
+					<div
+						class={ "w-10 h-10 flex items-center justify-center rounded-xl transition-all shadow-sm shrink-0",
+							templ.KV("bg-[var(--surface-arena-30)] border border-[var(--color-arena)]", destacado),
+							templ.KV("bg-transparent border border-transparent group-hover:bg-[var(--surface-arena-20)]", !destacado) }
+					>
+						<span
+							class={ "material-icons text-2xl",
+								templ.KV("text-[var(--color-guinda)]", destacado),
+								templ.KV("text-gray-400 group-hover:text-[var(--color-guinda)]", !destacado) }
+						>
+							{ item.Icon }
+						</span>
+					</div>
+					<span
+						class={ "text-xs uppercase tracking-widest transition-all truncate",
+							templ.KV("font-black", destacado),
+							templ.KV("font-bold", !destacado) }
+					>
+						{ item.Label }
+					</span>
+				</div>
+				<span
+					class="material-icons text-lg text-gray-400 transition-transform duration-200 shrink-0 group-hover:text-[var(--color-guinda)] mr-1"
+					:class="abierto ? 'rotate-180 text-[var(--color-guinda)]' : ''"
+				>
+					expand_more
+				</span>
+			</button>
+			<ul
+				x-show="abierto"
+				x-transition:enter="transition ease-out duration-200"
+				x-transition:enter-start="opacity-0 -translate-y-1"
+				x-transition:enter-end="opacity-100 translate-y-0"
+				x-transition:leave="transition ease-in duration-150"
+				x-transition:leave-start="opacity-100 translate-y-0"
+				x-transition:leave-end="opacity-0 -translate-y-1"
+				class="pl-6 ml-5 space-y-1 border-l-2 border-[var(--surface-arena-30)] pt-1 pb-1"
+				style="display: none;"
+			>
+				for _, sub := range item.SubItems {
+					if sesionutil.UsuarioDeContexto(ctx).Perfil == sesionutil.PerfilSuperAdmin || navigation.Allowed(ctx, sub.URL) {
+						<li>
+							<a
+								href={ templ.SafeURL(sub.URL) }
+								class={ "flex items-center gap-3 py-1.5 px-3 rounded-lg text-xs uppercase tracking-wider transition-all",
+									templ.KV("bg-[var(--surface-arena-30)] text-[var(--color-guinda)] font-black", sub.EsActivo(string(active), active.URL())),
+									templ.KV("text-gray-500 hover:text-[var(--color-guinda)] hover:bg-[var(--surface-arena-20)] font-bold", !sub.EsActivo(string(active), active.URL())) }
+							>
+								if sub.Icon != "" {
+									<span class="material-icons text-base shrink-0">{ sub.Icon }</span>
+								} else {
+									<span class="w-1.5 h-1.5 rounded-full bg-current shrink-0"></span>
+								}
+								<span class="truncate">{ sub.Label }</span>
+							</a>
+						</li>
+					}
+				}
+			</ul>
 		</li>
 	}
 }

@@ -18,8 +18,14 @@ RUN templ generate
 # Build the application using the vendor directory
 RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -o main ./cmd/main.go
 
+# Development stage with live reload (Air + Templ)
+FROM builder AS dev
+RUN go install github.com/air-verse/air@latest
+EXPOSE 8080
+CMD ["air", "-c", ".air.toml"]
+
 # Run stage
-FROM alpine:latest
+FROM alpine:latest AS runtime
 
 # Install CA certificates for HTTPS requests (useful for private repos/APIs)
 RUN apk add --no-cache ca-certificates
@@ -41,6 +47,10 @@ USER 10001
 
 # Expose port
 EXPOSE 8080
+
+# Health check against lightweight liveness endpoint
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget -qO- http://127.0.0.1:8080/healthz >/dev/null || exit 1
 
 # Command to run
 CMD ["./main"]

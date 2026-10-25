@@ -1277,6 +1277,7 @@ import (
 	"<<.Module>>/pagination"
 	shared "<<.Module>>/shared/db"
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -1391,7 +1392,7 @@ func (r *<<.NameUpper>>Repository) Actualizar(ctx context.Context, item <<.Name>
 			return err
 		}
 		if ct.RowsAffected() == 0 {
-			return fmt.Errorf("registro no encontrado para actualizar")
+			return errors.New("registro no encontrado para actualizar")
 		}
 		return nil
 	})
@@ -1404,7 +1405,7 @@ func (r *<<.NameUpper>>Repository) Eliminar(ctx context.Context, id uuid.UUID) e
 			return err
 		}
 		if ct.RowsAffected() == 0 {
-			return fmt.Errorf("registro no encontrado para eliminar")
+			return errors.New("registro no encontrado para eliminar")
 		}
 		return nil
 	})
@@ -1618,6 +1619,7 @@ import (
 	"<<.Module>>/<<.Name>>"
 	reporte "<<.Module>>/shared/reportes"
 	"context"
+	"errors"
 	"fmt"
 )
 
@@ -1633,7 +1635,7 @@ func (s *<<.NameUpper>>Service) ReportePdf(ctx context.Context) (string, error) 
 		return "", fmt.Errorf("error obteniendo registros: %w", err)
 	}
 	if len(data) == 0 {
-		return "", fmt.Errorf("no hay registros disponibles para exportar")
+		return "", errors.New("no hay registros disponibles para exportar")
 	}
 
 	renderFuncs := map[string]func(any) string{
@@ -1674,7 +1676,7 @@ func (s *<<.NameUpper>>Service) ReporteExcel(ctx context.Context) (string, error
 		return "", fmt.Errorf("error obteniendo registros: %w", err)
 	}
 	if len(data) == 0 {
-		return "", fmt.Errorf("no hay registros disponibles para exportar")
+		return "", errors.New("no hay registros disponibles para exportar")
 	}
 
 	renderFuncs := map[string]func(any) string{

@@ -66,7 +66,7 @@ Ejecuta la app usando [Air](https://github.com/air-verse/air) para recompilació
 ```bash
 air
 ```
-Si modificas archivos `.templ`, asegúrate de correr `templ generate` (o `make templ-check`).
+Si modificas archivos `.templ`, asegúrate de correr `jrmp templ-check` (o `templ generate`).
 
 ## 📊 Reportes PDF, Excel y Assets
 
@@ -81,13 +81,13 @@ El proyecto incluye escaneo automatizado continuo tanto en desarrollo local como
 
 1.  **`govulncheck`**:
     *   Herramienta oficial de Go que analiza el grafo real de llamadas (`call-graph analysis`) para detectar si el código efectivamente invoca símbolos con vulnerabilidades reportadas en el *Go Vulnerability Database*.
-    *   Ejecución local: `make vulncheck` o `jrmp vulncheck`.
+    *   Ejecución local: `jrmp vulncheck` (o `make vulncheck`).
 2.  **`Trivy`**:
     *   Escáner de seguridad de Aqua Security para detectar vulnerabilidades en dependencias, configuraciones de contenedores (`Dockerfile`) y secretos expuestos.
     *   Excluye automáticamente el directorio `vendor/` para evitar falsos positivos de pruebas upstream.
-    *   Ejecución local: `make trivy` o `jrmp trivy` (si no tienes `trivy` instalado, utiliza automáticamente el contenedor `aquasec/trivy:latest` vía Docker).
+    *   Ejecución local: `jrmp trivy` (o `make trivy`; si no tienes `trivy` instalado, utiliza automáticamente el contenedor `aquasec/trivy:latest` vía Docker).
 3.  **Auditoría Integral**:
-    *   `make security` o `jrmp security` ejecuta ambos análisis secuencialmente.
+    *   `jrmp security` (o `make security`) ejecuta ambos análisis secuencialmente.
     *   En GitHub Actions (`.github/workflows/ci.yml`), el job `security` corre en paralelo en cada push y pull request.
 
 ## 🧪 Pruebas (Testing)

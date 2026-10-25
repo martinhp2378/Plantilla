@@ -35,14 +35,14 @@ No basta con que un usuario haya iniciado sesión; el sistema verifica en cada c
 
 | Perfil | Qué puede hacer por defecto |
 | :--- | :--- |
-| **`superadmin`** | Acceso total a todos los módulos del sistema y a los módulos nuevos creados con `make new-module`. |
-| **`admin`** | Acceso de consulta, creación y modificación en los módulos generados con `make new-module`. |
+| **`superadmin`** | Acceso total a todos los módulos del sistema y a los módulos nuevos creados con `jrmp new-module`. |
+| **`admin`** | Acceso de consulta, creación y modificación en los módulos generados con `jrmp new-module`. |
 | **`operador`** | Acceso operativo a módulos específicos que se le asignen en la tabla `sesion.politica`. |
 | **`anonimo`** | Usuarios que aún no han iniciado sesión (solo pueden ver `/login` y recuperación de contraseña). |
 
 ### ¿Cómo dar permiso a otro perfil (ej. `operador`) sobre un módulo nuevo?
 
-Cuando creas un módulo con `make new-module`, la migración SQL le da permiso automáticamente a `superadmin` y `admin`. Si también quieres darle permiso al perfil `operador` (o a un perfil nuevo), solo copia y pega estas líneas al final del archivo `.up.sql` de tu módulo:
+Cuando creas un módulo con `jrmp new-module`, la migración SQL le da permiso automáticamente a `superadmin` y `admin`. Si también quieres darle permiso al perfil `operador` (o a un perfil nuevo), solo copia y pega estas líneas al final del archivo `.up.sql` de tu módulo:
 
 🟡 **Modificar antes de guardar**:
 Cambia **`proveedor`** por el nombre de tu módulo y **`operador`** por el perfil al que quieres darle acceso:

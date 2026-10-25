@@ -10,7 +10,7 @@ Bienvenido a la documentación detallada de la **Plantilla Institucional**. Este
     *   Comandos para copiar y pegar para renombrar el proyecto con los datos de tu sistema.
     *   Cómo encender el proyecto en Docker, iniciar sesión y guardar tus avances en Git.
 2.  **[Guía Amigable: Cómo Crear y Personalizar un Nuevo Módulo CRUD](./scaffolding.md)**
-    *   Cómo crear una pantalla completa con `make new-module` (tabla, buscador, modales y reportes PDF/Excel).
+    *   Cómo crear una pantalla completa con `jrmp new-module` (tabla, buscador, modales y reportes PDF/Excel).
     *   Cómo borrar un módulo de prueba sin dejar residuos en la base de datos.
     *   Cómo agregar campos nuevos paso a paso.
 

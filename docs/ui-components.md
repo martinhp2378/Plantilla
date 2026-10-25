@@ -89,7 +89,7 @@ Cambia `Label`, `Description`, `Name` y `Checked`.
 
 ## 📊 2. Tablas Dinámicas (`shared/views/components/v2/table.templ`)
 
-Cuando creas un módulo con `make new-module`, la tabla principal ya viene configurada en `view/components/table_v2.templ` con:
+Cuando creas un módulo con `jrmp new-module`, la tabla principal ya viene configurada en `view/components/table_v2.templ` con:
 - **Buscador automático**: Filtra mientras el usuario escribe sin recargar toda la pantalla.
 - **Botones de exportación**: Descarga directa en **PDF** y **Excel**.
 - **Paginación**: Botones de página anterior/siguiente y selector de cantidad de registros.

@@ -48,7 +48,7 @@ Las **migraciones** son archivos `.sql` numerados que viven en la carpeta `sql/m
   2. `000011_nombre.down.sql`: Instrucciones para **deshacer** ese cambio si fuera necesario.
 
 > [!TIP]
-> **Cuando usas `make new-module NAME=proveedor`**, el generador crea automáticamente ambos archivos `.up.sql` y `.down.sql` con el número siguiente que toca. ¡No tienes que crearlos a mano!
+> **Cuando usas `jrmp new-module proveedor`**, el generador crea automáticamente ambos archivos `.up.sql` y `.down.sql` con el número siguiente que toca. ¡No tienes que crearlos a mano!
 
 ### ¿Cómo crear una migración manual si solo quieres agregar una columna a una tabla existente?
 

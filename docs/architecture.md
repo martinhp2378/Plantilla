@@ -48,7 +48,7 @@ El ensamblaje de dependencias está descentralizado por módulo mediante el cont
 1.  **Instanciación Local**: El módulo construye su propio repositorio (`a.Pools`), servicio (`a.Logger`, `a.ManejadorArchivos`) y handler.
 2.  **Montaje de Rutas**: El handler registra sus subrutas directamente sobre el router `chi.Router`.
 3.  **Registro en Menú Lateral**: El módulo se registra dinámicamente en el menú de navegación mediante `navigation.RegistrarItemMenu(...)`.
-4.  **Punto Único en `cmd/main.go`**: Agregar un módulo requiere únicamente una línea `<modulo>_handler.Register(a, r)` (automatizada por `make new-module`).
+4.  **Punto Único en `cmd/main.go`**: Agregar un módulo requiere únicamente una línea `<modulo>_handler.Register(a, r)` (automatizada por `jrmp new-module`).
 
 ## 📊 Ciclo de Vida y Retención de Reportes Privados
 

@@ -29,6 +29,7 @@ const (
 	actionUp           tuiActionID = "up"
 	actionDown         tuiActionID = "down"
 	actionCheck        tuiActionID = "check"
+	actionSecurity     tuiActionID = "security"
 	actionExit         tuiActionID = "exit"
 )
 
@@ -197,6 +198,13 @@ func defaultMenuItems() []tuiMenuItem {
 			needsWizard: false,
 		},
 		{
+			id:          actionSecurity,
+			title:       "🛡️  Auditar seguridad (govulncheck & Trivy)",
+			commandHint: "jrmp security",
+			description: "Escanea vulnerabilidades en código Go (govulncheck) y contenedores/dependencias (Trivy).",
+			needsWizard: false,
+		},
+		{
 			id:          actionExit,
 			title:       "👋 Salir",
 			commandHint: "q / esc",
@@ -285,6 +293,15 @@ func defaultTUIRunner(action tuiActionID, values map[string]string) (string, err
 			return "", err
 		}
 		return "✅ Validación completa exitosa (templ fmt + templ generate + golangci-lint + go test).", nil
+
+	case actionSecurity:
+		if err := requireProjectRoot(); err != nil {
+			return "", err
+		}
+		if err := runSecurityCore(); err != nil {
+			return "", err
+		}
+		return "🛡️  Auditoría de seguridad completada con éxito (govulncheck + Trivy).", nil
 
 	default:
 		return "", fmt.Errorf("acción no soportada: %s", action)
@@ -605,6 +622,8 @@ func wizardTitleForAction(action tuiActionID) string {
 		return "🛑 Detener Entorno Docker"
 	case actionCheck:
 		return "✅ Validación de Calidad Institucional"
+	case actionSecurity:
+		return "🛡️  Auditoría de Seguridad (govulncheck & Trivy)"
 	default:
 		return string(action)
 	}

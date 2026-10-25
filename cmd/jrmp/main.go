@@ -81,6 +81,12 @@ func main() {
 		runRemoveModule(subArgs, os.Stdin)
 	case "check":
 		runCheck()
+	case "security":
+		runSecurity()
+	case "vulncheck":
+		runVulncheck()
+	case "trivy":
+		runTrivy()
 	case "templ-fmt":
 		mustRunCmd(".", "templ", "fmt", ".")
 	case "templ-check":
@@ -132,6 +138,9 @@ Uso:
   jrmp logs                             Muestra los logs del servidor en vivo
   jrmp dev                              Ejecuta Air localmente fuera de Docker (compatible con Windows .exe, Mac y Linux)
   jrmp check                            Ejecuta la validación completa (templ-check + lint + test)
+  jrmp security                         Ejecuta escaneo completo de seguridad (govulncheck + trivy)
+  jrmp vulncheck                        Ejecuta govulncheck en el proyecto raíz y cmd/jrmp
+  jrmp trivy                            Ejecuta escaneo de seguridad Trivy (vulnerabilidades y secretos)
   jrmp templ-fmt                        Formatea todos los archivos .templ
   jrmp templ-check                      Verifica formato .templ y ejecuta templ generate
   jrmp lint                             Ejecuta golangci-lint run ./...
@@ -574,6 +583,80 @@ func checkProjectCore() error {
 		}
 	}
 	return nil
+}
+
+func runSecurity() {
+	if err := runSecurityCore(); err != nil {
+		fmt.Printf("❌ %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println("✅ ¡Auditoría de seguridad completada!")
+}
+
+func runVulncheck() {
+	if err := runVulncheckCore(); err != nil {
+		fmt.Printf("❌ %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func runTrivy() {
+	if err := runTrivyCore(); err != nil {
+		fmt.Printf("❌ %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func runSecurityCore() error {
+	if err := requireProjectRoot(); err != nil {
+		return err
+	}
+	_ = runVulncheckCore()
+	_ = runTrivyCore()
+	return nil
+}
+
+func runVulncheckCore() error {
+	if err := requireProjectRoot(); err != nil {
+		return err
+	}
+	fmt.Println("🛡️  [1/2] Ejecutando govulncheck en el proyecto raíz...")
+	if err := runCmdWithFallback(".", "govulncheck", []string{"./..."}, "go", "run", "golang.org/x/vuln/cmd/govulncheck@latest", "./..."); err != nil {
+		fmt.Printf("⚠️  Hallazgos en raíz: %v\n", err)
+	}
+	if _, err := os.Stat(filepath.Join("cmd", "jrmp", "go.mod")); err == nil {
+		fmt.Println("🛡️  [2/2] Ejecutando govulncheck en cmd/jrmp...")
+		if err := runCmdWithFallback(filepath.Join("cmd", "jrmp"), "govulncheck", []string{"./..."}, "go", "run", "golang.org/x/vuln/cmd/govulncheck@latest", "./..."); err != nil {
+			fmt.Printf("⚠️  Hallazgos en cmd/jrmp: %v\n", err)
+		}
+	}
+	return nil
+}
+
+func runTrivyCore() error {
+	if err := requireProjectRoot(); err != nil {
+		return err
+	}
+	fmt.Println("🛡️  Ejecutando escáner de seguridad Trivy (vulnerabilidades y secretos)...")
+	if _, err := exec.LookPath("trivy"); err == nil {
+		return runCmdInDir(".", "trivy", "fs", "--skip-dirs", "vendor", "--severity", "HIGH,CRITICAL", ".")
+	}
+	if err := exec.Command("docker", "info").Run(); err == nil {
+		cwd, err := os.Getwd()
+		if err != nil {
+			cwd = "."
+		}
+		return runCmdInDir(".", "docker", "run", "--rm", "-v", fmt.Sprintf("%s:/app", cwd), "-w", "/app", "aquasec/trivy:latest", "fs", "--skip-dirs", "vendor", "--severity", "HIGH,CRITICAL", ".")
+	}
+	fmt.Println("⚠️  Ni trivy ni Docker están disponibles en el entorno para ejecutar el escaneo.")
+	return nil
+}
+
+func runCmdWithFallback(dir, primaryCmd string, primaryArgs []string, fallbackCmd string, fallbackArgs ...string) error {
+	if _, err := exec.LookPath(primaryCmd); err == nil {
+		return runCmdInDir(dir, primaryCmd, primaryArgs...)
+	}
+	return runCmdInDir(dir, fallbackCmd, fallbackArgs...)
 }
 
 func runDev() {

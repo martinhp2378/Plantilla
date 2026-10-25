@@ -267,6 +267,37 @@ func TestRequireProjectRoot_BlocksOutsideProject(t *testing.T) {
 	}
 }
 
+func TestTUIMenu_SecurityAction(t *testing.T) {
+	var capturedAction tuiActionID
+	m := newTUIModel("PlantillaInstitucional")
+	m.runner = func(action tuiActionID, values map[string]string) (string, error) {
+		capturedAction = action
+		return "ok", nil
+	}
+
+	var model tea.Model = m
+	// Navigate to actionSecurity (index 7)
+	for i := 0; i < 7; i++ {
+		model, _ = model.Update(tea.KeyMsg{Type: tea.KeyDown})
+	}
+	got := model.(tuiModel)
+	if got.items[got.cursor].id != actionSecurity {
+		t.Fatalf("expected cursor at actionSecurity, got %s", got.items[got.cursor].id)
+	}
+
+	// Press Enter to dispatch
+	var cmd tea.Cmd
+	model, cmd = model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	if cmd == nil {
+		t.Fatalf("expected command on dispatching security action")
+	}
+	msg := cmd()
+	_, _ = model.Update(msg)
+	if capturedAction != actionSecurity {
+		t.Errorf("capturedAction = %q, want %q", capturedAction, actionSecurity)
+	}
+}
+
 
 
 

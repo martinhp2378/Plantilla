@@ -3,6 +3,7 @@ package shared
 import (
 	"PlantillaInstitucional/shared/entorno"
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"path/filepath"
@@ -28,7 +29,7 @@ func GenerarReporteExcel[T any](
 	_ bool,
 ) (string, error) {
 	if len(datos) == 0 {
-		return "", fmt.Errorf("lista vacía")
+		return "", errors.New("lista vacía")
 	}
 	if err := validateReportRows(len(datos)); err != nil {
 		return "", err
@@ -94,7 +95,7 @@ func GenerarReporteExcel[T any](
 		_ = f.SetRowHeight(sheet, i, 15)
 	}
 
-	imageEndCell := fmt.Sprintf("%s7", lastCol)
+	imageEndCell := lastCol + "7"
 	if err := f.MergeCell(sheet, "A1", imageEndCell); err != nil {
 		log.Printf("Advertencia: No se pudo fusionar las celdas para la imagen: %v", err)
 	}
@@ -114,13 +115,13 @@ func GenerarReporteExcel[T any](
 		log.Printf("Advertencia: No se pudo agregar la imagen al Excel: %v", err)
 	}
 
-	titleEndCell := fmt.Sprintf("%s9", lastCol)
+	titleEndCell := lastCol + "9"
 	_ = f.SetCellValue(sheet, "A9", titulo)
 	_ = f.MergeCell(sheet, "A9", titleEndCell)
 	_ = f.SetCellStyle(sheet, "A9", titleEndCell, titleStyle)
 
 	fechaStr := time.Now().Format("02/01/2006 15:04")
-	fechaEndCell := fmt.Sprintf("%s10", lastCol)
+	fechaEndCell := lastCol + "10"
 	_ = f.SetCellValue(sheet, "A10", "Generado el: "+fechaStr)
 	_ = f.MergeCell(sheet, "A10", fechaEndCell)
 	_ = f.SetCellStyle(sheet, "A10", fechaEndCell, fechaStyle)

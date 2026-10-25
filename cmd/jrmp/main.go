@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -183,10 +184,10 @@ func ensureProjectRoot() {
 func requireProjectRoot() error {
 	ensureProjectRoot()
 	if _, err := os.Stat("go.mod"); err != nil {
-		return fmt.Errorf("no se detectó un proyecto válido en la carpeta actual (falta go.mod); entrá a la carpeta de tu proyecto o creá uno con 'jrmp create'")
+		return errors.New("no se detectó un proyecto válido en la carpeta actual (falta go.mod); entrá a la carpeta de tu proyecto o creá uno con 'jrmp create'")
 	}
 	if _, err := os.Stat(filepath.Join("cmd", "main.go")); err != nil {
-		return fmt.Errorf("no se detectó cmd/main.go en la carpeta actual; ejecutá este comando desde la raíz de tu proyecto")
+		return errors.New("no se detectó cmd/main.go en la carpeta actual; ejecutá este comando desde la raíz de tu proyecto")
 	}
 	return nil
 }
@@ -226,28 +227,7 @@ func runCreateProject(args []string, in io.Reader) {
 	newRemote := strings.TrimSpace(*remoteFlag)
 	startDocker := *upFlag
 
-	if !*nonInteractiveFlag {
-		if serviceName == "" {
-			serviceName = toSnakeCase(promptInput(reader, "🗄️  Nombre corto para servicio y base de datos local", defaultSvc))
-		}
-		if dbPass == "" {
-			dbPass = promptInput(reader, "🔑 Contraseña para la base de datos PostgreSQL local", "postgres")
-		}
-		if newRemote == "" {
-			newRemote = promptInput(reader, "🔗 URL de tu nuevo repositorio Git (opcional, Enter para omitir)", "")
-		}
-		if !startDocker {
-			ans := strings.ToLower(promptInput(reader, "🐳 ¿Deseas construir y encender el proyecto con Docker al finalizar? (s/N)", "n"))
-			startDocker = ans == "s" || ans == "si" || ans == "sí" || ans == "y" || ans == "yes"
-		}
-	} else {
-		if serviceName == "" {
-			serviceName = defaultSvc
-		}
-		if dbPass == "" {
-			dbPass = "postgres"
-		}
-	}
+	serviceName, dbPass, newRemote, startDocker = resolveCreateProjectOptions(*nonInteractiveFlag, serviceName, defaultSvc, dbPass, newRemote, startDocker, reader)
 
 	if err := createProjectCore(*repoFlag, projectName, serviceName, dbPass, newRemote, startDocker); err != nil {
 		fmt.Printf("❌ %v\n", err)
@@ -255,10 +235,37 @@ func runCreateProject(args []string, in io.Reader) {
 	}
 }
 
+func resolveCreateProjectOptions(nonInteractive bool, serviceName, defaultSvc, dbPass, newRemote string, startDocker bool, reader *bufio.Reader) (string, string, string, bool) {
+	if nonInteractive {
+		if serviceName == "" {
+			serviceName = defaultSvc
+		}
+		if dbPass == "" {
+			dbPass = "postgres"
+		}
+		return serviceName, dbPass, newRemote, startDocker
+	}
+
+	if serviceName == "" {
+		serviceName = toSnakeCase(promptInput(reader, "🗄️  Nombre corto para servicio y base de datos local", defaultSvc))
+	}
+	if dbPass == "" {
+		dbPass = promptInput(reader, "🔑 Contraseña para la base de datos PostgreSQL local", "postgres")
+	}
+	if newRemote == "" {
+		newRemote = promptInput(reader, "🔗 URL de tu nuevo repositorio Git (opcional, Enter para omitir)", "")
+	}
+	if !startDocker {
+		ans := strings.ToLower(promptInput(reader, "🐳 ¿Deseas construir y encender el proyecto con Docker al finalizar? (s/N)", "n"))
+		startDocker = ans == "s" || ans == "si" || ans == "sí" || ans == "y" || ans == "yes"
+	}
+	return serviceName, dbPass, newRemote, startDocker
+}
+
 func createProjectCore(repoURL, projectName, serviceName, dbPass, newRemote string, startDocker bool) error {
 	projectName = strings.ReplaceAll(strings.TrimSpace(projectName), " ", "")
 	if projectName == "" {
-		return fmt.Errorf("el nombre del proyecto es obligatorio")
+		return errors.New("el nombre del proyecto es obligatorio")
 	}
 	if repoURL == "" {
 		repoURL = defaultTemplateRepo
@@ -347,7 +354,7 @@ func initProjectCore(newMod, svc, dbPass string) error {
 	}
 	newMod = strings.ReplaceAll(strings.TrimSpace(newMod), " ", "")
 	if newMod == "" {
-		return fmt.Errorf("el nombre del proyecto es obligatorio")
+		return errors.New("el nombre del proyecto es obligatorio")
 	}
 
 	// Si el remote origin sigue apuntando a PlantillaInstitucional, desvincularlo por seguridad
@@ -470,7 +477,7 @@ func scaffoldModuleCore(rawName, schemaRaw, titleRaw, pluralRaw string, noMount,
 		return "", err
 	}
 	if strings.TrimSpace(rawName) == "" {
-		return "", fmt.Errorf("el nombre del módulo es obligatorio (ej. proveedor)")
+		return "", errors.New("el nombre del módulo es obligatorio (ej. proveedor)")
 	}
 
 	name := toSnakeCase(rawName)
@@ -646,7 +653,7 @@ func runTrivyCore() error {
 		if err != nil {
 			cwd = "."
 		}
-		return runCmdInDir(".", "docker", "run", "--rm", "-v", fmt.Sprintf("%s:/app", cwd), "-w", "/app", "aquasec/trivy:latest", "fs", "--skip-dirs", "vendor", "--severity", "HIGH,CRITICAL", ".")
+		return runCmdInDir(".", "docker", "run", "--rm", "-v", cwd+":/app", "-w", "/app", "aquasec/trivy:latest", "fs", "--skip-dirs", "vendor", "--severity", "HIGH,CRITICAL", ".")
 	}
 	fmt.Println("⚠️  Ni trivy ni Docker están disponibles en el entorno para ejecutar el escaneo.")
 	return nil
@@ -928,7 +935,7 @@ func mountInMainFile(targetFile string, cfg Config) error {
 	s = s[:insertImportPos] + "\n\t" + importTarget + s[insertImportPos:]
 
 	// Inyectar llamada de Register en el grupo protegido respetando la indentación
-	registerCall := fmt.Sprintf("%s_handler.Register(a, r)", cfg.Name)
+	registerCall := cfg.Name + "_handler.Register(a, r)"
 	groupMarker := "miperfil_handler.Register(a, r)"
 	if strings.Contains(s, groupMarker) {
 		indent := "\t\t\t"
@@ -959,7 +966,7 @@ func unmountFromMainFile(targetFile, name, moduleName string) error {
 	}
 
 	importTarget := fmt.Sprintf("%s_handler \"%s/%s/handler\"", name, moduleName, name)
-	registerCall := fmt.Sprintf("%s_handler.Register(a, r)", name)
+	registerCall := name + "_handler.Register(a, r)"
 
 	var kept []string
 	for _, line := range strings.Split(string(content), "\n") {

@@ -79,29 +79,10 @@ func BuildDynamicWhere(filtros map[string]any, config FilterConfig, tableAlias s
 
 		// Rango de fechas o igualdad simple
 		if config.Fecha[campo] {
-			if dateRange, ok := valor.(DateRange); ok {
-				if !dateRange.Start.IsZero() && !dateRange.End.IsZero() {
-					condiciones = append(condiciones, fmt.Sprintf("%s%s BETWEEN $%d AND $%d", aliasPrefix, campo, argID, argID+1))
-					args = append(args, dateRange.Start, dateRange.End)
-					argID += 2
-				} else if !dateRange.Start.IsZero() {
-					condiciones = append(condiciones, fmt.Sprintf("%s%s >= $%d", aliasPrefix, campo, argID))
-					args = append(args, dateRange.Start)
-					argID++
-				} else if !dateRange.End.IsZero() {
-					condiciones = append(condiciones, fmt.Sprintf("%s%s <= $%d", aliasPrefix, campo, argID))
-					args = append(args, dateRange.End)
-					argID++
-				}
-			} else if t, ok := valor.(time.Time); ok && !t.IsZero() {
-				condiciones = append(condiciones, fmt.Sprintf("%s%s = $%d", aliasPrefix, campo, argID))
-				args = append(args, t)
-				argID++
-			} else if s, ok := valor.(string); ok && strings.TrimSpace(s) != "" {
-				s = strings.TrimSpace(s)
-				condiciones = append(condiciones, fmt.Sprintf("%s%s::text ILIKE $%d", aliasPrefix, campo, argID))
-				args = append(args, "%"+s+"%")
-				argID++
+			if cond, filterArgs, inc, ok := buildFechaFilter(campo, aliasPrefix, valor, argID); ok {
+				condiciones = append(condiciones, cond)
+				args = append(args, filterArgs...)
+				argID += inc
 			}
 			continue
 		}
@@ -224,4 +205,29 @@ func BuildOrderBy(sortedBy, direction string, allowedCols map[string]bool, table
 		return fmt.Sprintf("%s.%s %s", tableAlias, col, dir), nil
 	}
 	return fmt.Sprintf("%s %s", col, dir), nil
+}
+
+func buildFechaFilter(campo, aliasPrefix string, valor any, argID int) (string, []any, int, bool) {
+	if dateRange, ok := valor.(DateRange); ok {
+		if !dateRange.Start.IsZero() && !dateRange.End.IsZero() {
+			return fmt.Sprintf("%s%s BETWEEN $%d AND $%d", aliasPrefix, campo, argID, argID+1),
+				[]any{dateRange.Start, dateRange.End}, 2, true
+		}
+		if !dateRange.Start.IsZero() {
+			return fmt.Sprintf("%s%s >= $%d", aliasPrefix, campo, argID),
+				[]any{dateRange.Start}, 1, true
+		}
+		if !dateRange.End.IsZero() {
+			return fmt.Sprintf("%s%s <= $%d", aliasPrefix, campo, argID),
+				[]any{dateRange.End}, 1, true
+		}
+	} else if t, ok := valor.(time.Time); ok && !t.IsZero() {
+		return fmt.Sprintf("%s%s = $%d", aliasPrefix, campo, argID),
+			[]any{t}, 1, true
+	} else if s, ok := valor.(string); ok && strings.TrimSpace(s) != "" {
+		s = strings.TrimSpace(s)
+		return fmt.Sprintf("%s%s::text ILIKE $%d", aliasPrefix, campo, argID),
+			[]any{"%" + s + "%"}, 1, true
+	}
+	return "", nil, 0, false
 }

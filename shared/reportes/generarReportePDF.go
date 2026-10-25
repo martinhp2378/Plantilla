@@ -3,6 +3,7 @@ package shared
 import (
 	"PlantillaInstitucional/shared/entorno"
 	"context"
+	"errors"
 	"fmt"
 	"image"
 	_ "image/jpeg"
@@ -141,7 +142,7 @@ func GenerarReportePDF[T any](
 ) (string, error) {
 
 	if len(datos) == 0 {
-		return "", fmt.Errorf("lista vacía")
+		return "", errors.New("lista vacía")
 	}
 	if err := validateReportRows(len(datos)); err != nil {
 		return "", err

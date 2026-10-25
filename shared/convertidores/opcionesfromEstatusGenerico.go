@@ -10,7 +10,7 @@ var opciones = []components.SelectOption{
 }
 
 func OptionFromEstatusGenerico() []components.SelectOption {
-	var options []components.SelectOption
+	options := make([]components.SelectOption, 0, 1+len(opciones))
 	options = append(options, components.SelectOption{
 		Value: "",
 		Text:  "Seleccione un Estatus",

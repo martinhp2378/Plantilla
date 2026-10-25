@@ -146,54 +146,12 @@ func ProcesarCSV[T any](r io.Reader, cfg ConfigCarga[T]) (*ResultadoCarga[T], er
 		}
 
 		// Validar si la fila está completamente vacía y saltarla
-		esFilaVacia := true
-		for _, val := range record {
-			if strings.TrimSpace(val) != "" {
-				esFilaVacia = false
-				break
-			}
-		}
-		if esFilaVacia {
+		if filaEstaVacia(record) {
 			resultado.TotalLeidos-- // No contar fila vacía
 			continue
 		}
 
-		var entidad T
-		var erroresFila []ErrorFila
-
-		for _, colDef := range cfg.ColumnasEsperadas {
-			colKey := strings.ToLower(strings.TrimSpace(colDef.Nombre))
-			idx, existe := headerMap[colKey]
-
-			var valor string
-			if existe && idx < len(record) {
-				valor = strings.TrimSpace(record[idx])
-			}
-
-			if valor == "" {
-				if colDef.Requerido {
-					erroresFila = append(erroresFila, ErrorFila{
-						Fila:    numFila,
-						Columna: colDef.Nombre,
-						Valor:   "",
-						Mensaje: "Campo obligatorio no proporcionado",
-					})
-				}
-				continue
-			}
-
-			if colDef.Parser != nil {
-				if parseErr := colDef.Parser(valor, &entidad); parseErr != nil {
-					erroresFila = append(erroresFila, ErrorFila{
-						Fila:    numFila,
-						Columna: colDef.Nombre,
-						Valor:   valor,
-						Mensaje: parseErr.Error(),
-					})
-				}
-			}
-		}
-
+		entidad, erroresFila := procesarFila(record, headerMap, cfg.ColumnasEsperadas, numFila)
 		if len(erroresFila) > 0 {
 			resultado.Errores = append(resultado.Errores, erroresFila...)
 			resultado.TotalErrores++
@@ -204,6 +162,55 @@ func ProcesarCSV[T any](r io.Reader, cfg ConfigCarga[T]) (*ResultadoCarga[T], er
 	}
 
 	return resultado, nil
+}
+
+func filaEstaVacia(record []string) bool {
+	for _, val := range record {
+		if strings.TrimSpace(val) != "" {
+			return false
+		}
+	}
+	return true
+}
+
+func procesarFila[T any](record []string, headerMap map[string]int, columnas []DefinicionColumna[T], numFila int) (T, []ErrorFila) {
+	var entidad T
+	var erroresFila []ErrorFila
+
+	for _, colDef := range columnas {
+		colKey := strings.ToLower(strings.TrimSpace(colDef.Nombre))
+		idx, existe := headerMap[colKey]
+
+		var valor string
+		if existe && idx < len(record) {
+			valor = strings.TrimSpace(record[idx])
+		}
+
+		if valor == "" {
+			if colDef.Requerido {
+				erroresFila = append(erroresFila, ErrorFila{
+					Fila:    numFila,
+					Columna: colDef.Nombre,
+					Valor:   "",
+					Mensaje: "Campo obligatorio no proporcionado",
+				})
+			}
+			continue
+		}
+
+		if colDef.Parser != nil {
+			if parseErr := colDef.Parser(valor, &entidad); parseErr != nil {
+				erroresFila = append(erroresFila, ErrorFila{
+					Fila:    numFila,
+					Columna: colDef.Nombre,
+					Valor:   valor,
+					Mensaje: parseErr.Error(),
+				})
+			}
+		}
+	}
+
+	return entidad, erroresFila
 }
 
 // GenerarPlantillaCSV genera los bytes de un archivo CSV con el encabezado y una fila de ejemplo.

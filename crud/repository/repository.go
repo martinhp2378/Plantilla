@@ -257,7 +257,7 @@ func (r *CrudRepository) ActualizarCrud(ctx context.Context, c crud.Crud) error 
 			return fmt.Errorf("ActualizarCrud: error al actualizar: %w", err)
 		}
 		if cmdTag.RowsAffected() == 0 {
-			return fmt.Errorf("registro no encontrado para actualizar")
+			return errors.New("registro no encontrado para actualizar")
 		}
 		return nil
 	})
@@ -270,7 +270,7 @@ func (r *CrudRepository) EliminarCrud(ctx context.Context, id uuid.UUID) error {
 			return fmt.Errorf("EliminarCrud: error al eliminar: %w", err)
 		}
 		if cmdTag.RowsAffected() == 0 {
-			return fmt.Errorf("registro no encontrado para eliminar")
+			return errors.New("registro no encontrado para eliminar")
 		}
 		return nil
 	})

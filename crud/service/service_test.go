@@ -22,7 +22,7 @@ func newMockCrudRepo() *mockCrudRepo {
 }
 
 func (m *mockCrudRepo) ConsultarCrud(ctx context.Context, criterios pagination.CriteriosPagina[crud.Crud]) ([]*crud.Crud, int, error) {
-	var res []*crud.Crud
+	res := make([]*crud.Crud, 0, len(m.items))
 	for _, item := range m.items {
 		val := item
 		res = append(res, &val)
@@ -60,7 +60,7 @@ func (m *mockCrudRepo) EliminarCrud(ctx context.Context, id uuid.UUID) error {
 }
 
 func (m *mockCrudRepo) ObtenerTodos(ctx context.Context) ([]crud.Crud, error) {
-	var res []crud.Crud
+	res := make([]crud.Crud, 0, len(m.items))
 	for _, item := range m.items {
 		res = append(res, item)
 	}

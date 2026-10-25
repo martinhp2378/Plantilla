@@ -192,7 +192,7 @@ func buildDynamicWhere(filtros map[string]any) ([]string, []any) {
 	argID := 1
 
 	// Extraer y ordenar las llaves para garantizar determinismo y cacheo de queries
-	var keys []string
+	keys := make([]string, 0, len(filtros))
 	for k := range filtros {
 		keys = append(keys, k)
 	}

@@ -192,7 +192,7 @@ func getTenantSchema(ctx context.Context) (string, error) {
 func buildTenantSearchPath(schema string) (string, error) {
 	s := strings.TrimSpace(schema)
 	if s == "" || s == "public" || !tenantSchemaRegex.MatchString(s) {
-		return "", fmt.Errorf("tenant schema inválido")
+		return "", errors.New("tenant schema inválido")
 	}
-	return fmt.Sprintf("%s, institucion, sesion, sistema, pg_catalog", pgx.Identifier{s}.Sanitize()), nil
+	return pgx.Identifier{s}.Sanitize() + ", institucion, sesion, sistema, pg_catalog", nil
 }

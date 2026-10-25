@@ -17,10 +17,20 @@ linters:
     - nilerr
     # Limpieza
     - unconvert
+    # Rendimiento
+    - perfsprint
+    - prealloc
+    # Complejidad
+    - nestif
+    - gocognit
     # Seguridad
     - gosec
 
   settings:
+    nestif:
+      min-complexity: 7
+    gocognit:
+      min-complexity: 50
     gosec:
       excludes:
         - G101 # Falsos positivos con palabras como "password" en queries y constantes

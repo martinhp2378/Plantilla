@@ -2,6 +2,7 @@ package qrcode
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"image"
 	"image/draw"
@@ -16,7 +17,7 @@ import (
 // Retorna los bytes de la imagen PNG o un error.
 func GenerateQR(content string, size int) ([]byte, error) {
 	if content == "" {
-		return nil, fmt.Errorf("el contenido del QR no puede estar vacío")
+		return nil, errors.New("el contenido del QR no puede estar vacío")
 	}
 
 	if size <= 0 {

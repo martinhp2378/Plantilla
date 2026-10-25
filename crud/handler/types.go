@@ -6,6 +6,7 @@ import (
 	"PlantillaInstitucional/shared/cargamasiva"
 	errores "PlantillaInstitucional/shared/errores"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -127,10 +128,10 @@ func (h *crudHandler) parseFormToCrud(r *http.Request) (crud.Crud, error) {
 func (h *crudHandler) parseIDParam(r *http.Request) (string, error) {
 	idParam := chi.URLParam(r, "id")
 	if idParam == "" {
-		return "", fmt.Errorf("id requerido")
+		return "", errors.New("id requerido")
 	}
 	if _, err := uuid.FromString(idParam); err != nil {
-		return "", fmt.Errorf("formato de id inválido")
+		return "", errors.New("formato de id inválido")
 	}
 	return idParam, nil
 }

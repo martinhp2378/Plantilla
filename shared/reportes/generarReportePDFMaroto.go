@@ -5,6 +5,7 @@ import (
 	"PlantillaInstitucional/shared/qrcode"
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -32,7 +33,7 @@ func GenerarReportePDFMaroto[T any](
 ) (string, error) {
 
 	if len(datos) == 0 {
-		return "", fmt.Errorf("lista vacía")
+		return "", errors.New("lista vacía")
 	}
 	if err := validateReportRows(len(datos)); err != nil {
 		return "", err

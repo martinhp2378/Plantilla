@@ -5,6 +5,7 @@ import (
 	"PlantillaInstitucional/pagination"
 	shared "PlantillaInstitucional/shared/password"
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -44,11 +45,11 @@ func (s *UsuarioService) CrearUsuario(ctx context.Context, b usuario.Usuario, ac
 
 	// 2. Persistencia
 	if b.UuidPersona == uuid.Nil {
-		return fmt.Errorf("debe seleccionar una persona para asignarle el usuario")
+		return errors.New("debe seleccionar una persona para asignarle el usuario")
 	}
 
 	if activationToken == "" {
-		return fmt.Errorf("token de activación requerido")
+		return errors.New("token de activación requerido")
 	}
 
 	// A random unusable password preserves the existing NOT NULL column while

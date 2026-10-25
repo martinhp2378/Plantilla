@@ -54,7 +54,7 @@ func getValidationMessage(fe validator.FieldError) string {
 	case "uuid":
 		return "Debe ser un UUID válido"
 	case "oneof":
-		return fmt.Sprintf("Valor permitido: %s", fe.Param())
+		return "Valor permitido: " + fe.Param()
 	case "min":
 		return fmt.Sprintf("Mínimo %s caracteres", fe.Param())
 	case "max":

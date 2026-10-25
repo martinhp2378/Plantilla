@@ -5,6 +5,7 @@ import (
 	"PlantillaInstitucional/pagination"
 	shared "PlantillaInstitucional/shared/errores"
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -62,7 +63,7 @@ func (h *PolicyHandler) parseForm(r *http.Request) (policy.Politica, error) {
 func (h *PolicyHandler) parseNombre(r *http.Request) (string, error) {
 	nombre := chi.URLParam(r, "id")
 	if nombre == "" {
-		return "", fmt.Errorf("id requerido")
+		return "", errors.New("id requerido")
 	}
 	return nombre, nil
 }

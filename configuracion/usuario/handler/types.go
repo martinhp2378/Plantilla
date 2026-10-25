@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -101,12 +102,12 @@ func (h *UsuarioHandler) parseFormToUsuario(r *http.Request) (usuario.Usuario, e
 func (h *UsuarioHandler) parseIDParam(r *http.Request) (uuid.UUID, error) {
 	idParam := chi.URLParam(r, "id")
 	if idParam == "" {
-		return uuid.Nil, fmt.Errorf("id requerido")
+		return uuid.Nil, errors.New("id requerido")
 	}
 	// Validamos formato brevemente
 	id, err := uuid.FromString(idParam)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("formato de id inválido")
+		return uuid.Nil, errors.New("formato de id inválido")
 	}
 
 	return id, nil

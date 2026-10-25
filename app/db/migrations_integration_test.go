@@ -195,7 +195,7 @@ func verifyReportRetentionLifecycle(t *testing.T, ctx context.Context, conn *pgx
 	tenantCtx := tenantcontext.WithTenant(ctx, tenantcontext.TenantContext{ID: tenantID, Schema: "tenant_test", CanonicalHost: "tenant-test.example"})
 	tenantCtx = lifecycle.Context(tenantCtx)
 
-	var paths []string
+	paths := make([]string, 0, 2)
 	for _, name := range []string{"parallel-one", "parallel-two"} {
 		url, err := reportes.StorePrivateReport(tenantCtx, manager, []byte(name), name, ".pdf")
 		if err != nil {

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 
 	"PlantillaInstitucional/configuracion/perfil"
 	"PlantillaInstitucional/pagination"
@@ -80,7 +81,7 @@ func (h *PerfilHandler) parseFormToPerfil(r *http.Request) (perfil.Perfil, error
 func (h *PerfilHandler) parseNombreParam(r *http.Request) (string, error) {
 	NombreParam := chi.URLParam(r, "id")
 	if NombreParam == "" {
-		return "", fmt.Errorf("id requerido")
+		return "", errors.New("id requerido")
 	}
 
 	return NombreParam, nil

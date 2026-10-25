@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 	"net/url"
 	"os"
@@ -62,7 +62,7 @@ func GetTrustedBaseURL(r *http.Request) (string, error) {
 	if raw := strings.TrimSpace(os.Getenv("APP_BASE_URL")); raw != "" {
 		u, err := url.Parse(raw)
 		if err != nil || u.Scheme == "" || u.Host == "" {
-			return "", fmt.Errorf("APP_BASE_URL inválida")
+			return "", errors.New("APP_BASE_URL inválida")
 		}
 		return strings.TrimRight(raw, "/"), nil
 	}
@@ -77,12 +77,12 @@ func GetTrustedBaseURL(r *http.Request) (string, error) {
 
 	host = strings.TrimSpace(host)
 	if strings.ContainsAny(host, "/\\ ") || strings.Contains(host, ",") || host == "" {
-		return "", fmt.Errorf("host inválido")
+		return "", errors.New("host inválido")
 	}
 
 	allowed := parseAllowedHosts(os.Getenv("TRUSTED_BASE_HOSTS"))
 	if len(allowed) > 0 && !allowed[strings.ToLower(host)] {
-		return "", fmt.Errorf("host no permitido")
+		return "", errors.New("host no permitido")
 	}
 
 	scheme := "http"

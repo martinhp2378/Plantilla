@@ -5,6 +5,7 @@ import (
 	"PlantillaInstitucional/pagination"
 	errores "PlantillaInstitucional/shared/errores"
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -111,11 +112,11 @@ func (h *personaHandler) parseFormToPersona(r *http.Request) (institucion.Person
 func (h *personaHandler) parseIDParam(r *http.Request) (string, error) {
 	idParam := chi.URLParam(r, "id")
 	if idParam == "" {
-		return "", fmt.Errorf("id requerido")
+		return "", errors.New("id requerido")
 	}
 	// Validamos formato brevemente
 	if _, err := uuid.FromString(idParam); err != nil {
-		return "", fmt.Errorf("formato de id inválido")
+		return "", errors.New("formato de id inválido")
 	}
 	return idParam, nil
 }

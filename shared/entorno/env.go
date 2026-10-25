@@ -3,6 +3,7 @@ package entorno
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -129,6 +130,7 @@ type Env struct {
 	SkipMigrations   bool   `json:"skipMigrations"`
 }
 
+//nolint:gocognit // Flat mapping of 40+ environment variables
 func GetEnv(envPaths ...string) (*Env, error) {
 	// Intentar cargar del path, si falla puede que sea porque está en
 	// Cloud Run (ambiente no Local) o simplemente el archivo no existe
@@ -190,7 +192,7 @@ func GetEnv(envPaths ...string) (*Env, error) {
 	}
 
 	if !strings.Contains(serverListen, ":") {
-		return nil, fmt.Errorf("el puerto del server debe tener el formato :8080")
+		return nil, errors.New("el puerto del server debe tener el formato :8080")
 	} else {
 		env.ServerListen = serverListen
 	}

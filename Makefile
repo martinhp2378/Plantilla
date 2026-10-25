@@ -1,4 +1,4 @@
-.PHONY: all check templ-fmt templ-check lint test generate new-module remove-module init-project
+.PHONY: all check templ-fmt templ-check lint test generate new-module remove-module init-project vulncheck trivy security
 
 all: check
 
@@ -18,8 +18,28 @@ lint:
 
 # Run automated tests
 test:
-	go test ./...
+	go test -mod=vendor ./...
 	go test -C cmd/jrmp ./...
+
+# Run govulncheck across project and cmd/jrmp
+vulncheck:
+	@echo "==> Scanning root project with govulncheck..."
+	@(which govulncheck >/dev/null 2>&1 && govulncheck ./... || go run golang.org/x/vuln/cmd/govulncheck@latest ./...) || true
+	@echo "==> Scanning cmd/jrmp with govulncheck..."
+	@(cd cmd/jrmp && (which govulncheck >/dev/null 2>&1 && govulncheck ./... || go run golang.org/x/vuln/cmd/govulncheck@latest ./...)) || true
+
+# Run Trivy security scanner (uses local trivy if available, otherwise docker)
+trivy:
+	@if which trivy >/dev/null 2>&1; then \
+		trivy fs --skip-dirs vendor --severity HIGH,CRITICAL .; \
+	elif docker info >/dev/null 2>&1; then \
+		docker run --rm -v $$(pwd):/app -w /app aquasec/trivy:latest fs --skip-dirs vendor --severity HIGH,CRITICAL .; \
+	else \
+		echo "Warning: neither trivy nor docker is available to run trivy scan"; \
+	fi
+
+# Run all security scans (govulncheck + trivy)
+security: vulncheck trivy
 
 # Initialize project module name: make init-project MODULE=MiNuevoProyecto
 init-project:

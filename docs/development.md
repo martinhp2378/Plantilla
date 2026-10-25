@@ -57,6 +57,9 @@ jrmp up
 | `jrmp lint` | Ejecuta `golangci-lint run ./...`. |
 | `jrmp test` | Ejecuta todas las pruebas unitarias (`go test ./...`). |
 | `jrmp check` | Ejecuta la validación completa (`templ-check` + `lint` + `test`). |
+| `jrmp security` | Ejecuta la auditoría completa de seguridad (`govulncheck` + `trivy`). |
+| `jrmp vulncheck` | Ejecuta `govulncheck` en el proyecto raíz y en `cmd/jrmp`. |
+| `jrmp trivy` | Ejecuta el escáner de seguridad Trivy en el repositorio (omitiendo `vendor`). |
 
 ### 3. Live Reload y Generación
 Ejecuta la app usando [Air](https://github.com/air-verse/air) para recompilación automática:
@@ -68,9 +71,24 @@ Si modificas archivos `.templ`, asegúrate de correr `templ generate` (o `make t
 ## 📊 Reportes PDF, Excel y Assets
 
 El sistema de reportes (`shared/reportes`) genera y almacena archivos privados con control de retención:
-*   **PDF (`generarReportePDF.go`)**: Utiliza `gofpdf` con traducción automática de caracteres UTF-8 a CP1252 (`UnicodeTranslatorFromDescriptor`), soportando acentos, diéresis y eñes en títulos, encabezados y celdas sin configuración adicional.
+*   **PDF (`generarReportePDF.go`)**: Utiliza `gofpdf` con la tipografía institucional **Gotham** en formato TrueType (`.ttf`) con soporte nativo UTF-8 (`SplitText`), preservando acentos, diéresis y eñes sin distorsión. Cuenta con fallback automático transparente a `Arial` (CP-1252) si faltan los archivos y protección `asegurarFuenteValida` contra estados no inicializados.
 *   **Excel (`generarReporteExcel.go`)**: Utiliza `excelize/v2` con formato institucional, autoajuste de columnas y encabezados con estilo.
 *   **Imágenes**: Logos institucionales en `static/public/img/`.
+
+## 🛡️ Auditoría de Seguridad (govulncheck y Trivy)
+
+El proyecto incluye escaneo automatizado continuo tanto en desarrollo local como en el pipeline de CI/CD:
+
+1.  **`govulncheck`**:
+    *   Herramienta oficial de Go que analiza el grafo real de llamadas (`call-graph analysis`) para detectar si el código efectivamente invoca símbolos con vulnerabilidades reportadas en el *Go Vulnerability Database*.
+    *   Ejecución local: `make vulncheck` o `jrmp vulncheck`.
+2.  **`Trivy`**:
+    *   Escáner de seguridad de Aqua Security para detectar vulnerabilidades en dependencias, configuraciones de contenedores (`Dockerfile`) y secretos expuestos.
+    *   Excluye automáticamente el directorio `vendor/` para evitar falsos positivos de pruebas upstream.
+    *   Ejecución local: `make trivy` o `jrmp trivy` (si no tienes `trivy` instalado, utiliza automáticamente el contenedor `aquasec/trivy:latest` vía Docker).
+3.  **Auditoría Integral**:
+    *   `make security` o `jrmp security` ejecuta ambos análisis secuencialmente.
+    *   En GitHub Actions (`.github/workflows/ci.yml`), el job `security` corre en paralelo en cada push y pull request.
 
 ## 🧪 Pruebas (Testing)
 

@@ -193,6 +193,7 @@ Guarda esta tabla a la mano; funcionan igual en **Mac, Linux y Windows**:
 | **Crear un nuevo módulo CRUD (interactivo o directo)** | `jrmp new-module` *(o `jrmp new-module proveedor`)* |
 | **Eliminar un módulo de prueba (y limpiar la BD)** | `jrmp remove-module proveedor` |
 | **Verificar formato Templ, linter y pruebas unitarias** | `jrmp check` |
+| **Auditar vulnerabilidades y seguridad (govulncheck + Trivy)** | `jrmp security` |
 | **Borrar la base de datos local y empezar desde cero** | `docker compose -f docker-compose.local.yml down -v` |
 
 ---

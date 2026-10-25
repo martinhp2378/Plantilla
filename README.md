@@ -44,6 +44,7 @@ El sistema incluye una capa de hardenización por defecto:
 - **CSRF**: Protección global mediante `nosurf`, integrada automáticamente con HTMX.
 - **Headers**: Implementación de cabeceras OWASP (HSTS, X-Frame-Options, X-Content-Type-Options).
 - **Validación ABAC**: Middleware de políticas basado en perfiles y rutas.
+- **Auditoría Continua de Vulnerabilidades**: Escaneo automatizado de código con `govulncheck` (análisis de árbol de llamadas) y de dependencias/contenedores con `Trivy` (`jrmp security` o `make security`), integrado en CI/CD.
 
 ---
 

@@ -3,13 +3,12 @@ package components
 import (
 	"PlantillaInstitucional/institucion"
 	"PlantillaInstitucional/pagination"
-	"PlantillaInstitucional/shared/pagina"
 	"PlantillaInstitucional/shared/views/components/v2"
 )
 
 templ TableV2(criterios pagination.CriteriosPagina[institucion.Persona], baseURL string, oob bool) {
 	{{
-		rutas := pagina.GlobalRutas.Personas
+		rutas := institucion.Rutas
 		buildSortURL := func(field string) string {
 			return criterios.WithSort(field).BuildURL(rutas.Tabla, 1)
 		}

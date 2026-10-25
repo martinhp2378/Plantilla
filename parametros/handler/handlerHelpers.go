@@ -23,9 +23,9 @@ func (h *ParametrosHandler) Mandar_error(ctx context.Context, w http.ResponseWri
 	criterios, err := h.service.ListarParametros(ctx)
 	if err == nil {
 		if r.Header.Get("HX-Request") == "true" {
-			utils.RenderIgnore(ctx, &sb, components.TableV2(criterios, pagina.GlobalRutas.Parametros.Tabla, false))
+			utils.RenderIgnore(ctx, &sb, components.TableV2(criterios, parametros.Rutas.Tabla, false))
 		} else {
-			utils.RenderIgnore(ctx, &sb, layouts.ViewParametros("Parámetros", pagina.Parametros, criterios, pagina.GlobalRutas.Parametros.Tabla))
+			utils.RenderIgnore(ctx, &sb, layouts.ViewParametros("Parámetros", pagina.Parametros, criterios, parametros.Rutas.Tabla))
 		}
 	}
 	
@@ -59,7 +59,7 @@ func (h *ParametrosHandler) Mandar_success(ctx context.Context, w http.ResponseW
 
 	criterios, err := h.service.ListarParametros(ctx)
 	if err == nil {
-		utils.RenderIgnore(ctx, &sb, components.TableV2(criterios, pagina.GlobalRutas.Parametros.Tabla, true))
+		utils.RenderIgnore(ctx, &sb, components.TableV2(criterios, parametros.Rutas.Tabla, true))
 	}
 	utils.RenderIgnore(ctx, &sb, compartidos.Mensaje("success", mensaje))
 

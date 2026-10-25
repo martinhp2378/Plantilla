@@ -11,7 +11,6 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"PlantillaInstitucional/configuracion/policy"
 	"PlantillaInstitucional/pagination"
-	"PlantillaInstitucional/shared/pagina"
 	"PlantillaInstitucional/shared/views/components/v2"
 )
 
@@ -36,7 +35,7 @@ func TableV2(criterios pagination.CriteriosPagina[policy.Politica], oob bool) te
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		rutas := pagina.GlobalRutas.Politicas
+		rutas := policy.Rutas
 		buildSortURL := func(field string) string {
 			return criterios.WithSort(field).BuildURL(rutas.Tabla, 1)
 		}

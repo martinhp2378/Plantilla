@@ -7,7 +7,6 @@ import (
 	"PlantillaInstitucional/pagination"
 	"PlantillaInstitucional/shared/pagina"
 	"PlantillaInstitucional/shared/utils"
-	sharedComp "PlantillaInstitucional/shared/views/components"
 	"PlantillaInstitucional/shared/views/components/compartidos"
 	"net/http"
 	"strings"
@@ -26,11 +25,11 @@ func (h *UsuarioHandler) Index(w http.ResponseWriter, r *http.Request) {
 
 	// Si es peticion HTMX (desde el sidebar), mandamos solo el componente de tabla
 	if r.Header.Get("HX-Request") == "true" {
-		utils.RenderIgnore(ctx, w, layouts.UsuarioContentV2(data, pagina.GlobalRutas.Usuarios.Tabla))
+		utils.RenderIgnore(ctx, w, layouts.UsuarioContentV2(data, usuario.Rutas.Tabla))
 		return
 	}
 
-	utils.RenderIgnore(ctx, w, layouts.ViewUsuariosV2("Usuarios", pagina.Usuarios, data, pagina.GlobalRutas.Usuarios.Tabla))
+	utils.RenderIgnore(ctx, w, layouts.ViewUsuariosV2("Usuarios", pagina.Usuarios, data, usuario.Rutas.Tabla))
 }
 
 func (h *UsuarioHandler) SearchTable(w http.ResponseWriter, r *http.Request) {
@@ -45,7 +44,7 @@ func (h *UsuarioHandler) SearchTable(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Renderizamos solo la tabla fragmento para HTMX
-	utils.RenderIgnore(ctx, w, components.TableV2(data, pagina.GlobalRutas.Usuarios.Tabla, false))
+	utils.RenderIgnore(ctx, w, components.TableV2(data, usuario.Rutas.Tabla, false))
 }
 
 // --- Render Helpers (Privados) ---
@@ -59,9 +58,9 @@ func (h *UsuarioHandler) renderErrorGeneric(w http.ResponseWriter, r *http.Reque
 
 	// Si es una peticion HTMX, mandamos solo el fragmento
 	if r.Header.Get("HX-Request") == "true" {
-		utils.RenderIgnore(ctx, &sb, components.TableV2(data, pagina.GlobalRutas.Usuarios.Tabla, false))
+		utils.RenderIgnore(ctx, &sb, components.TableV2(data, usuario.Rutas.Tabla, false))
 	} else {
-		utils.RenderIgnore(ctx, &sb, layouts.ViewUsuariosV2("Usuarios", pagina.Usuarios, data, pagina.GlobalRutas.Usuarios.Tabla))
+		utils.RenderIgnore(ctx, &sb, layouts.ViewUsuariosV2("Usuarios", pagina.Usuarios, data, usuario.Rutas.Tabla))
 	}
 	utils.RenderIgnore(ctx, &sb, compartidos.Mensaje("error", msg))
 
@@ -80,7 +79,7 @@ func (h *UsuarioHandler) renderSuccess(w http.ResponseWriter, r *http.Request, m
 	// 2. Recargar Tabla con datos frescos
 	criterios := pagination.NewCriteriosPaginaDefault[usuario.Usuario]()
 	data, _ := h.service.ListarUsuarios(ctx, criterios)
-	utils.RenderIgnore(ctx, &sb, components.TableV2(data, pagina.GlobalRutas.Usuarios.Tabla, true))
+	utils.RenderIgnore(ctx, &sb, components.TableV2(data, usuario.Rutas.Tabla, true))
 
 	// 3. Mostrar Toast/Mensaje
 	utils.RenderIgnore(ctx, &sb, compartidos.Mensaje("success", msg))
@@ -93,16 +92,7 @@ func (h *UsuarioHandler) renderErrorModalCreate(w http.ResponseWriter, r *http.R
 	var sb strings.Builder
 	utils.RenderIgnore(r.Context(), &sb, compartidos.Mensaje("error", msg))
 
-	personas, err := h.personaService.ObtenerTodasCorto(r.Context())
-	var opcionesPersona []sharedComp.SelectOption
-	if err == nil {
-		for _, p := range personas {
-			opcionesPersona = append(opcionesPersona, sharedComp.SelectOption{
-				Value: p.UuidPersona.String(),
-				Text:  p.GetNombreCompleto(),
-			})
-		}
-	}
+	opcionesPersona, _ := h.personaService.ObtenerOpcionesPersona(r.Context())
 
 	utils.RenderIgnore(r.Context(), &sb, components.FormCreateUsuarioV2(b, opcionesPersona, errs))
 	w.Header().Set("Content-Type", "text/html")
@@ -114,16 +104,7 @@ func (h *UsuarioHandler) renderErrorModalUpdate(w http.ResponseWriter, r *http.R
 	var sb strings.Builder
 	utils.RenderIgnore(r.Context(), &sb, compartidos.Mensaje("error", msg))
 
-	personas, err := h.personaService.ObtenerTodasCorto(r.Context())
-	var opcionesPersona []sharedComp.SelectOption
-	if err == nil {
-		for _, p := range personas {
-			opcionesPersona = append(opcionesPersona, sharedComp.SelectOption{
-				Value: p.UuidPersona.String(),
-				Text:  p.GetNombreCompleto(),
-			})
-		}
-	}
+	opcionesPersona, _ := h.personaService.ObtenerOpcionesPersona(r.Context())
 
 	utils.RenderIgnore(r.Context(), &sb, components.FormUpdateUsuarioV2(&b, opcionesPersona, errs))
 	w.Header().Set("Content-Type", "text/html")

@@ -36,7 +36,7 @@ func (h *ParametrosHandler) Create_templ(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	h.Mandar_success(ctx, w, errores.MensajeOperacionExitosaRegistroCreado, pagina.GlobalRutas.Parametros.Tabla)
+	h.Mandar_success(ctx, w, errores.MensajeOperacionExitosaRegistroCreado, parametros.Rutas.Tabla)
 }
 
 func (h *ParametrosHandler) Update_templ(w http.ResponseWriter, r *http.Request) {
@@ -60,7 +60,7 @@ func (h *ParametrosHandler) Update_templ(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	h.Mandar_success(ctx, w, errores.MensajeOperacionExitosaRegistroActualizado, pagina.GlobalRutas.Parametros.Tabla)
+	h.Mandar_success(ctx, w, errores.MensajeOperacionExitosaRegistroActualizado, parametros.Rutas.Tabla)
 }
 
 func (h *ParametrosHandler) Delete_templ(w http.ResponseWriter, r *http.Request) {
@@ -72,7 +72,7 @@ func (h *ParametrosHandler) Delete_templ(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	h.Mandar_success(ctx, w, errores.MensajeOperacionExitosaRegistroEliminado, pagina.GlobalRutas.Parametros.Tabla)
+	h.Mandar_success(ctx, w, errores.MensajeOperacionExitosaRegistroEliminado, parametros.Rutas.Tabla)
 }
 
 func (h *ParametrosHandler) CargarPagina_templ(w http.ResponseWriter, r *http.Request) {
@@ -86,9 +86,9 @@ func (h *ParametrosHandler) CargarPagina_templ(w http.ResponseWriter, r *http.Re
 	}
 
 	if r.Header.Get("HX-Request") == "true" {
-		utils.RenderIgnore(ctx, w, components.TableV2(criterios, pagina.GlobalRutas.Parametros.Tabla, false))
+		utils.RenderIgnore(ctx, w, components.TableV2(criterios, parametros.Rutas.Tabla, false))
 	} else {
-		utils.RenderIgnore(ctx, w, layouts.ViewParametros("Parámetros", pagina.Parametros, criterios, pagina.GlobalRutas.Parametros.Tabla))
+		utils.RenderIgnore(ctx, w, layouts.ViewParametros("Parámetros", pagina.Parametros, criterios, parametros.Rutas.Tabla))
 	}
 }
 
@@ -111,7 +111,7 @@ func (h *ParametrosHandler) CargarTabla_templ(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	utils.RenderIgnore(ctx, w, components.TableV2(criterios, pagina.GlobalRutas.Parametros.Tabla, false))
+	utils.RenderIgnore(ctx, w, components.TableV2(criterios, parametros.Rutas.Tabla, false))
 }
 
 func (h *ParametrosHandler) ModalCreate_templ(w http.ResponseWriter, r *http.Request) {

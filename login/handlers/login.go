@@ -107,8 +107,8 @@ func (h *HandlerLogin) HandlePostIngresar(w http.ResponseWriter, r *http.Request
 
 	// Redirigir según perfil: administrador va al dashboard
 	if datosUsuario.PerfilAplicacion == sesionutil.PerfilSuperAdmin || datosUsuario.Perfil == sesiones.PerfilSuperAdmin {
-		http.Redirect(w, r, pagina.GlobalRutas.Personas.Prefix, http.StatusFound)
+		http.Redirect(w, r, pagina.GlobalRutas.Dashboard.Prefix, http.StatusFound)
 		return
 	}
-	http.Redirect(w, r, pagina.GlobalRutas.Personas.Base, http.StatusFound)
+	http.Redirect(w, r, pagina.GlobalRutas.Dashboard.Base, http.StatusFound)
 }

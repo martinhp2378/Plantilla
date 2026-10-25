@@ -2,12 +2,6 @@ package app
 
 import (
 	bd "PlantillaInstitucional/app/db"
-	"PlantillaInstitucional/configuracion/policy"
-	policy_repo "PlantillaInstitucional/configuracion/policy/repository"
-	policy_service "PlantillaInstitucional/configuracion/policy/service"
-	persona_repo "PlantillaInstitucional/institucion/repository"
-	persona_service "PlantillaInstitucional/institucion/service"
-	"PlantillaInstitucional/pagination"
 	"PlantillaInstitucional/shared/email"
 	"PlantillaInstitucional/shared/entorno"
 	sharedEvents "PlantillaInstitucional/shared/events"
@@ -19,7 +13,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/issemym-repos/archivos"
 	"github.com/issemym-repos/logs"
 	"github.com/issemym-repos/sesiones"
@@ -53,55 +46,48 @@ type App struct {
 type PolicyResolver interface {
 	IsRouteAllowed(ctx context.Context, profile string, path string) (bool, error)
 	IsProfileActive(ctx context.Context, profile string) (bool, error)
-	ListarPoliticas(ctx context.Context, criterios pagination.CriteriosPagina[policy.Politica]) (pagination.CriteriosPagina[policy.Politica], error)
-	ObtenerPolitica(ctx context.Context, nombre string) (policy.Politica, error)
-	CrearPolitica(ctx context.Context, p policy.Politica) error
-	ActualizarPolitica(ctx context.Context, p policy.Politica, nombreOriginal string) error
-	EliminarPolitica(ctx context.Context, nombre string) error
-	CatalogosPolitica(ctx context.Context) ([]string, []string, []string, error)
 }
 
 type Services struct {
-	Policy  PolicyResolver
-	Persona persona_service.PersonaService
+	Policy PolicyResolver
 }
 
 type Repositories struct {
 	Tenants tenants.Repository
-	Policy  *policy_repo.PolicyRepository
 }
 
 func NewApp(ctx context.Context, env *entorno.Env,
 	pqWrite *pgxpool.Pool, pqRead *pgxpool.Pool, conexionRedis *redis.Client,
 	logger *logs.Logger, instrumentacion *logs.Instrumentacion,
 	constructorSesion *sesiones.ConstructorSesion, constructorSesionJWT *sesiones.ConstructorSesionJWT,
-	manejadorArchivos *archivos.ManejadorArchivos, servicioEmail *email.EmailService) (*App, error) {
+	manejadorArchivos *archivos.ManejadorArchivos, servicioEmail *email.EmailService,
+	policyResolvers ...PolicyResolver) (*App, error) {
 	tenantPolicy, err := tenantPolicyFromEnvironment(env, timeNow)
 	if err != nil {
 		return nil, err
 	}
 	return NewAppWithTenantPolicy(ctx, env, pqWrite, pqRead, conexionRedis, logger, instrumentacion,
-		constructorSesion, constructorSesionJWT, manejadorArchivos, servicioEmail, tenantPolicy)
+		constructorSesion, constructorSesionJWT, manejadorArchivos, servicioEmail, tenantPolicy, policyResolvers...)
 }
 
 func NewAppWithTenantPolicy(ctx context.Context, env *entorno.Env,
 	pqWrite *pgxpool.Pool, pqRead *pgxpool.Pool, conexionRedis *redis.Client,
 	logger *logs.Logger, instrumentacion *logs.Instrumentacion,
 	constructorSesion *sesiones.ConstructorSesion, constructorSesionJWT *sesiones.ConstructorSesionJWT,
-	manejadorArchivos *archivos.ManejadorArchivos, servicioEmail *email.EmailService, tenantPolicy securitypolicy.TenantPolicy) (*App, error) {
+	manejadorArchivos *archivos.ManejadorArchivos, servicioEmail *email.EmailService, tenantPolicy securitypolicy.TenantPolicy,
+	policyResolvers ...PolicyResolver) (*App, error) {
 	if err := tenantPolicy.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid tenant policy: %w", err)
 	}
 	pools := bd.NewAppPools(pqRead, pqWrite)
-	validate := validator.New()
 
 	tenantsRepo := tenants.NewStaticRepository()
-	policyRepo := policy_repo.NewPolicyRepository(pools)
-
 	dispatcher := sharedEvents.NewDispatcher()
-	policySvc := policy_service.NewService(policyRepo)
-	personaRepo := persona_repo.NewPersonaRepository(pools)
-	personaSvc := persona_service.NewPersonaService(personaRepo, validate, logger, manejadorArchivos)
+
+	var policyResolver PolicyResolver
+	if len(policyResolvers) > 0 {
+		policyResolver = policyResolvers[0]
+	}
 
 	return &App{
 		Env:                  env,
@@ -117,12 +103,10 @@ func NewAppWithTenantPolicy(ctx context.Context, env *entorno.Env,
 		ServicioEmail:        servicioEmail,
 		EventDispatcher:      dispatcher,
 		Services: Services{
-			Policy:  policySvc,
-			Persona: *personaSvc,
+			Policy: policyResolver,
 		},
 		Repositories: Repositories{
 			Tenants: tenantsRepo,
-			Policy:  policyRepo,
 		},
 		TenantPolicy: tenantPolicy,
 		tenants:      make(map[string]string),

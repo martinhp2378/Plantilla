@@ -7,8 +7,6 @@ import (
 	"testing"
 
 	"PlantillaInstitucional/app"
-	"PlantillaInstitucional/configuracion/policy"
-	"PlantillaInstitucional/pagination"
 	"PlantillaInstitucional/shared/sesionutil"
 	"PlantillaInstitucional/shared/tenantcontext"
 	"github.com/gofrs/uuid/v5"
@@ -27,30 +25,6 @@ func (m *mockPolicyService) IsRouteAllowed(ctx context.Context, profile string, 
 
 func (m *mockPolicyService) IsProfileActive(ctx context.Context, profile string) (bool, error) {
 	return true, nil
-}
-
-func (m *mockPolicyService) ListarPoliticas(ctx context.Context, criterios pagination.CriteriosPagina[policy.Politica]) (pagination.CriteriosPagina[policy.Politica], error) {
-	return criterios, nil
-}
-
-func (m *mockPolicyService) ObtenerPolitica(ctx context.Context, nombre string) (policy.Politica, error) {
-	return policy.Politica{}, nil
-}
-
-func (m *mockPolicyService) CrearPolitica(ctx context.Context, p policy.Politica) error {
-	return nil
-}
-
-func (m *mockPolicyService) ActualizarPolitica(ctx context.Context, p policy.Politica, nombreOriginal string) error {
-	return nil
-}
-
-func (m *mockPolicyService) EliminarPolitica(ctx context.Context, nombre string) error {
-	return nil
-}
-
-func (m *mockPolicyService) CatalogosPolitica(ctx context.Context) ([]string, []string, []string, error) {
-	return nil, nil, nil, nil
 }
 
 func TestPolicyMiddleware(t *testing.T) {

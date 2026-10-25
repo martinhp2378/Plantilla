@@ -10,7 +10,6 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"PlantillaInstitucional/configuracion/policy"
-	"PlantillaInstitucional/shared/pagina"
 	"PlantillaInstitucional/shared/views/components"
 	"PlantillaInstitucional/shared/views/components/v2"
 )
@@ -53,9 +52,9 @@ func FormCreatePolicyV2(p policy.Politica, errors map[string]string, perfiles []
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var3 string
-			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(pagina.GlobalRutas.Politicas.Crear)
+			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(policy.Rutas.Crear)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `configuracion/policy/view/components/form_v2.templ`, Line: 12, Col: 52}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `configuracion/policy/view/components/form_v2.templ`, Line: 11, Col: 36}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 			if templ_7745c5c3_Err != nil {
@@ -125,9 +124,9 @@ func FormUpdatePolicyV2(p *policy.Politica, errors map[string]string, perfiles [
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var6 string
-			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.ResolveAttributeValue(pagina.GlobalRutas.Politicas.GetUpdate(p.Nombre))
+			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.ResolveAttributeValue(policy.Rutas.GetUpdate(p.Nombre))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `configuracion/policy/view/components/form_v2.templ`, Line: 21, Col: 65}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `configuracion/policy/view/components/form_v2.templ`, Line: 20, Col: 49}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
 			if templ_7745c5c3_Err != nil {

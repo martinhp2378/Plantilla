@@ -27,11 +27,11 @@ func (h *personaHandler) Index(w http.ResponseWriter, r *http.Request) {
 		Titulo:    "Catálogo de Personal",
 		Pag:       pagina.Personas,
 		Criterios: data,
-		BaseURL:   pagina.GlobalRutas.Personas.Tabla,
+		BaseURL:   institucion.Rutas.Tabla,
 	}
 
 	if r.Header.Get("HX-Request") == "true" {
-		utils.RenderIgnore(ctx, w, components.TableV2(data, pagina.GlobalRutas.Personas.Tabla, false))
+		utils.RenderIgnore(ctx, w, components.TableV2(data, institucion.Rutas.Tabla, false))
 		return
 	}
 
@@ -48,7 +48,7 @@ func (h *personaHandler) SearchTable(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.RenderIgnore(ctx, w, components.TableV2(data, pagina.GlobalRutas.Personas.Tabla, false))
+	utils.RenderIgnore(ctx, w, components.TableV2(data, institucion.Rutas.Tabla, false))
 }
 
 // --- Render Helpers (Privados) ---
@@ -60,13 +60,13 @@ func (h *personaHandler) renderErrorGeneric(w http.ResponseWriter, r *http.Reque
 	data, _ := h.service.ListarPersonas(ctx, criterios)
 
 	if r.Header.Get("HX-Request") == "true" {
-		utils.RenderIgnore(ctx, &sb, components.TableV2(data, pagina.GlobalRutas.Personas.Tabla, false))
+		utils.RenderIgnore(ctx, &sb, components.TableV2(data, institucion.Rutas.Tabla, false))
 	} else {
 		params := view.ParamPersona{
 			Titulo:    "Catálogo de Personal",
 			Pag:       pagina.Personas,
 			Criterios: data,
-			BaseURL:   pagina.GlobalRutas.Personas.Tabla,
+			BaseURL:   institucion.Rutas.Tabla,
 		}
 		utils.RenderIgnore(ctx, &sb, layouts.PaginaListaPersonasV2(params))
 	}
@@ -82,7 +82,7 @@ func (h *personaHandler) renderSuccess(w http.ResponseWriter, r *http.Request, m
 	sb.WriteString(`<div id="modal" hx-swap-oob="true"></div>`)
 	criterios := pagination.NewCriteriosPaginaDefault[institucion.Persona]()
 	data, _ := h.service.ListarPersonas(ctx, criterios)
-	utils.RenderIgnore(ctx, &sb, components.TableV2(data, pagina.GlobalRutas.Personas.Tabla, true))
+	utils.RenderIgnore(ctx, &sb, components.TableV2(data, institucion.Rutas.Tabla, true))
 	w.Header().Set("Content-Type", "text/html")
 	utils.RenderIgnore(ctx, &sb, compartidos.Mensaje("success", msg))
 	_, _ = w.Write([]byte(sb.String()))

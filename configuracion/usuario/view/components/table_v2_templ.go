@@ -11,7 +11,6 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"PlantillaInstitucional/configuracion/usuario"
 	"PlantillaInstitucional/pagination"
-	"PlantillaInstitucional/shared/pagina"
 	"PlantillaInstitucional/shared/views/components/v2"
 )
 
@@ -36,7 +35,7 @@ func TableV2(criterios pagination.CriteriosPagina[usuario.Usuario], baseURL stri
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		rutas := pagina.GlobalRutas.Usuarios
+		rutas := usuario.Rutas
 		// Helper para construir URLs de ordenamiento
 		buildSortURL := func(field string) string {
 			return criterios.WithSort(field).BuildURL(rutas.Tabla, 1)

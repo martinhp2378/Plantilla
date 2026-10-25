@@ -27,11 +27,11 @@ func (h *crudHandler) Index(w http.ResponseWriter, r *http.Request) {
 		Titulo:    "Catálogo de Ejemplo CRUD",
 		Pag:       pagina.Crud,
 		Criterios: data,
-		BaseURL:   pagina.GlobalRutas.Crud.Tabla,
+		BaseURL:   crud.Rutas.Tabla,
 	}
 
 	if r.Header.Get("HX-Request") == "true" {
-		utils.RenderIgnore(ctx, w, components.TableV2(data, pagina.GlobalRutas.Crud.Tabla, false))
+		utils.RenderIgnore(ctx, w, components.TableV2(data, crud.Rutas.Tabla, false))
 		return
 	}
 
@@ -48,7 +48,7 @@ func (h *crudHandler) SearchTable(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.RenderIgnore(ctx, w, components.TableV2(data, pagina.GlobalRutas.Crud.Tabla, false))
+	utils.RenderIgnore(ctx, w, components.TableV2(data, crud.Rutas.Tabla, false))
 }
 
 func (h *crudHandler) renderErrorGeneric(w http.ResponseWriter, r *http.Request, msg string) {
@@ -58,13 +58,13 @@ func (h *crudHandler) renderErrorGeneric(w http.ResponseWriter, r *http.Request,
 	data, _ := h.service.ListarCrud(ctx, criterios)
 
 	if r.Header.Get("HX-Request") == "true" {
-		utils.RenderIgnore(ctx, &sb, components.TableV2(data, pagina.GlobalRutas.Crud.Tabla, false))
+		utils.RenderIgnore(ctx, &sb, components.TableV2(data, crud.Rutas.Tabla, false))
 	} else {
 		params := view.ParamCrud{
 			Titulo:    "Catálogo de Ejemplo CRUD",
 			Pag:       pagina.Crud,
 			Criterios: data,
-			BaseURL:   pagina.GlobalRutas.Crud.Tabla,
+			BaseURL:   crud.Rutas.Tabla,
 		}
 		utils.RenderIgnore(ctx, &sb, layouts.PaginaListaCrudV2(params))
 	}
@@ -80,7 +80,7 @@ func (h *crudHandler) renderSuccess(w http.ResponseWriter, r *http.Request, msg 
 	sb.WriteString(`<div id="modal" hx-swap-oob="true"></div>`)
 	criterios := pagination.NewCriteriosPaginaDefault[crud.Crud]()
 	data, _ := h.service.ListarCrud(ctx, criterios)
-	utils.RenderIgnore(ctx, &sb, components.TableV2(data, pagina.GlobalRutas.Crud.Tabla, true))
+	utils.RenderIgnore(ctx, &sb, components.TableV2(data, crud.Rutas.Tabla, true))
 	w.Header().Set("Content-Type", "text/html")
 	utils.RenderIgnore(ctx, &sb, compartidos.Mensaje("success", msg))
 	_, _ = w.Write([]byte(sb.String()))

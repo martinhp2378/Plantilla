@@ -6,10 +6,10 @@ import (
 	"net/http"
 
 	"PlantillaInstitucional/configuracion/usuario"
-	"PlantillaInstitucional/institucion"
 	"PlantillaInstitucional/pagination"
 	shared "PlantillaInstitucional/shared/errores"
 	sharedEvents "PlantillaInstitucional/shared/events"
+	sharedComp "PlantillaInstitucional/shared/views/components"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
@@ -17,9 +17,9 @@ import (
 	"github.com/issemym-repos/logs"
 )
 
-// PersonaServiceProvider define el contrato del servicio de personas necesario para usuarios.
+// PersonaServiceProvider define el contrato para obtener opciones de selección de personas.
 type PersonaServiceProvider interface {
-	ObtenerTodasCorto(ctx context.Context) ([]institucion.Persona, error)
+	ObtenerOpcionesPersona(ctx context.Context) ([]sharedComp.SelectOption, error)
 }
 
 // UsuarioServiceProvider define el contrato del servicio de usuarios.

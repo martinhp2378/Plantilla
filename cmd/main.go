@@ -6,12 +6,15 @@ import (
 	app_middleware "PlantillaInstitucional/app/middleware"
 	perfil_handler "PlantillaInstitucional/configuracion/perfil/handler"
 	policy_handler "PlantillaInstitucional/configuracion/policy/handler"
+	policy_repo "PlantillaInstitucional/configuracion/policy/repository"
+	policy_service "PlantillaInstitucional/configuracion/policy/service"
 	usuario_handler "PlantillaInstitucional/configuracion/usuario/handler"
 	crud_handler "PlantillaInstitucional/crud/handler"
 	dashboard_handler "PlantillaInstitucional/dashboard/handler"
 	"PlantillaInstitucional/institucion"
 	persona_handler "PlantillaInstitucional/institucion/handler"
 	persona_repo "PlantillaInstitucional/institucion/repository"
+	persona_service "PlantillaInstitucional/institucion/service"
 	login_handler "PlantillaInstitucional/login/handlers"
 	miperfil_handler "PlantillaInstitucional/miperfil/handler"
 	parametros_handler "PlantillaInstitucional/parametros/handler"
@@ -19,6 +22,7 @@ import (
 	"PlantillaInstitucional/shared/entorno"
 	reportes "PlantillaInstitucional/shared/reportes"
 	"PlantillaInstitucional/shared/sesionutil"
+	sharedComp "PlantillaInstitucional/shared/views/components"
 	"context"
 	"log/slog"
 	"net/http"
@@ -29,6 +33,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofrs/uuid/v5"
 	"github.com/issemym-repos/archivos"
 	"github.com/issemym-repos/logs"
@@ -118,6 +123,9 @@ func main() {
 		logger.Fatal("error al inicializar constructor de sesiones JWT", err)
 	}
 
+	policyRepo := policy_repo.NewPolicyRepository(pools)
+	policySvc := policy_service.NewService(policyRepo)
+
 	a, err := app.NewApp(
 		context.Background(),
 		env,
@@ -129,7 +137,8 @@ func main() {
 		constructorSesion,
 		constructorSesionJWT,
 		manejadorArchivos,
-		emailService)
+		emailService,
+		policySvc)
 
 	if err != nil {
 		logger.Fatal("error al crear app", err)
@@ -163,7 +172,9 @@ func main() {
 			r.Use(app_middleware.PolicyMiddleware(a))
 			r.Use(app_middleware.NavigationMiddleware(a))
 
-			usuario_handler.Register(a, r)
+			validate := validator.New()
+			personaSvc := persona_service.NewPersonaService(personaRepo, validate, logger, manejadorArchivos)
+			usuario_handler.Register(a, r, personaOptionAdapter{svc: personaSvc})
 			perfil_handler.Register(a, r)
 			policy_handler.Register(a, r)
 			persona_handler.Register(a, r)
@@ -264,6 +275,28 @@ func buildSessionUserLoader(
 			},
 		}
 	}
+}
+
+type personaOptionAdapter struct {
+	svc *persona_service.PersonaService
+}
+
+func (a personaOptionAdapter) ObtenerOpcionesPersona(ctx context.Context) ([]sharedComp.SelectOption, error) {
+	if a.svc == nil {
+		return nil, nil
+	}
+	personas, err := a.svc.ObtenerTodasCorto(ctx)
+	if err != nil {
+		return nil, err
+	}
+	opciones := make([]sharedComp.SelectOption, 0, len(personas))
+	for _, p := range personas {
+		opciones = append(opciones, sharedComp.SelectOption{
+			Value: p.UuidPersona.String(),
+			Text:  p.GetNombreCompleto(),
+		})
+	}
+	return opciones, nil
 }
 
 func newHTTPServer(addr string, handler http.Handler) *http.Server {

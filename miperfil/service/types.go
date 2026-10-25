@@ -2,7 +2,6 @@ package service
 
 import (
 	"PlantillaInstitucional/miperfil"
-	"PlantillaInstitucional/miperfil/repository"
 	"context"
 	"io"
 
@@ -10,6 +9,14 @@ import (
 	"github.com/issemym-repos/archivos"
 	"github.com/issemym-repos/logs"
 )
+
+// RepositoryProvider define el puerto de persistencia requerido por el servicio de Mi Perfil.
+type RepositoryProvider interface {
+	ObtenerPerfilUsuario(ctx context.Context, uuidPersona uuid.UUID) (miperfil.PerfilUsuario, error)
+	ObtenerPasswordHash(ctx context.Context, uuidPersona uuid.UUID) (string, error)
+	ActualizarPassword(ctx context.Context, uuidPersona uuid.UUID, passwordHash string) error
+	ActualizarImagenPerfil(ctx context.Context, uuidPersona uuid.UUID, nombreArchivo string) error
+}
 
 // ServiceProvider define el contrato de lógica de negocio para Mi Perfil.
 type ServiceProvider interface {
@@ -20,13 +27,13 @@ type ServiceProvider interface {
 
 // MiPerfilService implementa ServiceProvider.
 type MiPerfilService struct {
-	repo     repository.RepositoryProvider
+	repo     RepositoryProvider
 	archivos *archivos.ManejadorArchivos
 	logger   *logs.Logger
 }
 
 // NewMiPerfilService construye la instancia del servicio.
-func NewMiPerfilService(repo repository.RepositoryProvider, archivos *archivos.ManejadorArchivos, logger *logs.Logger) *MiPerfilService {
+func NewMiPerfilService(repo RepositoryProvider, archivos *archivos.ManejadorArchivos, logger *logs.Logger) *MiPerfilService {
 	return &MiPerfilService{
 		repo:     repo,
 		archivos: archivos,

@@ -14,9 +14,14 @@ type RepositorioPsql struct {
 	PolicyResolver PolicyResolver
 }
 
-func NewRepositorioPsql(pools *bd.AppPools) *RepositorioPsql {
+func NewRepositorioPsql(pools *bd.AppPools, resolver ...PolicyResolver) *RepositorioPsql {
+	var r PolicyResolver
+	if len(resolver) > 0 {
+		r = resolver[0]
+	}
 	return &RepositorioPsql{
-		AppPools: pools,
+		AppPools:       pools,
+		PolicyResolver: r,
 	}
 }
 

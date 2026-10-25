@@ -8,7 +8,6 @@ import (
 	password "PlantillaInstitucional/shared/password"
 	"PlantillaInstitucional/shared/utils"
 	validacion "PlantillaInstitucional/shared/validacion"
-	sharedComp "PlantillaInstitucional/shared/views/components"
 	"net/http"
 )
 
@@ -109,17 +108,7 @@ func (h *UsuarioHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 func (h *UsuarioHandler) ModalCreate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	personas, err := h.personaService.ObtenerTodasCorto(ctx)
-	var opcionesPersona []sharedComp.SelectOption
-	if err == nil {
-		for _, p := range personas {
-			opcionesPersona = append(opcionesPersona, sharedComp.SelectOption{
-				Value: p.UuidPersona.String(),
-				Text:  p.GetNombreCompleto(),
-			})
-		}
-	}
-
+	opcionesPersona, _ := h.personaService.ObtenerOpcionesPersona(ctx)
 	utils.RenderIgnore(r.Context(), w, components.FormCreateUsuarioV2(usuario.Usuario{}, opcionesPersona, nil))
 }
 
@@ -137,17 +126,7 @@ func (h *UsuarioHandler) ModalUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	personas, err := h.personaService.ObtenerTodasCorto(ctx)
-	var opcionesPersona []sharedComp.SelectOption
-	if err == nil {
-		for _, p := range personas {
-			opcionesPersona = append(opcionesPersona, sharedComp.SelectOption{
-				Value: p.UuidPersona.String(),
-				Text:  p.GetNombreCompleto(),
-			})
-		}
-	}
-
+	opcionesPersona, _ := h.personaService.ObtenerOpcionesPersona(ctx)
 	utils.RenderIgnore(ctx, w, components.FormUpdateUsuarioV2(&b, opcionesPersona, nil))
 }
 

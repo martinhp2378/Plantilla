@@ -12,7 +12,7 @@ import (
 )
 
 // Register inicializa el repositorio, servicio, listeners de eventos, handler y monta las rutas de Usuario.
-func Register(a *app.App, r chi.Router) {
+func Register(a *app.App, r chi.Router, personaProviders ...PersonaServiceProvider) {
 	validate := validator.New()
 	repo := repository.NewUsuarioRepository(a.Pools)
 	svc := service.NewUsuarioService(repo, validate, a.Logger, a.ManejadorArchivos, a.EventDispatcher)
@@ -22,6 +22,11 @@ func Register(a *app.App, r chi.Router) {
 		a.EventDispatcher.Register(usuario_events.SendUserActivationEvent{}.Name(), userEmailListener)
 	}
 
-	h := NewUsuarioHandler(svc, &a.Services.Persona, a.EventDispatcher, a.Logger, validate)
+	var personaProvider PersonaServiceProvider
+	if len(personaProviders) > 0 {
+		personaProvider = personaProviders[0]
+	}
+
+	h := NewUsuarioHandler(svc, personaProvider, a.EventDispatcher, a.Logger, validate)
 	h.RegisterRoutes(r)
 }

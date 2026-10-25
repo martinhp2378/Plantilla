@@ -10,9 +10,9 @@ import (
 
 	"PlantillaInstitucional/configuracion/usuario"
 	usuarioEvents "PlantillaInstitucional/configuracion/usuario/events"
-	"PlantillaInstitucional/institucion"
 	"PlantillaInstitucional/pagination"
 	sharedEvents "PlantillaInstitucional/shared/events"
+	sharedComp "PlantillaInstitucional/shared/views/components"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofrs/uuid/v5"
@@ -50,7 +50,7 @@ func (s *createUserService) ReporteExcel(context.Context) (string, error) { retu
 
 type createPersonaService struct{}
 
-func (createPersonaService) ObtenerTodasCorto(context.Context) ([]institucion.Persona, error) {
+func (createPersonaService) ObtenerOpcionesPersona(context.Context) ([]sharedComp.SelectOption, error) {
 	return nil, nil
 }
 
